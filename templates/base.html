@@ -1,0 +1,216 @@
+﻿{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}GetMeCare ONTARIO{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'Caregiver/css/styles.css' %}" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="{% static 'Caregiver/js/animations.js' %}" defer></script>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <!-- ===================== NAVBAR ===================== -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="{% url 'home' %}" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#F57C00"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name"
+              >GetMe<span style="color: #f57c00">Care</span></span
+            >
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="{% url 'browse' %}" {% if request.resolver_match.url_name == "browse" %}class="nav-active"{% endif %}>Browse Caregivers</a>
+          <a href="{% url 'how_it_works' %}" {% if request.resolver_match.url_name == "how_it_works" %}class="nav-active"{% endif %}>How It Works</a>
+          <a href="{% url 'services' %}" {% if request.resolver_match.url_name == "services" %}class="nav-active"{% endif %}>Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="{% url 'contact' %}" class="btn-find-caregiver"
+            >Contact Us</a
+          >
+        </div>
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="{% url 'browse' %}">Browse Caregivers</a>
+          <a href="{% url 'how_it_works' %}">How It Works</a>
+          <a href="{% url 'services' %}">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="{% url 'contact' %}" class="btn-find-caregiver"
+            >Contact Us</a
+          >
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- ===================== PAGE CONTENT ===================== -->
+    {% block content %}{% endblock %}
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#F57C00"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#F57C00"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">
+                GetMe<span style="color: #f57c00">Care</span>
+              </div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="{% url 'browse' %}">Browse Caregivers</a></li>
+            <li><a href="{% url 'how_it_works' %}">How It Works</a></li>
+            <li><a href="{% url 'services' %}">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+            <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+            <li><a href="{% url 'terms' %}">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="{% url 'contact' %}">Contact Us</a>
+          <a href="{% url 'terms' %}">Terms of Service</a>
+          <a href="{% url 'privacy' %}">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ===================== HAMBURGER SCRIPT ===================== -->
+    <script>
+      (function () {
+        const btn = document.getElementById("hamburger");
+        const drawer = document.getElementById("mobile-drawer");
+        const overlay = document.getElementById("drawer-overlay");
+        function openMenu() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          btn.setAttribute("aria-expanded", "true");
+          document.body.style.overflow = "hidden";
+        }
+        function closeMenu() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
+          document.body.style.overflow = "";
+        }
+        btn.addEventListener("click", () =>
+          btn.classList.contains("is-open") ? closeMenu() : openMenu(),
+        );
+        overlay.addEventListener("click", closeMenu);
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeMenu));
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeMenu();
+        });
+      })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

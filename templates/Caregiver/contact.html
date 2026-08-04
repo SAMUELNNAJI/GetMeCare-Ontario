@@ -1,0 +1,193 @@
+{% extends "base.html" %} {% load static %} {% block title %}Contact
+Us – GetMeCare ONTARIO{% endblock %} {% block content %}
+
+<!-- HERO -->
+<section class="contact-hero">
+  <div class="contact-hero-inner">
+    <span class="contact-eyebrow reveal"
+      ><i class="fas fa-envelope"></i> Get in Touch</span
+    >
+    <h1 class="reveal reveal-d1">Contact GetMeCare ONTARIO</h1>
+    <p class="contact-hero-sub reveal reveal-d2">
+      Whether you're a family looking for care, a PSW ready to join our network,
+      or just have a question — our admin team is here and ready to help.
+    </p>
+    <div class="contact-hero-meta reveal reveal-d3">
+      <span><i class="fas fa-clock"></i> Replies within 1 business day</span>
+      <span><i class="fas fa-shield-alt"></i> Secure &amp; confidential</span>
+      <span><i class="fas fa-map-marker-alt"></i> Ontario, Canada</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT BODY -->
+<div class="contact-body">
+  <!-- LEFT: Form -->
+  <div class="contact-form-card animate-on-scroll">
+    <h2>Send Us a Message</h2>
+    <p>
+      Fill in the form below and our team will get back to you as soon as
+      possible. All fields marked <span style="color: #e53935">*</span> are
+      required.
+    </p>
+
+    <form id="contactForm" novalidate>
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name <span>*</span></label>
+          <input
+            type="text"
+            placeholder="e.g. Sandra"
+            id="firstName"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Last Name <span>*</span></label>
+          <input
+            type="text"
+            placeholder="e.g. Mitchell"
+            id="lastName"
+            required
+          />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email Address <span>*</span></label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            id="email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" placeholder="+1 (647) 000-0000" id="phone" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>I am a… <span>*</span></label>
+        <select id="role" required>
+          <option value="" disabled selected>Select your role</option>
+          <option value="family">Family / Employer looking for care</option>
+          <option value="psw">PSW / Caregiver looking to join</option>
+          <option value="general">General enquiry</option>
+          <option value="media">Media / Press</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Subject <span>*</span></label>
+        <input
+          type="text"
+          placeholder="Brief subject of your message"
+          id="subject"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label>Message <span>*</span></label>
+        <textarea
+          id="message"
+          placeholder="Tell us how we can help you…"
+          required
+        ></textarea>
+      </div>
+      <button type="submit" class="btn-submit">
+        <i class="fas fa-paper-plane"></i> Send Message
+      </button>
+    </form>
+
+    <div class="form-success" id="formSuccess">
+      <div class="form-success-icon"><i class="fas fa-check"></i></div>
+      <h3>Message Sent!</h3>
+      <p>
+        Thanks for reaching out. Our admin team will review your message and
+        reply within 1 business day.
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="contact-sidebar">
+    <div class="contact-info-card animate-on-scroll">
+      <h3><i class="fas fa-address-book"></i> Contact Details</h3>
+      <div class="contact-items-grid">
+        <div class="contact-info-item">
+          <span class="contact-info-icon teal"
+            ><i class="fas fa-envelope"></i
+          ></span>
+          <div class="contact-info-text">
+            <strong>Email Us</strong>
+            <a href="mailto:info@getmecare-ontario.com"
+              >info@getmecare-ontario.com</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="contact-response-card animate-on-scroll">
+      <h3><i class="fas fa-clock"></i> Response Times</h3>
+      <div class="contact-response-item">
+        <span>General enquiries</span><strong>Within 1 business day</strong>
+      </div>
+      <div class="contact-response-item">
+        <span>Caregiver applications</span><strong>1–2 business days</strong>
+      </div>
+      <div class="contact-response-item">
+        <span>Privacy / Legal</span><strong>Within 30 days (PIPEDA)</strong>
+      </div>
+      <div class="contact-response-item">
+        <span>Urgent care support</span><strong>Same business day</strong>
+      </div>
+    </div>
+    <div class="contact-faq-card animate-on-scroll">
+      <h3><i class="fas fa-question-circle"></i> Common Questions</h3>
+      <a href="{% url 'how_it_works' %}#faq" class="contact-faq-link"
+        >How long does caregiver matching take?
+        <i class="fas fa-chevron-right"></i
+      ></a>
+      <a href="{% url 'how_it_works' %}#faq" class="contact-faq-link"
+        >What is the $39 CAD vetting fee? <i class="fas fa-chevron-right"></i
+      ></a>
+      <a href="{% url 'how_it_works' %}#faq" class="contact-faq-link"
+        >How are payments processed? <i class="fas fa-chevron-right"></i
+      ></a>
+      <a href="{% url 'how_it_works' %}" class="contact-faq-link"
+        >View all FAQs <i class="fas fa-chevron-right"></i
+      ></a>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  (function () {
+    const form = document.getElementById("contactForm");
+    const success = document.getElementById("formSuccess");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const required = form.querySelectorAll("[required]");
+      let valid = true;
+      required.forEach((el) => {
+        el.style.borderColor = "";
+        if (!el.value.trim()) {
+          el.style.borderColor = "#e53935";
+          valid = false;
+        }
+      });
+      if (!valid) return;
+      const btn = form.querySelector(".btn-submit");
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+      btn.disabled = true;
+      setTimeout(() => {
+        form.style.display = "none";
+        success.style.display = "block";
+      }, 1200);
+    });
+  })();
+</script>
+{% endblock %}
