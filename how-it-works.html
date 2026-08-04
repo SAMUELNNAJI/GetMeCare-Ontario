@@ -681,9 +681,9 @@
             tabs.forEach((t) => t.classList.remove("active"));
             panels.forEach((p) => p.classList.add("hidden"));
             tab.classList.add("active");
-            document
-              .getElementById("tab-" + tab.dataset.tab)
-              .classList.remove("hidden");
+            const target = document.getElementById("tab-" + tab.dataset.tab);
+            target.classList.remove("hidden");
+            target.querySelectorAll(".hiw-step").forEach((s) => s.classList.add("visible"));
           });
         });
 
