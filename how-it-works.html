@@ -52,7 +52,7 @@
         </nav>
         <div class="nav-actions">
           <a href="#" class="btn-signin">Sign In</a>
-          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+          <a href="contact.html" class="btn-find-caregiver">Contact</a>
         </div>
         <button
           class="hamburger"
@@ -72,7 +72,7 @@
         </nav>
         <div class="mobile-nav-actions">
           <a href="#" class="btn-signin">Sign In</a>
-          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+          <a href="contact.html" class="btn-find-caregiver">Contact</a>
         </div>
       </div>
     </header>
@@ -103,10 +103,22 @@
     <!-- TAB SWITCHER -->
     <div class="hiw-tabs-wrap">
       <div class="hiw-tabs">
-        <button class="hiw-tab active" data-tab="families">
+        <button
+          class="hiw-tab active"
+          type="button"
+          data-tab="families"
+          aria-controls="tab-families"
+          aria-selected="true"
+        >
           <i class="fas fa-home"></i> For Families
         </button>
-        <button class="hiw-tab" data-tab="caregivers">
+        <button
+          class="hiw-tab"
+          type="button"
+          data-tab="caregivers"
+          aria-controls="tab-caregivers"
+          aria-selected="false"
+        >
           <i class="fas fa-user-nurse"></i> For Caregivers
         </button>
       </div>
@@ -654,12 +666,14 @@
           btn.classList.add("is-open");
           drawer.classList.add("is-open");
           overlay.classList.add("is-open");
+          btn.setAttribute("aria-expanded", "true");
           document.body.style.overflow = "hidden";
         }
         function closeM() {
           btn.classList.remove("is-open");
           drawer.classList.remove("is-open");
           overlay.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
           document.body.style.overflow = "";
         }
         btn.addEventListener("click", () =>
@@ -681,9 +695,14 @@
             tabs.forEach((t) => t.classList.remove("active"));
             panels.forEach((p) => p.classList.add("hidden"));
             tab.classList.add("active");
+            tabs.forEach((t) => t.setAttribute("aria-selected", "false"));
+            tab.setAttribute("aria-selected", "true");
             const target = document.getElementById("tab-" + tab.dataset.tab);
+            if (!target) return;
             target.classList.remove("hidden");
-            target.querySelectorAll(".hiw-step").forEach((s) => s.classList.add("visible"));
+            target
+              .querySelectorAll(".hiw-step")
+              .forEach((s) => s.classList.add("visible"));
           });
         });
 

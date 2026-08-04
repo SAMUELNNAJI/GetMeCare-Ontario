@@ -200,9 +200,10 @@ img {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--grey-border);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
   height: 64px;
   transition:
     box-shadow 0.3s ease,
@@ -392,10 +393,12 @@ img {
   inset: 64px 0 0 0;
   background: rgba(0, 0, 0, 0.25);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 .drawer-overlay.is-open {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .btn-signin {
@@ -3150,7 +3153,7 @@ img {
 }
 .navbar--scrolled {
   box-shadow: 0 2px 24px rgba(0, 0, 0, 0.1) !important;
-  background: rgba(255, 255, 255, 0.99) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
 }
 
 /* =========================================================
@@ -4360,7 +4363,7 @@ img {
 /* Lay the four items out in a 2x2 grid inside the card */
 .contact-info-card .contact-items-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 4px;
   border: 1px solid #f0f2f4;
   border-radius: 12px;
@@ -4384,9 +4387,9 @@ img {
 
 .contact-info-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
+  text-align: left;
   gap: 10px;
   margin-bottom: 0;
   padding: 18px 12px;
@@ -4418,14 +4421,14 @@ img {
   font-weight: 700;
   color: var(--dark);
   margin-bottom: 3px;
-  text-align: center;
+  text-align: left;
 }
 .contact-info-text span,
 .contact-info-text a {
   font-size: 13px;
   color: var(--grey);
   line-height: 1.5;
-  text-align: center;
+  text-align: left;
   display: block;
 }
 .contact-info-text a:hover { color: var(--teal); }
