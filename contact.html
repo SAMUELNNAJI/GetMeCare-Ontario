@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us – GetMeCare ONTARIO</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="assets/js/animations.js" defer></script>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#00897b"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name">GetMeCare</span>
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- HERO -->
+    <section class="contact-hero">
+      <div class="contact-hero-inner">
+        <span class="contact-eyebrow reveal"
+          ><i class="fas fa-envelope"></i> Get in Touch</span
+        >
+        <h1 class="reveal reveal-d1">Contact GetMeCare ONTARIO</h1>
+        <p class="contact-hero-sub reveal reveal-d2">
+          Whether you're a family looking for care, a PSW ready to join our
+          network, or just have a question — our admin team is here and ready to
+          help.
+        </p>
+        <div class="contact-hero-meta reveal reveal-d3">
+          <span
+            ><i class="fas fa-clock"></i> Replies within 1 business day</span
+          >
+          <span
+            ><i class="fas fa-shield-alt"></i> Secure &amp; confidential</span
+          >
+          <span><i class="fas fa-map-marker-alt"></i> Ontario, Canada</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT BODY -->
+    <div class="contact-body">
+      <!-- LEFT: Form -->
+      <div class="contact-form-card animate-on-scroll">
+        <h2>Send Us a Message</h2>
+        <p>
+          Fill in the form below and our team will get back to you as soon as
+          possible. All fields marked <span style="color: #e53935">*</span> are
+          required.
+        </p>
+
+        <form id="contactForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name <span>*</span></label>
+              <input
+                type="text"
+                placeholder="e.g. Sandra"
+                id="firstName"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Last Name <span>*</span></label>
+              <input
+                type="text"
+                placeholder="e.g. Mitchell"
+                id="lastName"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email Address <span>*</span></label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                id="email"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" placeholder="+1 (647) 000-0000" id="phone" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>I am a… <span>*</span></label>
+            <select id="role" required>
+              <option value="" disabled selected>Select your role</option>
+              <option value="family">Family / Employer looking for care</option>
+              <option value="psw">PSW / Caregiver looking to join</option>
+              <option value="general">General enquiry</option>
+              <option value="media">Media / Press</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Subject <span>*</span></label>
+            <input
+              type="text"
+              placeholder="Brief subject of your message"
+              id="subject"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Message <span>*</span></label>
+            <textarea
+              id="message"
+              placeholder="Tell us how we can help you…"
+              required
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+
+        <!-- Success state (shown after submit) -->
+        <div class="form-success" id="formSuccess">
+          <div class="form-success-icon"><i class="fas fa-check"></i></div>
+          <h3>Message Sent!</h3>
+          <p>
+            Thanks for reaching out. Our admin team will review your message and
+            reply within 1 business day.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Sidebar -->
+      <div class="contact-sidebar">
+        <!-- Contact details -->
+        <div class="contact-info-card animate-on-scroll">
+          <h3><i class="fas fa-address-book"></i> Contact Details</h3>
+          <div class="contact-items-grid">
+            <div class="contact-info-item">
+              <span class="contact-info-icon teal"
+                ><i class="fas fa-envelope"></i
+              ></span>
+              <div class="contact-info-text">
+                <strong>Email Us</strong>
+                <a href="mailto:info@getmecare-ontario.com"
+                  >info@getmecare-ontario.com</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Response times -->
+        <div class="contact-response-card animate-on-scroll">
+          <h3><i class="fas fa-clock"></i> Response Times</h3>
+          <div class="contact-response-item">
+            <span>General enquiries</span>
+            <strong>Within 1 business day</strong>
+          </div>
+          <div class="contact-response-item">
+            <span>Caregiver applications</span>
+            <strong>1–2 business days</strong>
+          </div>
+          <div class="contact-response-item">
+            <span>Privacy / Legal</span>
+            <strong>Within 30 days (PIPEDA)</strong>
+          </div>
+          <div class="contact-response-item">
+            <span>Urgent care support</span>
+            <strong>Same business day</strong>
+          </div>
+        </div>
+
+        <!-- FAQ teaser -->
+        <div class="contact-faq-card animate-on-scroll">
+          <h3><i class="fas fa-question-circle"></i> Common Questions</h3>
+          <a href="how-it-works.html#faq" class="contact-faq-link">
+            How long does caregiver matching take?
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="how-it-works.html#faq" class="contact-faq-link">
+            What is the $39 CAD vetting fee?
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="how-it-works.html#faq" class="contact-faq-link">
+            How are payments processed? <i class="fas fa-chevron-right"></i>
+          </a>
+          <a href="how-it-works.html" class="contact-faq-link">
+            View all FAQs <i class="fas fa-chevron-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#4db6ac"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#00897b"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">GetMeCare</div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="browse.html">Browse Caregivers</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="contact.html">Contact Us</a>
+          <a href="terms.html">Terms of Service</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        const btn = document.getElementById("hamburger"),
+          drawer = document.getElementById("mobile-drawer"),
+          overlay = document.getElementById("drawer-overlay");
+        function openM() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          document.body.style.overflow = "hidden";
+        }
+        function closeM() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          document.body.style.overflow = "";
+        }
+        btn.addEventListener("click", () =>
+          btn.classList.contains("is-open") ? closeM() : openM(),
+        );
+        overlay.addEventListener("click", closeM);
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeM));
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeM();
+        });
+      })();
+
+      // Form submission handler
+      (function () {
+        const form = document.getElementById("contactForm");
+        const success = document.getElementById("formSuccess");
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Basic validation
+          const required = form.querySelectorAll("[required]");
+          let valid = true;
+          required.forEach((el) => {
+            el.style.borderColor = "";
+            if (!el.value.trim()) {
+              el.style.borderColor = "#e53935";
+              valid = false;
+            }
+          });
+          if (!valid) return;
+
+          // Simulate submission
+          const btn = form.querySelector(".btn-submit");
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+          btn.disabled = true;
+
+          setTimeout(() => {
+            form.style.display = "none";
+            success.style.display = "block";
+          }, 1200);
+        });
+      })();
+    </script>
+  </body>
+</html>

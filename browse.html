@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse Caregivers – GetMeCare Ontario</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <script src="assets/js/animations.js" defer></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#00897b"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name">GetMeCare</span>
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="browse.html" class="nav-active">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- HERO BANNER -->
+    <section class="browse-hero">
+      <div class="browse-hero-inner">
+        <div class="browse-hero-text">
+          <span class="browse-eyebrow reveal"
+            ><i class="fas fa-check-circle"></i> 142 Verified Caregivers in
+            Ontario</span
+          >
+          <h1 class="reveal reveal-d1">
+            Find Your Trusted
+            <span class="bh-highlight">Ontario Caregiver</span>
+          </h1>
+          <p class="reveal reveal-d2">
+            Every profile is admin-reviewed, VSC-cleared, and
+            credential-verified before going live.
+          </p>
+        </div>
+        <div class="browse-hero-search reveal reveal-d3">
+          <div class="bhs-inner">
+            <span class="bhs-field">
+              <i class="fas fa-map-marker-alt"></i>
+              <input type="text" placeholder="City or postal code" />
+            </span>
+            <div class="bhs-divider"></div>
+            <span class="bhs-field">
+              <i class="fas fa-briefcase-medical"></i>
+              <select>
+                <option value="" disabled selected>Care type</option>
+                <option>Senior / Elder Care</option>
+                <option>Dementia &amp; Alzheimer</option>
+                <option>Palliative Care</option>
+                <option>Post-Surgery Recovery</option>
+                <option>Postpartum Care</option>
+                <option>Companion Care</option>
+                <option>Mobility Assistance</option>
+                <option>Live-In Care</option>
+              </select>
+            </span>
+            <a href="browse.html" class="bhs-btn">
+              <i class="fas fa-search"></i> Search
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STICKY SEARCH BAR (shown after hero scrolls out) -->
+    <div class="sticky-search" id="stickySearch">
+      <div class="sticky-search-inner">
+        <div class="bhs-inner">
+          <span class="bhs-field">
+            <i class="fas fa-map-marker-alt"></i>
+            <input
+              type="text"
+              placeholder="City or postal code"
+              id="stickyCity"
+            />
+          </span>
+          <div class="bhs-divider"></div>
+          <span class="bhs-field">
+            <i class="fas fa-briefcase-medical"></i>
+            <select id="stickyCareType">
+              <option value="" disabled selected>Care type</option>
+              <option>Senior / Elder Care</option>
+              <option>Dementia &amp; Alzheimer</option>
+              <option>Post-Surgery Care</option>
+              <option>Palliative Care</option>
+              <option>Companionship</option>
+              <option>PSW Services</option>
+            </select>
+          </span>
+          <a href="browse.html" class="bhs-btn"><i class="fas fa-search"></i> Search</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER + RESULTS LAYOUT -->
+    <div class="browse-layout">
+      <!-- SIDEBAR FILTERS -->
+      <aside class="browse-sidebar">
+        <div class="filter-card">
+          <div class="filter-header">
+            <h3><i class="fas fa-sliders-h"></i> Filters</h3>
+            <a href="browse.html" class="filter-reset" id="resetFilters">Reset all</a>
+          </div>
+
+          <!-- Availability -->
+          <div class="filter-group">
+            <h4>Availability</h4>
+            <label class="filter-check"
+              ><input type="checkbox" checked /><span
+                >Available Now</span
+              ></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Weekdays</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Weekends</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Live-In</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Overnight</span></label
+            >
+          </div>
+
+          <!-- Care Type -->
+          <div class="filter-group">
+            <h4>Care Type</h4>
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Senior / Elder Care</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span
+                >Dementia &amp; Alzheimer</span
+              ></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Palliative Care</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span
+                >Post-Surgery Recovery</span
+              ></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Postpartum Care</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Companion Care</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Mobility Assistance</span></label
+            >
+          </div>
+
+          <!-- Hourly Rate -->
+          <div class="filter-group">
+            <h4>Hourly Rate (CAD)</h4>
+            <div class="rate-range">
+              <span id="rate-min">$20</span>
+              <input type="range" min="20" max="60" value="20" id="rateMin" />
+              <span>–</span>
+              <input type="range" min="20" max="60" value="60" id="rateMax" />
+              <span id="rate-max">$60</span>
+            </div>
+          </div>
+
+          <!-- Compliance -->
+          <div class="filter-group">
+            <h4>Compliance</h4>
+            <label class="filter-check"
+              ><input type="checkbox" checked /><span>VSC Cleared</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" checked /><span
+                >PSW Certified</span
+              ></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>RPN Trained</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>First Aid Certified</span></label
+            >
+          </div>
+
+          <!-- City -->
+          <div class="filter-group">
+            <h4>City</h4>
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Toronto</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Mississauga</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Brampton</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Ottawa</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Hamilton</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>London</span></label
+            >
+            <label class="filter-check"
+              ><input type="checkbox" /><span>Scarborough</span></label
+            >
+          </div>
+        </div>
+      </aside>
+
+      <!-- RESULTS AREA -->
+      <main class="browse-results">
+        <!-- Results toolbar -->
+        <div class="results-toolbar">
+          <div class="results-count"><strong>142</strong> caregivers found</div>
+          <div class="results-sort">
+            <label>Sort by</label>
+            <select id="sortBy">
+              <option>Top Rated</option>
+              <option>Lowest Rate</option>
+              <option>Highest Rate</option>
+              <option>Most Reviews</option>
+              <option>Newest</option>
+            </select>
+          </div>
+          <button class="mobile-filter-btn" id="mobileFilterBtn">
+            <i class="fas fa-sliders-h"></i> Filters
+          </button>
+        </div>
+
+        <!-- Active filter chips -->
+        <div class="active-filters">
+          <span class="af-chip">Available Now <a href="#" class="af-chip-remove">×</a></span>
+          <span class="af-chip">VSC Cleared <a href="#" class="af-chip-remove">×</a></span>
+          <span class="af-chip">PSW Certified <a href="#" class="af-chip-remove">×</a></span>
+        </div>
+
+        <!-- Cards grid -->
+        <div class="bc-grid stagger-children">
+          <!-- Card 1 -->
+          <div class="bc-card animate-on-scroll hover-lift">
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/44.jpg"
+                  alt="Mary O."
+                />
+                <span class="bc-dot available" title="Available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Mary O.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Certified PSW</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Mississauga, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>4.9</strong
+                  ><span>(34 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Dementia Care</span>
+              <span class="stag">Mobility Assist</span>
+              <span class="stag">Medication Mgmt</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$32.00 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> Weekdays + Weekends</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bc-card featured animate-on-scroll hover-lift">
+            <div class="bc-featured-badge">
+              <i class="fas fa-star"></i> Top Rated
+            </div>
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/65.jpg"
+                  alt="Patricia A."
+                />
+                <span class="bc-dot available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Patricia A.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Registered PSW · RPN Trained</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Toronto, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>5.0</strong
+                  ><span>(52 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> RPN Trained</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Palliative Care</span>
+              <span class="stag">Post-Surgery</span>
+              <span class="stag">Alzheimer Support</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$35.00 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> Flexible — all shifts</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bc-card animate-on-scroll hover-lift">
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/33.jpg"
+                  alt="Josephine K."
+                />
+                <span class="bc-dot available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Josephine K.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Certified PSW</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Ottawa, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>4.8</strong
+                  ><span>(21 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Companion Care</span
+              ><span class="stag">Meal Prep</span
+              ><span class="stag">Light Housekeeping</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$29.50 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> Mon–Fri, Days</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 4 -->
+          <div class="bc-card animate-on-scroll hover-lift">
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/68.jpg"
+                  alt="Grace N."
+                />
+                <span class="bc-dot available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Grace N.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Certified PSW · First Aid</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Hamilton, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>4.7</strong
+                  ><span>(18 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> First Aid</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Senior Care</span
+              ><span class="stag">Bathing Assist</span
+              ><span class="stag">Errand Support</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$28.00 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> Weekdays Only</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 5 -->
+          <div class="bc-card animate-on-scroll hover-lift">
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/52.jpg"
+                  alt="Amara S."
+                />
+                <span class="bc-dot available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Amara S.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Registered PSW</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Brampton, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>4.9</strong
+                  ><span>(41 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Postpartum</span
+              ><span class="stag">Newborn Care</span
+              ><span class="stag">Breastfeeding Support</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$31.00 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> All shifts</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 6 -->
+          <div class="bc-card animate-on-scroll hover-lift">
+            <div class="bc-card-top">
+              <div class="bc-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/29.jpg"
+                  alt="Diana F."
+                />
+                <span class="bc-dot available"></span>
+              </div>
+              <div class="bc-meta">
+                <div class="bc-name-row">
+                  <h4>Diana F.</h4>
+                  <span class="bc-verified"
+                    ><i class="fas fa-check-circle"></i
+                  ></span>
+                </div>
+                <p class="bc-cred">Certified PSW · Bilingual</p>
+                <p class="bc-loc">
+                  <i class="fas fa-map-marker-alt"></i> Scarborough, ON
+                </p>
+                <div class="bc-rating">
+                  <i class="fas fa-star"></i><strong>4.6</strong
+                  ><span>(15 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-compliance">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="bc-skills">
+              <span class="stag">Dementia Care</span
+              ><span class="stag">French/English</span
+              ><span class="stag">Live-In</span>
+            </div>
+            <div class="bc-footer">
+              <span class="bc-rate">$33.50 CAD / hr</span>
+              <span class="bc-avail"
+                ><i class="far fa-clock"></i> Live-In available</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+        </div>
+        <!-- /.bc-grid -->
+
+        <!-- Load More -->
+        <div class="load-more-wrap">
+          <a href="browse.html" class="btn-load-more">
+            <i class="fas fa-spinner"></i> Load More Caregivers
+          </a>
+          <p>Showing 6 of 142 verified caregivers</p>
+        </div>
+      </main>
+    </div>
+    <!-- /.browse-layout -->
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#4db6ac"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#00897b"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">GetMeCare</div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="browse.html">Browse Caregivers</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="contact.html">Contact Us</a
+          ><a href="terms.html">Terms of Service</a
+          ><a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        // Hamburger
+        const btn = document.getElementById("hamburger"),
+          drawer = document.getElementById("mobile-drawer"),
+          overlay = document.getElementById("drawer-overlay");
+        function openM() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          document.body.style.overflow = "hidden";
+        }
+        function closeM() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          document.body.style.overflow = "";
+        }
+        btn.addEventListener("click", () =>
+          btn.classList.contains("is-open") ? closeM() : openM(),
+        );
+        overlay.addEventListener("click", closeM);
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeM));
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeM();
+        });
+
+        // Sticky search bar
+        const hero = document.querySelector(".browse-hero");
+        const stickySearch = document.getElementById("stickySearch");
+        if (hero && stickySearch) {
+          const observer = new IntersectionObserver(
+            ([entry]) => {
+              stickySearch.classList.toggle(
+                "is-visible",
+                !entry.isIntersecting,
+              );
+            },
+            { threshold: 0 },
+          );
+          observer.observe(hero);
+        }
+
+        // Rate range display
+        const rMin = document.getElementById("rateMin"),
+          rMax = document.getElementById("rateMax");
+        const rMinL = document.getElementById("rate-min"),
+          rMaxL = document.getElementById("rate-max");
+        if (rMin && rMax) {
+          function updateRate() {
+            rMinL.textContent = "$" + rMin.value;
+            rMaxL.textContent = "$" + rMax.value;
+          }
+          rMin.addEventListener("input", updateRate);
+          rMax.addEventListener("input", updateRate);
+        }
+
+        // Mobile filter panel toggle
+        const mfb = document.getElementById("mobileFilterBtn"),
+          sidebar = document.querySelector(".browse-sidebar");
+        if (mfb && sidebar) {
+          mfb.addEventListener("click", () =>
+            sidebar.classList.toggle("mobile-open"),
+          );
+        }
+
+        // Remove active filter chips
+        document.querySelectorAll(".af-chip .af-chip-remove").forEach((b) => {
+          b.addEventListener("click", (e) => {
+            e.preventDefault();
+            b.closest(".af-chip").remove();
+          });
+        });
+
+        // Load More animation
+        const loadBtn = document.querySelector(".btn-load-more");
+        if (loadBtn) {
+          loadBtn.addEventListener("click", (e) => {
+            loadBtn.innerHTML =
+              '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            loadBtn.style.pointerEvents = "none";
+            loadBtn.style.opacity = "0.7";
+            setTimeout(() => {
+              loadBtn.innerHTML =
+                '<i class="fas fa-spinner"></i> Load More Caregivers';
+              loadBtn.style.pointerEvents = "";
+              loadBtn.style.opacity = "";
+            }, 1800);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

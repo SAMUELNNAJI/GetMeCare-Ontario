@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How It Works – GetMeCare ONTARIO</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="assets/js/animations.js" defer></script>
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#00897b"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name">GetMeCare</span>
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html" class="nav-active">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- PAGE HERO -->
+    <section class="page-hero">
+      <div class="page-hero-inner">
+        <span class="page-hero-eyebrow reveal"
+          ><i class="fas fa-route"></i> The Process</span
+        >
+        <h1 class="reveal reveal-d1">How GetMeCare ONTARIO Works</h1>
+        <p class="page-hero-sub reveal reveal-d2">
+          From posting your first care request to your caregiver's first shift —
+          every step is admin-guided, transparent, and safe.
+        </p>
+        <div class="page-hero-meta reveal reveal-d3">
+          <span><i class="fas fa-clock"></i> Get matched in 48–72 hrs</span>
+          <span
+            ><i class="fas fa-shield-alt"></i> Every caregiver
+            VSC-verified</span
+          >
+          <span><i class="fas fa-dollar-sign"></i> $0 agency fee</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB SWITCHER -->
+    <div class="hiw-tabs-wrap">
+      <div class="hiw-tabs">
+        <button class="hiw-tab active" data-tab="families">
+          <i class="fas fa-home"></i> For Families
+        </button>
+        <button class="hiw-tab" data-tab="caregivers">
+          <i class="fas fa-user-nurse"></i> For Caregivers
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== FAMILIES FLOW ===== -->
+    <div class="hiw-panel" id="tab-families">
+      <div class="hiw-container">
+        <div class="hiw-step animate-on-scroll">
+          <div class="hiw-step-num">01</div>
+          <div class="hiw-step-img">
+            <img
+              src="assets/images/image-1.avif"
+              alt="Post your care request"
+            />
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip teal"
+              ><i class="fas fa-clipboard-list"></i> Step 1</span
+            >
+            <h2>Post Your Care Request</h2>
+            <p>
+              Create a family account and fill in your care request in minutes.
+              Tell us about the person needing care, your schedule, location,
+              and target hourly rate.
+            </p>
+            <p>
+              A one-time <strong>$39 CAD admin vetting fee</strong> activates
+              your profile, covers our compliance review, and publishes your
+              request to our verified caregiver network.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>No recurring subscription fees</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Posted within 24 hours</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Visible to all matched caregivers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step reverse">
+          <div class="hiw-step-num">02</div>
+          <div class="hiw-step-img">
+            <img
+              src="assets/images/image-2.png"
+              alt="Admin vets every caregiver"
+            />
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip yellow"
+              ><i class="fas fa-shield-alt"></i> Step 2</span
+            >
+            <h2>Admin Vets Every Caregiver</h2>
+            <p>
+              Our compliance desk manually reviews every PSW before they can
+              apply to your request. No caregiver bypasses this process — ever.
+            </p>
+            <div class="hiw-checklist">
+              <div class="hiw-check-item">
+                <span class="check-icon teal"
+                  ><i class="fas fa-shield-alt"></i
+                ></span>
+                <div>
+                  <strong>Vulnerable Sector Check</strong>
+                  <p>
+                    Issued within 12 months, original document inspected by our
+                    team.
+                  </p>
+                </div>
+              </div>
+              <div class="hiw-check-item">
+                <span class="check-icon blue"
+                  ><i class="fas fa-id-card"></i
+                ></span>
+                <div>
+                  <strong>Government ID Verified</strong>
+                  <p>
+                    Photo ID cross-referenced against their registered profile.
+                  </p>
+                </div>
+              </div>
+              <div class="hiw-check-item">
+                <span class="check-icon green"
+                  ><i class="fas fa-certificate"></i
+                ></span>
+                <div>
+                  <strong>PSW Certificate Confirmed</strong>
+                  <p>
+                    Ontario College certificate or equivalent validated
+                    directly.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step animate-on-scroll">
+          <div class="hiw-step-num">03</div>
+          <div class="hiw-step-img">
+            <img
+              src="assets/images/image-3.jpg"
+              alt="Admin schedules your match"
+            />
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip green"
+              ><i class="fas fa-calendar-check"></i> Step 3</span
+            >
+            <h2>Admin Schedules Your Match</h2>
+            <p>
+              Once you review caregiver profiles and agree on terms, our admin
+              team steps in to activate the shift schedule — no direct contact
+              happens until we confirm both sides are aligned.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Admin reviews compatibility before confirming</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Shift schedule locked in writing</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Both parties notified simultaneously</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step reverse">
+          <div class="hiw-step-num">04</div>
+          <div class="hiw-step-img">
+            <img
+              src="assets/images/image-4.jpg"
+              alt="Live shift tracking and billing"
+            />
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip purple"
+              ><i class="fas fa-credit-card"></i> Step 4</span
+            >
+            <h2>Live Tracking &amp; Transparent Billing</h2>
+            <p>
+              Your caregiver clocks in and out directly via their dashboard. You
+              see every timestamp in real time from your family portal.
+            </p>
+            <p>
+              After each completed, dispute-free shift — our admin manually
+              triggers the payment.
+              <strong>85% goes directly to your caregiver.</strong> No surprise
+              invoices, no auto-charges.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Real-time shift log visible to families</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Payment only after admin confirmation</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Full transaction history on your dashboard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CAREGIVERS FLOW ===== -->
+    <div class="hiw-panel hidden" id="tab-caregivers">
+      <div class="hiw-container">
+        <div class="hiw-step animate-on-scroll">
+          <div class="hiw-step-num">01</div>
+          <div
+            class="hiw-step-img img-placeholder"
+            style="
+              background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 64px;
+            "
+          >
+            👩‍⚕️
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip teal"
+              ><i class="fas fa-user-plus"></i> Step 1</span
+            >
+            <h2>Apply &amp; Submit Your Documents</h2>
+            <p>
+              Create a caregiver profile and submit your credentials. Our
+              compliance team reviews your VSC, PSW certificate, and government
+              ID — usually within 1–2 business days.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>No application fee for caregivers</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Secure document upload portal</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Real-time status updates via email</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step reverse">
+          <div class="hiw-step-num">02</div>
+          <div
+            class="hiw-step-img img-placeholder"
+            style="
+              background: linear-gradient(135deg, #fff8e1, #ffecb3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 64px;
+            "
+          >
+            📋
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip yellow"
+              ><i class="fas fa-list-alt"></i> Step 2</span
+            >
+            <h2>Get Matched to Care Requests</h2>
+            <p>
+              Once approved, your profile goes live and you'll see care requests
+              that match your skills, location, and availability. Browse open
+              jobs and express interest directly from your dashboard.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Filter by city, shift type, and care category</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>See hourly rate before applying</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Admin mediates all initial contact</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step animate-on-scroll">
+          <div class="hiw-step-num">03</div>
+          <div
+            class="hiw-step-img img-placeholder"
+            style="
+              background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 64px;
+            "
+          >
+            📅
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip green"
+              ><i class="fas fa-handshake"></i> Step 3</span
+            >
+            <h2>Admin Confirms Your Schedule</h2>
+            <p>
+              After both parties agree on terms, our admin activates your shift
+              schedule. You receive your confirmed schedule, the family's care
+              plan, and all relevant notes before your first shift.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Written confirmation before every shift</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Clear care plan provided in advance</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Admin available via live chat throughout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hiw-step reverse">
+          <div class="hiw-step-num">04</div>
+          <div
+            class="hiw-step-img img-placeholder"
+            style="
+              background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 64px;
+            "
+          >
+            💳
+          </div>
+          <div class="hiw-step-body">
+            <span class="hiw-step-chip purple"
+              ><i class="fas fa-dollar-sign"></i> Step 4</span
+            >
+            <h2>Clock In, Complete Shift, Get Paid</h2>
+            <p>
+              Clock in and out via your dashboard. After admin confirms the
+              shift was completed without dispute, payment is processed directly
+              to your registered account — no waiting, no agency cuts eating
+              your earnings.
+            </p>
+            <div class="hiw-features">
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>85% of the hourly rate goes to you</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Payments processed within 1–2 business days</span>
+              </div>
+              <div class="hiw-feature">
+                <i class="fas fa-check-circle"></i
+                ><span>Full earnings history on your dashboard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ SECTION -->
+    <section class="hiw-faq-section">
+      <div class="hiw-container">
+        <div class="hiw-faq-header">
+          <span class="section-chip"
+            ><i class="fas fa-question-circle"></i> FAQ</span
+          >
+          <h2>Common Questions</h2>
+        </div>
+        <div class="faq-grid">
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> How long does matching take?
+            </div>
+            <p>
+              Most families receive their first caregiver match within 48–72
+              hours of posting their request.
+            </p>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> Can I meet the caregiver
+              before hiring?
+            </div>
+            <p>
+              Yes. Once admin confirms compatibility, a brief intro call can be
+              arranged before the first shift is locked in.
+            </p>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> What if a caregiver cancels
+              last minute?
+            </div>
+            <p>
+              Our admin team is notified immediately and will work to find a
+              replacement or rescheduled shift as quickly as possible.
+            </p>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> Is my payment information
+              safe?
+            </div>
+            <p>
+              Yes. We never store raw card data. All payments are tokenized via
+              our PCI-DSS compliant processor and stored on Canada Central
+              servers.
+            </p>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> Can caregivers set their own
+              rates?
+            </div>
+            <p>
+              Yes. Caregivers list their preferred hourly rate on their profile.
+              Families can filter by budget range when browsing.
+            </p>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">
+              <i class="fas fa-chevron-right"></i> What is the $39 CAD vetting
+              fee?
+            </div>
+            <p>
+              It's a one-time fee for employers that covers admin compliance
+              review, caregiver vetting, and publishing your care request to our
+              network. There are no recurring charges.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="hiw-cta-section">
+      <div class="hiw-container">
+        <div class="hiw-cta-card">
+          <div class="hiw-cta-left">
+            <h2>Ready to Get Started?</h2>
+            <p>
+              Whether you're a family looking for trusted care or a PSW ready to
+              take control of your schedule — GetMeCare ONTARIO connects you
+              directly, with admin support every step of the way.
+            </p>
+          </div>
+          <div class="hiw-cta-btns">
+            <a href="#" class="hiw-btn-outline"
+              ><i class="fas fa-shield-alt"></i> Post a Care Request</a
+            >
+            <a href="#" class="hiw-btn-orange"
+              ><i class="fas fa-briefcase"></i> Apply as a PSW &rarr;</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#4db6ac"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#00897b"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">GetMeCare</div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="browse.html">Browse Caregivers</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="contact.html">Contact Us</a
+          ><a href="terms.html">Terms of Service</a
+          ><a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        // Hamburger
+        const btn = document.getElementById("hamburger"),
+          drawer = document.getElementById("mobile-drawer"),
+          overlay = document.getElementById("drawer-overlay");
+        function openM() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          document.body.style.overflow = "hidden";
+        }
+        function closeM() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          document.body.style.overflow = "";
+        }
+        btn.addEventListener("click", () =>
+          btn.classList.contains("is-open") ? closeM() : openM(),
+        );
+        overlay.addEventListener("click", closeM);
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeM));
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeM();
+        });
+
+        // Tab switcher
+        const tabs = document.querySelectorAll(".hiw-tab");
+        const panels = document.querySelectorAll(".hiw-panel");
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            tabs.forEach((t) => t.classList.remove("active"));
+            panels.forEach((p) => p.classList.add("hidden"));
+            tab.classList.add("active");
+            document
+              .getElementById("tab-" + tab.dataset.tab)
+              .classList.remove("hidden");
+          });
+        });
+
+        // Animate steps on scroll
+        const steps = document.querySelectorAll(".hiw-step");
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add("visible");
+              }
+            });
+          },
+          { threshold: 0.15 },
+        );
+        steps.forEach((s) => io.observe(s));
+      })();
+    </script>
+  </body>
+</html>

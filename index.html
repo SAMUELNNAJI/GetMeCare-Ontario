@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      GetMeCare ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly
+    </title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="assets/js/animations.js" defer></script>
+  </head>
+  <body>
+    <!-- ===================== NAVBAR ===================== -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#00897b"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name">GetMeCare</span>
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+        <!-- Hamburger -->
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="hero-breadcrumb animate-fade-up">
+          Home / Find a Caregiver in Ontario
+        </p>
+        <h1 class="animate-fade-up stagger-1">
+          Hire Trusted, Pre-Vetted <br /><span class="hero-highlight"
+            >Ontario</span
+          ><br />Caregivers Directly
+        </h1>
+        <p class="hero-sub animate-fade-up stagger-2">
+          Our platform connects Ontario families to carefully vetted PSWs and
+          caregivers — pay directly, take control, and find quality care with
+          our open marketplace.
+        </p>
+        <div class="hero-badges animate-fade-up stagger-3">
+          <span class="badge pulse-hover"
+            ><i class="fas fa-shield-alt"></i> Background Checked</span
+          >
+          <span class="badge pulse-hover"
+            ><i class="fas fa-certificate"></i> Certified PSWs</span
+          >
+          <span class="badge pulse-hover"
+            ><i class="fas fa-star"></i> Family Rated</span
+          >
+        </div>
+        <div class="hero-cta animate-fade-up stagger-4">
+          <a href="browse.html" class="btn-outline-white glow-hover"
+            ><i class="fas fa-search"></i> Browse Caregivers</a
+          >
+          <a href="#" class="btn-teal glow-hover"
+            >Apply as a Caregiver <i class="fas fa-arrow-right"></i
+          ></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STATS ===================== -->
+    <section class="stats-bar" id="stats-bar">
+      <div class="stats-container">
+        <div class="stat-item">
+          <span
+            class="stat-number"
+            data-target="142"
+            data-prefix=""
+            data-suffix=""
+            >0</span
+          >
+          <span class="stat-label">Verified Caregivers</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span
+            class="stat-number"
+            data-target="38"
+            data-prefix=""
+            data-suffix=""
+            >0</span
+          >
+          <span class="stat-label">Years Avg Experience</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span
+            class="stat-number"
+            data-target="19"
+            data-prefix=""
+            data-suffix=""
+            >0</span
+          >
+          <span class="stat-label">Cities in Ontario</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span
+            class="stat-number"
+            data-target="31.50"
+            data-prefix="$"
+            data-suffix=""
+            >$0</span
+          >
+          <span class="stat-label">Avg Hourly Rate</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CARE SERVICES SECTION ===================== -->
+    <section class="care-section">
+      <div class="section-container">
+        <p class="section-label reveal">Our Services</p>
+        <h2 class="section-title reveal reveal-d1">
+          Care, Coordinated from End to End
+        </h2>
+        <p class="section-sub reveal reveal-d2">
+          From daily personal care to companionship, our vetted caregivers
+          provide the support your family deserves — all managed on one easy
+          platform.
+        </p>
+
+        <div class="care-cards stagger-children">
+          <div class="care-card animate-on-scroll hover-lift">
+            <div
+              class="care-card-img"
+              style="
+                background-image: url(&quot;assets/images/hero-image.png&quot;);
+                background-size: cover;
+                background-position: center;
+              "
+            ></div>
+            <div class="care-card-body">
+              <span class="care-icon blue"
+                ><i class="fas fa-heartbeat"></i
+              ></span>
+              <h4>Personal Support Worker (PSW)</h4>
+              <p>
+                Certified PSWs provide hands-on daily care, bathing, grooming,
+                medication reminders and more for seniors and adults in need.
+              </p>
+              <div class="care-tags">
+                <span class="tag teal">Most Popular</span>
+                <span class="tag grey">Hourly</span>
+              </div>
+            </div>
+          </div>
+          <div class="care-card animate-on-scroll hover-lift">
+            <div
+              class="care-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-2.png&quot;);
+                background-size: cover;
+                background-position: center;
+              "
+            ></div>
+            <div class="care-card-body">
+              <span class="care-icon yellow"
+                ><i class="fas fa-user-nurse"></i
+              ></span>
+              <h4>In-Home Senior Caregiver (PSW)</h4>
+              <p>
+                Compassionate in-home care for aging parents — providing
+                companionship, mobility assistance, and personal hygiene
+                support.
+              </p>
+              <div class="care-tags">
+                <span class="tag yellow">Senior Care</span>
+                <span class="tag grey">Flexible Hours</span>
+              </div>
+            </div>
+          </div>
+          <div class="care-card animate-on-scroll hover-lift">
+            <div
+              class="care-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-3.jpg&quot;);
+                background-size: cover;
+                background-position: center;
+              "
+            ></div>
+            <div class="care-card-body">
+              <span class="care-icon pink"><i class="fas fa-baby"></i></span>
+              <h4>Postpartum Caregiver &amp; Newborn (PSW)</h4>
+              <p>
+                Trained caregivers supporting new mothers with baby care,
+                feeding assistance, and light household tasks post delivery.
+              </p>
+              <div class="care-tags">
+                <span class="tag pink">Postpartum</span>
+                <span class="tag grey">Part-time</span>
+              </div>
+            </div>
+          </div>
+          <div class="care-card animate-on-scroll hover-lift">
+            <div
+              class="care-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-4.jpg&quot;);
+                background-size: cover;
+                background-position: center;
+              "
+            ></div>
+            <div class="care-card-body">
+              <span class="care-icon green"
+                ><i class="fas fa-hand-holding-heart"></i
+              ></span>
+              <h4>Companionship and Wellbeing</h4>
+              <p>
+                Friendly caregivers providing emotional support, social
+                engagement, errands and light housekeeping for seniors living
+                alone.
+              </p>
+              <div class="care-tags">
+                <span class="tag green">Companionship</span>
+                <span class="tag grey">Live-In</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="care-actions animate-fade-up">
+          <a href="#" class="btn-outline-teal glow-hover"
+            >Find a Caregiver <i class="fas fa-chevron-down"></i
+          ></a>
+          <a href="#" class="btn-outline-teal glow-hover"
+            >Service Locations <i class="fas fa-chevron-down"></i
+          ></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ACTIVE PSWs ===================== -->
+    <section class="psw-section">
+      <div class="section-container">
+        <!-- Header row -->
+        <div class="psw-header">
+          <div class="psw-header-left">
+            <p class="psw-verified-label reveal">
+              <i class="fas fa-check-circle"></i> VERIFIED CAREGIVERS
+            </p>
+            <h2 class="psw-section-title reveal reveal-d1">
+              Meet Some of Our Active PSWs
+            </h2>
+            <p class="psw-section-sub reveal reveal-d2">
+              Every caregiver on our platform has passed our mandatory
+              compliance review — ID verified, VSC cleared, and credentials
+              confirmed by our admin team.
+            </p>
+          </div>
+          <a
+            href="browse.html"
+            class="btn-view-all animate-fade-up stagger-3 glow-hover"
+            >View All Caregivers <i class="fas fa-arrow-right"></i
+          ></a>
+        </div>
+
+        <!-- Cards grid -->
+        <div class="psw-cards stagger-children">
+          <!-- Card 1 – Mary O. -->
+          <div class="psw-card animate-on-scroll hover-lift">
+            <div class="psw-card-top">
+              <div class="psw-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/44.jpg"
+                  alt="Mary O."
+                />
+                <span class="psw-verified-dot"
+                  ><i class="fas fa-check"></i
+                ></span>
+              </div>
+              <div class="psw-card-meta">
+                <h4>Mary O.</h4>
+                <p class="psw-credential">Certified PSW</p>
+                <p class="psw-location">
+                  <i class="fas fa-map-marker-alt"></i> Mississauga, ON
+                </p>
+                <div class="psw-rating">
+                  <i class="fas fa-star"></i>
+                  <strong>4.9</strong>
+                  <span>(34 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="psw-compliance-tags">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="psw-skill-tags">
+              <span class="stag">Dementia Care</span>
+              <span class="stag">Mobility Assist</span>
+              <span class="stag">Medication Mgmt</span>
+            </div>
+            <div class="psw-card-footer">
+              <span class="psw-rate-label">$32.00 CAD / hr</span>
+              <span class="psw-availability"
+                ><i class="far fa-clock"></i> Weekdays + Weekends</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 2 – Patricia A. -->
+          <div class="psw-card animate-on-scroll hover-lift">
+            <div class="psw-card-top">
+              <div class="psw-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/65.jpg"
+                  alt="Patricia A."
+                />
+                <span class="psw-verified-dot"
+                  ><i class="fas fa-check"></i
+                ></span>
+              </div>
+              <div class="psw-card-meta">
+                <h4>Patricia A.</h4>
+                <p class="psw-credential">Registered PSW · RPN Trained</p>
+                <p class="psw-location">
+                  <i class="fas fa-map-marker-alt"></i> Toronto, ON
+                </p>
+                <div class="psw-rating">
+                  <i class="fas fa-star"></i>
+                  <strong>5</strong>
+                  <span>(52 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="psw-compliance-tags">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> RPN Trained</span
+              >
+            </div>
+            <div class="psw-skill-tags">
+              <span class="stag">Palliative Care</span>
+              <span class="stag">Post-Surgery</span>
+              <span class="stag">Alzheimer Support</span>
+            </div>
+            <div class="psw-card-footer">
+              <span class="psw-rate-label">$35.00 CAD / hr</span>
+              <span class="psw-availability"
+                ><i class="far fa-clock"></i> Flexible — all shifts</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+
+          <!-- Card 3 – Josephine K. -->
+          <div class="psw-card animate-on-scroll hover-lift">
+            <div class="psw-card-top">
+              <div class="psw-avatar-wrap">
+                <img
+                  src="https://randomuser.me/api/portraits/women/33.jpg"
+                  alt="Josephine K."
+                />
+                <span class="psw-verified-dot"
+                  ><i class="fas fa-check"></i
+                ></span>
+              </div>
+              <div class="psw-card-meta">
+                <h4>Josephine K.</h4>
+                <p class="psw-credential">Certified PSW</p>
+                <p class="psw-location">
+                  <i class="fas fa-map-marker-alt"></i> Ottawa, ON
+                </p>
+                <div class="psw-rating">
+                  <i class="fas fa-star"></i>
+                  <strong>4.8</strong>
+                  <span>(21 reviews)</span>
+                </div>
+              </div>
+            </div>
+            <div class="psw-compliance-tags">
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span
+              >
+              <span class="ctag ctag-teal"
+                ><i class="fas fa-check-circle"></i> PSW Certified</span
+              >
+            </div>
+            <div class="psw-skill-tags">
+              <span class="stag">Companion Care</span>
+              <span class="stag">Meal Prep</span>
+              <span class="stag">Light Housekeeping</span>
+            </div>
+            <div class="psw-card-footer">
+              <span class="psw-rate-label">$29.50 CAD / hr</span>
+              <span class="psw-availability"
+                ><i class="far fa-clock"></i> Mon–Fri, Days</span
+              >
+            </div>
+            <a href="#" class="btn-request"
+              ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+            >
+          </div>
+        </div>
+        <!-- /.psw-cards -->
+      </div>
+    </section>
+
+    <!-- ===================== SAFETY / TRANSPARENCY ===================== -->
+    <section class="safety-section">
+      <div class="safety-grid">
+        <!-- Left: image column -->
+        <div class="safety-img-col">
+          <div class="safety-badge-wrap animate-on-scroll">
+            <img
+              src="assets/images/safety-image.png"
+              alt="Caregiver"
+              class="safety-img"
+            />
+            <!-- Top-left badge -->
+            <div class="safety-top-badge">
+              <span class="stb-icon"><i class="fas fa-dollar-sign"></i></span>
+              <div>
+                <div class="stb-title">$0 Agency Fee</div>
+                <div class="stb-sub">Direct-hire pricing</div>
+              </div>
+            </div>
+            <!-- Bottom compliance badge -->
+            <div class="safety-badge">
+              <div class="sb-label">
+                <i class="fas fa-check-circle"></i> COMPLIANCE RATE
+              </div>
+              <span class="badge-num">100%</span>
+              <span class="badge-text"
+                >of active caregivers VSC-verified before publishing</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: text -->
+        <div class="safety-text-col">
+          <div class="safety-text-inner">
+            <p class="section-label reveal">Why GetMeCare</p>
+            <h2 class="section-title reveal reveal-d1">
+              Safety and Transparency Built Into<br />Every Step
+            </h2>
+            <p class="section-sub animate-fade-up stagger-2">
+              We built GetMeCare for Ontario families who want the quality of a
+              private caregiver — without the opacity of a traditional agency.
+              Every safeguard is visible, every action is logged.
+            </p>
+
+            <div class="safety-features">
+              <div class="safety-feature animate-fade-up stagger-3">
+                <span class="safety-icon teal"
+                  ><i class="fas fa-shield-alt"></i
+                ></span>
+                <div>
+                  <h5>Ontario VSC Verified</h5>
+                  <p>
+                    Every caregiver must present a Vulnerable Sector Check
+                    issued within 12 months. We inspect the original — no
+                    exceptions.
+                  </p>
+                </div>
+              </div>
+              <div class="safety-feature animate-fade-up stagger-4">
+                <span class="safety-icon purple"
+                  ><i class="fas fa-user-friends"></i
+                ></span>
+                <div>
+                  <h5>Admin-Mediated Matching</h5>
+                  <p>
+                    No direct contact between families and caregivers until our
+                    admin team has reviewed schedule compatibility and confirmed
+                    terms.
+                  </p>
+                </div>
+              </div>
+              <div class="safety-feature animate-fade-up stagger-5">
+                <span class="safety-icon blue"
+                  ><i class="fas fa-lock"></i
+                ></span>
+                <div>
+                  <h5>Canadian Data Residency</h5>
+                  <p>
+                    All personal data, health logs, ID uploads, and payment
+                    tokens are stored exclusively in Canada Central (Montréal)
+                    servers — fully PIPEDA-aligned.
+                  </p>
+                </div>
+              </div>
+              <div class="safety-feature animate-fade-up stagger-6">
+                <span class="safety-icon orange"
+                  ><i class="fas fa-clock"></i
+                ></span>
+                <div>
+                  <h5>Live Shift Tracking</h5>
+                  <p>
+                    Clock-in and clock-out timestamps are recorded the moment a
+                    caregiver taps their dashboard. Families see every log in
+                    real time.
+                  </p>
+                </div>
+              </div>
+              <div class="safety-feature animate-fade-up">
+                <span class="safety-icon green"
+                  ><i class="fas fa-dollar-sign"></i
+                ></span>
+                <div>
+                  <h5>No Charge Until Shift Completes</h5>
+                  <p>
+                    Your card is never charged automatically. Our admin manually
+                    triggers each payment only after a completed, dispute-free
+                    shift is confirmed.
+                  </p>
+                </div>
+              </div>
+              <div class="safety-feature animate-fade-up">
+                <span class="safety-icon grey-icon"
+                  ><i class="fas fa-comments"></i
+                ></span>
+                <div>
+                  <h5>Admin Chat — Always On</h5>
+                  <p>
+                    Our live chat desk is monitored by our administrative team.
+                    Every message, every reply, every note — permanently logged
+                    and retrievable.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TESTIMONIALS ===================== -->
+    <section class="testimonials-section">
+      <div class="section-container">
+        <p class="section-label reveal">What Ontario Families Say</p>
+        <h2 class="t-section-title reveal reveal-d1">
+          Trusted by Families Across Ontario
+        </h2>
+        <p class="t-section-sub reveal reveal-d2">
+          Real reviews from verified platform users — families and caregivers
+          who have<br />completed shifts through GetMeCare.
+        </p>
+
+        <div class="testimonial-cards stagger-children">
+          <!-- Card 1 -->
+          <div class="testimonial-card animate-on-scroll hover-lift">
+            <div class="t-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i>
+            </div>
+            <div class="t-quote-body">
+              <span class="t-quote-mark">&ldquo;</span>
+              <p>
+                The admin team found us a caregiver for my mother within three
+                days. Mary was VSC-cleared and her credentials were all on file.
+                We never had to chase a single document.
+              </p>
+            </div>
+            <div class="t-tag-row">
+              <span class="t-tag">Dementia Care</span>
+            </div>
+            <div class="t-author">
+              <strong>Sandra M.</strong>
+              <span>Employer · Mississauga, ON</span>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="testimonial-card animate-on-scroll hover-lift">
+            <div class="t-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i>
+            </div>
+            <div class="t-quote-body">
+              <span class="t-quote-mark">&ldquo;</span>
+              <p>
+                As a PSW, I've worked through two agencies before. GetMeCare is
+                the first platform where I actually keep most of what I earn.
+                The shift tracker is simple and the admin team is always
+                responsive.
+              </p>
+            </div>
+            <div class="t-tag-row">
+              <span class="t-tag">Post-Surgery Recovery</span>
+            </div>
+            <div class="t-author">
+              <strong>Patricia A.</strong>
+              <span>Caregiver · Toronto, ON</span>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="testimonial-card animate-on-scroll hover-lift">
+            <div class="t-stars">
+              <i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i><i class="fas fa-star"></i
+              ><i class="fas fa-star"></i>
+            </div>
+            <div class="t-quote-body">
+              <span class="t-quote-mark">&ldquo;</span>
+              <p>
+                We needed weekend coverage for my father's mobility care. The
+                live shift log means I can see exactly when the caregiver
+                arrived and left — even when I'm at work. That peace of mind is
+                priceless.
+              </p>
+            </div>
+            <div class="t-tag-row">
+              <span class="t-tag">Mobility Assistance</span>
+            </div>
+            <div class="t-author">
+              <strong>David O.</strong>
+              <span>Employer · Ottawa, ON</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CTA BANNER ===================== -->
+    <section class="cta-banner-wrap">
+      <div class="cta-banner">
+        <div class="cta-left">
+          <h2 class="animate-fade-up">Ready to Get Started?</h2>
+          <p class="animate-fade-up stagger-1">
+            Whether you're a family looking for trusted care or a PSW ready to
+            take control of your schedule — GetMeCare connects you directly,
+            with admin support every step of the way.
+          </p>
+        </div>
+        <div class="cta-btns animate-fade-up stagger-2">
+          <a href="#" class="btn-cta-outline glow-hover"
+            ><i class="fas fa-shield-alt"></i> Post a Care Request</a
+          >
+          <a href="#" class="btn-cta-orange glow-hover"
+            ><i class="fas fa-briefcase"></i> Apply as a PSW &rarr;</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#4db6ac"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#00897b"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">GetMeCare</div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="browse.html">Browse Caregivers</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="contact.html">Contact Us</a>
+          <a href="terms.html">Terms of Service</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      /* ---- Hamburger / Mobile Drawer ---- */
+      (function () {
+        const btn = document.getElementById("hamburger");
+        const drawer = document.getElementById("mobile-drawer");
+        const overlay = document.getElementById("drawer-overlay");
+
+        function openMenu() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          btn.setAttribute("aria-expanded", "true");
+          document.body.style.overflow = "hidden";
+        }
+
+        function closeMenu() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
+          document.body.style.overflow = "";
+        }
+
+        btn.addEventListener("click", () => {
+          btn.classList.contains("is-open") ? closeMenu() : openMenu();
+        });
+
+        overlay.addEventListener("click", closeMenu);
+
+        // Close on any drawer link tap
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeMenu));
+
+        // Close on resize back to desktop
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeMenu();
+        });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        const counters = document.querySelectorAll(".stat-number[data-target]");
+        let animated = false;
+
+        function easeOutQuad(t) {
+          return t * (2 - t);
+        }
+
+        function animateCounter(el) {
+          const target = parseFloat(el.dataset.target);
+          const prefix = el.dataset.prefix || "";
+          const isFloat = el.dataset.target.includes(".");
+          const decimals = isFloat
+            ? (el.dataset.target.split(".")[1] || "").length
+            : 0;
+          const duration = 1800; // ms
+          const start = performance.now();
+
+          function tick(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOutQuad(progress);
+            const current = eased * target;
+
+            el.textContent =
+              prefix +
+              (isFloat
+                ? current.toFixed(decimals)
+                : Math.floor(current).toString());
+
+            if (progress < 1) requestAnimationFrame(tick);
+            else
+              el.textContent =
+                prefix +
+                (isFloat ? target.toFixed(decimals) : target.toString());
+          }
+
+          requestAnimationFrame(tick);
+        }
+
+        function onIntersect(entries, observer) {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !animated) {
+              animated = true;
+              counters.forEach(animateCounter);
+              observer.disconnect();
+            }
+          });
+        }
+
+        const observer = new IntersectionObserver(onIntersect, {
+          threshold: 0.4, // fire when 40% of the bar is visible
+        });
+
+        const statsBar = document.getElementById("stats-bar");
+        if (statsBar) observer.observe(statsBar);
+      })();
+    </script>
+  </body>
+</html>

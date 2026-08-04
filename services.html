@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Our Services – GetMeCare ONTARIO</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="assets/js/animations.js" defer></script>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">
+          <svg
+            class="logo-icon"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="22" cy="22" r="22" fill="#e8f5f3" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#e5a550"
+              opacity="0.9"
+            />
+            <path
+              d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+              fill="#00897b"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#00695c"
+            />
+          </svg>
+          <div class="logo-text-wrap">
+            <span class="logo-name">GetMeCare</span>
+            <span class="logo-region">Ontario</span>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html" class="nav-active">Services</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+        <button
+          class="hamburger"
+          id="hamburger"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <!-- Mobile drawer -->
+      <div class="mobile-drawer" id="mobile-drawer">
+        <nav class="mobile-nav">
+          <a href="browse.html">Browse Caregivers</a>
+          <a href="how-it-works.html">How It Works</a>
+          <a href="services.html">Services</a>
+        </nav>
+        <div class="mobile-nav-actions">
+          <a href="#" class="btn-signin">Sign In</a>
+          <a href="#" class="btn-find-caregiver">Find a Caregiver</a>
+        </div>
+      </div>
+    </header>
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- PAGE HERO -->
+    <section class="svc-hero">
+      <div class="svc-hero-inner">
+        <span class="svc-eyebrow reveal"
+          ><i class="fas fa-hand-holding-heart"></i> What We Offer</span
+        >
+        <h1 class="reveal reveal-d1">
+          Care Services Available<br /><span class="svc-hero-highlight"
+            >Across Ontario</span
+          >
+        </h1>
+        <p class="svc-hero-sub reveal reveal-d2">
+          Every service is delivered by admin-reviewed, VSC-cleared, and
+          credential-verified caregivers. Browse what's available or post a care
+          request to get matched within 48–72 hours.
+        </p>
+        <div class="svc-hero-meta reveal reveal-d3">
+          <span
+            ><i class="fas fa-check-circle"></i> 142 Verified Caregivers</span
+          >
+          <span
+            ><i class="fas fa-map-marker-alt"></i> 19 Cities in Ontario</span
+          >
+          <span><i class="fas fa-dollar-sign"></i> $0 Agency Fee</span>
+        </div>
+        <div class="svc-hero-cta reveal reveal-d4">
+          <a href="browse.html" class="btn-outline-white"
+            ><i class="fas fa-search"></i> Browse Caregivers</a
+          >
+          <a href="#" class="btn-find-caregiver svc-hero-btn"
+            >Post a Care Request</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES GRID -->
+    <section class="svc-grid-section" id="services">
+      <div class="svc-container">
+        <p class="section-label">Our Services</p>
+        <h2 class="section-title">Every Type of Care, One Platform</h2>
+        <p class="section-sub">
+          Whether you need daily personal support, specialised medical
+          assistance, or companionship for a loved one — our vetted caregivers
+          are here.
+        </p>
+
+        <div class="svc-grid stagger-children">
+          <!-- 1 – PSW -->
+          <div class="svc-card reveal hover-lift" id="psw">
+            <div
+              class="svc-card-img"
+              style="
+                background-image: url(&quot;assets/images/hero-image.png&quot;);
+              "
+            ></div>
+            <div class="svc-card-body">
+              <span class="svc-icon blue"
+                ><i class="fas fa-heartbeat"></i
+              ></span>
+              <h3>Personal Support Worker (PSW)</h3>
+              <p>
+                Certified PSWs provide hands-on daily care — bathing, grooming,
+                dressing, medication reminders, mobility support, and more for
+                seniors and adults who need consistent in-home assistance.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Personal hygiene &amp; grooming
+                </li>
+                <li><i class="fas fa-check"></i> Medication reminders</li>
+                <li>
+                  <i class="fas fa-check"></i> Mobility &amp; transfer
+                  assistance
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Meal preparation &amp; feeding
+                </li>
+                <li><i class="fas fa-check"></i> Bowel &amp; bladder care</li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$28 CAD/hr</strong></span>
+                <span class="tag teal">Most Popular</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a PSW <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 2 – Senior Care -->
+          <div class="svc-card reveal hover-lift" id="senior">
+            <div
+              class="svc-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-2.png&quot;);
+              "
+            ></div>
+            <div class="svc-card-body">
+              <span class="svc-icon yellow"
+                ><i class="fas fa-user-nurse"></i
+              ></span>
+              <h3>In-Home Senior Care</h3>
+              <p>
+                Compassionate, respectful care for aging parents and seniors
+                living independently. Our caregivers provide continuous
+                companionship, light housekeeping, and assistance with daily
+                routines.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Companionship &amp; social
+                  engagement
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Cognitive stimulation activities
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Light housekeeping &amp; laundry
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Grocery shopping &amp; errands
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Transportation to appointments
+                </li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$26 CAD/hr</strong></span>
+                <span class="tag yellow">Senior Care</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Senior Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 3 – Dementia & Alzheimer -->
+          <div class="svc-card reveal hover-lift" id="dementia">
+            <div
+              class="svc-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-3.jpg&quot;);
+              "
+            ></div>
+            <div class="svc-card-body">
+              <span class="svc-icon purple"><i class="fas fa-brain"></i></span>
+              <h3>Dementia &amp; Alzheimer Care</h3>
+              <p>
+                Specialist caregivers trained in dementia-specific
+                communication, safety protocols, and behaviour management —
+                providing stability and structure for clients and peace of mind
+                for families.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Dementia-friendly communication
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Wandering &amp; safety monitoring
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Routine-based daily structure
+                </li>
+                <li><i class="fas fa-check"></i> Sundowning management</li>
+                <li>
+                  <i class="fas fa-check"></i> Family update &amp; reporting
+                </li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$32 CAD/hr</strong></span>
+                <span class="tag" style="background: #f3e5f5; color: #6a1b9a"
+                  >Specialist</span
+                >
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Dementia Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 4 – Postpartum -->
+          <div class="svc-card reveal hover-lift" id="postpartum">
+            <div
+              class="svc-card-img"
+              style="
+                background-image: url(&quot;assets/images/image-4.jpg&quot;);
+              "
+            ></div>
+            <div class="svc-card-body">
+              <span class="svc-icon pink"><i class="fas fa-baby"></i></span>
+              <h3>Postpartum &amp; Newborn Care</h3>
+              <p>
+                Trained postpartum caregivers support new mothers during
+                recovery — assisting with infant care, feeding support, light
+                household tasks, and providing emotional reassurance in those
+                critical first weeks.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Newborn feeding &amp; latching
+                  support
+                </li>
+                <li><i class="fas fa-check"></i> Safe sleep guidance</li>
+                <li><i class="fas fa-check"></i> Overnight newborn care</li>
+                <li>
+                  <i class="fas fa-check"></i> Postpartum maternal support
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Light housekeeping &amp; meal
+                  prep
+                </li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$30 CAD/hr</strong></span>
+                <span class="tag pink">Postpartum</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Postpartum Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 5 – Palliative -->
+          <div class="svc-card reveal hover-lift" id="palliative">
+            <div
+              class="svc-card-img"
+              style="
+                background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 72px;
+              "
+            >
+              🕊️
+            </div>
+            <div class="svc-card-body">
+              <span class="svc-icon green"><i class="fas fa-heart"></i></span>
+              <h3>Palliative &amp; End-of-Life Care</h3>
+              <p>
+                Compassionate caregivers providing comfort-focused support for
+                clients in their final stages of life — ensuring dignity, pain
+                management awareness, and meaningful presence for the client and
+                their family.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Comfort &amp; dignity-focused
+                  care
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Pain &amp; symptom observation
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Emotional support for family
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Coordination with health teams
+                </li>
+                <li><i class="fas fa-check"></i> 24/7 shift availability</li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$34 CAD/hr</strong></span>
+                <span class="tag green">Palliative</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Palliative Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 6 – Post-Surgery -->
+          <div class="svc-card reveal hover-lift" id="post-surgery">
+            <div
+              class="svc-card-img"
+              style="
+                background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 72px;
+              "
+            >
+              🏥
+            </div>
+            <div class="svc-card-body">
+              <span class="svc-icon blue"
+                ><i class="fas fa-procedures"></i
+              ></span>
+              <h3>Post-Surgery Recovery Care</h3>
+              <p>
+                Short-term intensive support following hospital discharge. Our
+                caregivers assist with wound care reminders, physiotherapy
+                exercises, medication schedules, and mobility during recovery.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Wound care observation &amp;
+                  reminders
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Physiotherapy exercise support
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Medication schedule management
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Mobility &amp; fall prevention
+                </li>
+                <li><i class="fas fa-check"></i> Appointment transport</li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$30 CAD/hr</strong></span>
+                <span class="tag" style="background: #e3f2fd; color: #1565c0"
+                  >Recovery</span
+                >
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Recovery Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 7 – Companionship -->
+          <div class="svc-card reveal hover-lift" id="companion">
+            <div
+              class="svc-card-img"
+              style="
+                background: linear-gradient(135deg, #fff8e1, #ffecb3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 72px;
+              "
+            >
+              ☀️
+            </div>
+            <div class="svc-card-body">
+              <span class="svc-icon orange"><i class="fas fa-smile"></i></span>
+              <h3>Companionship &amp; Wellbeing</h3>
+              <p>
+                Friendly, vetted caregivers who provide regular social
+                interaction, light activity support, and emotional wellbeing for
+                seniors living alone — reducing isolation and improving quality
+                of life.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> Conversation &amp; social
+                  activities
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Games, reading &amp; hobbies
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Outdoor walks &amp; outings
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Light errands &amp; shopping
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Wellbeing check-ins &amp;
+                  reporting
+                </li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$24 CAD/hr</strong></span>
+                <span class="tag yellow">Companionship</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Companion Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+
+          <!-- 8 – Live-In -->
+          <div class="svc-card reveal hover-lift" id="live-in">
+            <div
+              class="svc-card-img"
+              style="
+                background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 72px;
+              "
+            >
+              🏡
+            </div>
+            <div class="svc-card-body">
+              <span class="svc-icon green"><i class="fas fa-home"></i></span>
+              <h3>Live-In Caregiver</h3>
+              <p>
+                Around-the-clock in-home care for clients who need continuous
+                support. Live-in caregivers stay in the home to provide
+                consistent, familiar, and responsive care throughout the day and
+                night.
+              </p>
+              <ul class="svc-list">
+                <li>
+                  <i class="fas fa-check"></i> 24-hour presence &amp; oversight
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Night-time care &amp; monitoring
+                </li>
+                <li>
+                  <i class="fas fa-check"></i> Full daily personal care routine
+                </li>
+                <li><i class="fas fa-check"></i> Household management</li>
+                <li>
+                  <i class="fas fa-check"></i> Consistent schedule &amp;
+                  familiarity
+                </li>
+              </ul>
+              <div class="svc-card-meta">
+                <span class="svc-rate">From <strong>$220 CAD/day</strong></span>
+                <span class="tag teal">Live-In</span>
+              </div>
+              <a href="browse.html" class="svc-btn"
+                >Find a Live-In Caregiver <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY SECTION -->
+    <section class="svc-why-section">
+      <div class="svc-container">
+        <p class="section-label">Why GetMeCare</p>
+        <h2 class="section-title">
+          Every Service Comes With Our<br />Full Compliance Guarantee
+        </h2>
+        <p class="section-sub">
+          We don't just connect you — we verify, mediate, and support every
+          engagement from first request to final shift.
+        </p>
+
+        <div class="svc-why-grid">
+          <div class="svc-why-item">
+            <span class="svc-why-icon"><i class="fas fa-shield-alt"></i></span>
+            <div>
+              <h4>VSC-Cleared Caregivers</h4>
+              <p>
+                Every caregiver presents a Vulnerable Sector Check issued within
+                12 months. We inspect originals — no exceptions.
+              </p>
+            </div>
+          </div>
+          <div class="svc-why-item">
+            <span class="svc-why-icon"><i class="fas fa-certificate"></i></span>
+            <div>
+              <h4>Credential Verified</h4>
+              <p>
+                PSW certificates, RPN training, and First Aid credentials are
+                confirmed by our admin team before any profile goes live.
+              </p>
+            </div>
+          </div>
+          <div class="svc-why-item">
+            <span class="svc-why-icon"
+              ><i class="fas fa-user-friends"></i
+            ></span>
+            <div>
+              <h4>Admin-Mediated Matching</h4>
+              <p>
+                No direct contact until our team has reviewed compatibility and
+                confirmed terms. You're never left on your own.
+              </p>
+            </div>
+          </div>
+          <div class="svc-why-item">
+            <span class="svc-why-icon"><i class="fas fa-clock"></i></span>
+            <div>
+              <h4>Live Shift Tracking</h4>
+              <p>
+                Clock-in and clock-out timestamps are logged the moment a
+                caregiver taps their dashboard. Families see every log in real
+                time.
+              </p>
+            </div>
+          </div>
+          <div class="svc-why-item">
+            <span class="svc-why-icon"><i class="fas fa-dollar-sign"></i></span>
+            <div>
+              <h4>$0 Agency Fee</h4>
+              <p>
+                You pay your caregiver directly at their hourly rate. No agency
+                markup, no inflated invoices. Just fair, transparent pricing.
+              </p>
+            </div>
+          </div>
+          <div class="svc-why-item">
+            <span class="svc-why-icon"><i class="fas fa-lock"></i></span>
+            <div>
+              <h4>Canadian Data Residency</h4>
+              <p>
+                All personal data is stored exclusively in Canada Central
+                (Montréal) — fully PIPEDA-aligned with no cross-border
+                transfers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <section class="cta-banner-wrap">
+      <div class="cta-banner">
+        <div class="cta-left">
+          <h2>Ready to Find the Right Caregiver?</h2>
+          <p>
+            Post a care request in minutes and our admin team will match you
+            with a verified caregiver within 48–72 hours. No agency fees, no
+            guesswork.
+          </p>
+        </div>
+        <div class="cta-btns">
+          <a href="browse.html" class="btn-cta-outline"
+            ><i class="fas fa-search"></i> Browse Caregivers</a
+          >
+          <a href="#" class="btn-cta-orange"
+            ><i class="fas fa-clipboard-list"></i> Post a Care Request</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="22" cy="22" r="22" fill="#1e3a35" />
+              <path
+                d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+                fill="#e5a550"
+                opacity="0.95"
+              />
+              <path
+                d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
+                fill="#4db6ac"
+              />
+              <path
+                d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+                fill="#00897b"
+              />
+            </svg>
+            <div>
+              <div class="footer-logo-text">GetMeCare</div>
+              <div class="footer-logo-sub">ONTARIO</div>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            Connecting Ontario families with trusted, pre-vetted independent
+            Personal Support Workers. Mediated, transparent, and safe.
+          </p>
+          <ul class="footer-trust-list">
+            <li>
+              <i class="fas fa-map-marker-alt"></i> Serving all Ontario
+              municipalities
+            </li>
+            <li>
+              <i class="fas fa-shield-alt"></i> Ontario-compliant data storage
+            </li>
+            <li><i class="fas fa-heart"></i> Admin-mediated every step</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>PLATFORM</h5>
+          <ul>
+            <li><a href="browse.html">Browse Caregivers</a></li>
+            <li><a href="how-it-works.html">How It Works</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="#">Open Jobs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR FAMILIES</h5>
+          <ul>
+            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>FOR CAREGIVERS</h5>
+          <ul>
+            <li><a href="#">Apply as a PSW</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2026 GetMeCare Ontario. All rights reserved. Data stored in
+          Canada Central (Montréal).
+        </p>
+        <div class="footer-bottom-links">
+          <a href="contact.html">Contact Us</a>
+          <a href="terms.html">Terms of Service</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        const btn = document.getElementById("hamburger"),
+          drawer = document.getElementById("mobile-drawer"),
+          overlay = document.getElementById("drawer-overlay");
+        function openM() {
+          btn.classList.add("is-open");
+          drawer.classList.add("is-open");
+          overlay.classList.add("is-open");
+          document.body.style.overflow = "hidden";
+        }
+        function closeM() {
+          btn.classList.remove("is-open");
+          drawer.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          document.body.style.overflow = "";
+        }
+        btn.addEventListener("click", () =>
+          btn.classList.contains("is-open") ? closeM() : openM(),
+        );
+        overlay.addEventListener("click", closeM);
+        drawer
+          .querySelectorAll("a")
+          .forEach((a) => a.addEventListener("click", closeM));
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 680) closeM();
+        });
+      })();
+    </script>
+  </body>
+</html>
