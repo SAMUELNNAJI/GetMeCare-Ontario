@@ -1681,7 +1681,7 @@ img {
    FOOTER
    ========================================================= */
 .footer {
-  background: #0d1f2d;
+  background: #0D1513;
   padding: 60px 0 0;
   color: rgba(255, 255, 255, 0.65);
 }
@@ -4360,26 +4360,16 @@ img {
   gap: 9px;
   text-align: center;
 }
-/* Lay the four items out in a 2x2 grid inside the card */
+/* Single-item contact info */
 .contact-info-card .contact-items-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
+  display: flex;
   border: 1px solid #f0f2f4;
   border-radius: 12px;
   overflow: hidden;
 }
 .contact-info-card .contact-items-grid .contact-info-item {
-  border-right: 1px solid #f0f2f4;
-  border-bottom: 1px solid #f0f2f4;
-}
-.contact-info-card .contact-items-grid .contact-info-item:nth-child(2),
-.contact-info-card .contact-items-grid .contact-info-item:nth-child(4) {
-  border-right: none;
-}
-.contact-info-card .contact-items-grid .contact-info-item:nth-child(3),
-.contact-info-card .contact-items-grid .contact-info-item:nth-child(4) {
-  border-bottom: none;
+  border: none;
+  padding: 16px;
 }
   color: var(--teal);
   font-size: 15px;
