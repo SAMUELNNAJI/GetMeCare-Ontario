@@ -185,10 +185,93 @@ def review_documents(request):
 
 @admin_required
 def manage_shifts(request):
-    shifts = Shift.objects.select_related('caregiver', 'employer').order_by('-created_at')
+    from Account.models import BookingProposal
+    shifts_qs = Shift.objects.select_related('caregiver', 'employer').order_by('-created_at')
+    # Annotate each shift with whether it came from a negotiation
+    booked_shift_ids = set(
+        BookingProposal.objects.filter(
+            status=BookingProposal.STATUS_BOOKED,
+            shift__isnull=False,
+        ).values_list('shift_id', flat=True)
+    )
+    shifts = []
+    for s in shifts_qs:
+        s.from_negotiation = s.pk in booked_shift_ids
+        shifts.append(s)
+
+    pending_payout_count = ShiftLog.objects.filter(
+        shift__status=Shift.STATUS_COMPLETED,
+        payment_status=ShiftLog.PAY_PENDING,
+        clock_out_time__isnull=False,
+    ).count()
+
     ctx = _admin_sidebar()
     ctx['shifts'] = shifts
+    ctx['pending_payout_count'] = pending_payout_count
     return render(request, 'AdminApp/manage-shifts.html', ctx)
+
+
+@admin_required
+def payout_queue(request):
+    """Admin payout queue — completed shifts awaiting or already paid."""
+    from decimal import Decimal as D
+    tab = request.GET.get('tab', 'pending')
+
+    pending_logs = list(
+        ShiftLog.objects.filter(
+            shift__status=Shift.STATUS_COMPLETED,
+            payment_status=ShiftLog.PAY_PENDING,
+            clock_out_time__isnull=False,
+            amount_earned__isnull=False,
+        ).select_related(
+            'shift', 'shift__caregiver', 'shift__employer',
+            'shift__caregiver__caregiver_profile',
+        ).order_by('-clock_out_time')
+    )
+    paid_logs = list(
+        ShiftLog.objects.filter(
+            shift__status=Shift.STATUS_COMPLETED,
+            payment_status=ShiftLog.PAY_PAID,
+            clock_out_time__isnull=False,
+        ).select_related(
+            'shift', 'shift__caregiver', 'shift__employer',
+            'shift__caregiver__caregiver_profile',
+        ).order_by('-clock_out_time')
+    )
+
+    total_pending = sum(l.amount_earned or D('0') for l in pending_logs)
+    total_paid    = sum(l.amount_earned or D('0') for l in paid_logs)
+
+    display_logs = paid_logs if tab == 'paid' else pending_logs
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'tab':           tab,
+        'display_logs':  display_logs,
+        'pending_logs':  pending_logs,
+        'paid_logs':     paid_logs,
+        'pending_count': len(pending_logs),
+        'paid_count':    len(paid_logs),
+        'total_pending': total_pending,
+        'total_paid':    total_paid,
+    })
+    return render(request, 'AdminApp/payout-queue.html', ctx)
+
+
+@admin_required
+def mark_paid(request, log_pk):
+    """Admin marks a ShiftLog payment as paid."""
+    if request.method != 'POST':
+        return redirect('AdminApp:payout_queue')
+    log = get_object_or_404(ShiftLog, pk=log_pk)
+    log.payment_status = ShiftLog.PAY_PAID
+    log.save(update_fields=['payment_status'])
+    messages.success(
+        request,
+        f'Payout for {log.shift.caregiver.get_full_name()} '
+        f'(${log.amount_earned}) marked as paid.'
+    )
+    return redirect('AdminApp:payout_queue')
 
 
 # ──────────────────────────────────────────────────────────────

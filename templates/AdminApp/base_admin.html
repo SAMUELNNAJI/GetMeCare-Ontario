@@ -241,6 +241,9 @@
     <a href="{% url 'AdminApp:manage_shifts' %}" {% if request.resolver_match.url_name == 'manage_shifts' %}class="active"{% endif %}>
       <i class="fas fa-calendar-alt"></i> Shifts
     </a>
+    <a href="{% url 'AdminApp:payout_queue' %}" {% if request.resolver_match.url_name == 'payout_queue' %}class="active"{% endif %}>
+      <i class="fas fa-money-bill-wave"></i> Payout Queue
+    </a>
     <a href="{% url 'AdminApp:manage_users' %}" {% if request.resolver_match.url_name == 'manage_users' %}class="active"{% endif %}>
       <i class="fas fa-users"></i> All Users
     </a>

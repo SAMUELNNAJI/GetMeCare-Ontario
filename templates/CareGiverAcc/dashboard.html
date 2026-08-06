@@ -583,12 +583,10 @@ GetMeCare{% endblock %} {% block extra_head %}
   <div>
     <!-- Shift tracker -->
     <div class="tracker-card">
-      <div class="tracker-label">Shift Tracker</div>
-      <div class="tracker-time" id="cg-timer">00:00:00</div>
-      <div class="tracker-status">No active shift · next starts in 14h</div>
-      <a href="{% url 'Account:clock_in' %}" class="tracker-btn">
-        <i class="fas fa-play"></i> Start shift
-      </a>
+      <div class="tracker-label" id="tracker-label">Shift Tracker</div>
+      <div class="tracker-time" id="cg-timer">--:--:--</div>
+      <div class="tracker-status" id="tracker-status">Loading...</div>
+      <div id="tracker-actions"></div>
     </div>
     <!-- Earnings chart -->
     <div class="chart-card">
@@ -705,6 +703,161 @@ GetMeCare{% endblock %} {% block extra_head %}
   </div>
 </div>
 <!-- end dash-bottom -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  /* ═══════════════════════════════════════════════════
+     SHIFT TIMER
+     States:
+       none        — no scheduled/active shift
+       countdown   — shift scheduled, time hasn't started yet
+       ready       — shift start time reached, waiting for clock-in
+       active      — clocked in, counting up elapsed time
+       completed   — clocked out
+  ═══════════════════════════════════════════════════ */
+  (function () {
+    // Data injected from Django template
+    const SHIFT_STATE   = "{{ tracker_state }}";            // none|countdown|ready|active|completed
+    const SHIFT_PK      = {{ tracker_shift_pk|default:"0" }};
+    const SHIFT_START_ISO  = "{{ tracker_start_iso }}";     // ISO datetime of shift start
+    const CLOCK_IN_ISO     = "{{ tracker_clock_in_iso }}";  // ISO datetime of clock-in (if active)
+    const CSRF = "{{ csrf_token }}";
+
+    const timerEl   = document.getElementById('cg-timer');
+    const labelEl   = document.getElementById('tracker-label');
+    const statusEl  = document.getElementById('tracker-status');
+    const actionsEl = document.getElementById('tracker-actions');
+
+    function pad(n) { return String(Math.floor(n)).padStart(2, '0'); }
+
+    function fmtDuration(totalSecs) {
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = Math.floor(totalSecs % 60);
+      return pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+
+    function fmtCountdown(totalSecs) {
+      if (totalSecs < 0) totalSecs = 0;
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = Math.floor(totalSecs % 60);
+      if (h > 0) return pad(h) + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+      if (m > 0) return pad(m) + 'm ' + pad(s) + 's';
+      return pad(s) + 's';
+    }
+
+    function clockInBtn() {
+      return `<form method="post" action="/clock-in/" style="display:inline">
+        <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+        <input type="hidden" name="shift_id" value="${SHIFT_PK}">
+        <button type="submit" class="tracker-btn">
+          <i class="fas fa-play"></i> Clock In
+        </button>
+      </form>`;
+    }
+
+    function clockOutBtn() {
+      return `<form method="post" action="/clock-out/" style="display:inline"
+                onsubmit="return confirm('Clock out and end this shift?')">
+        <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
+        <button type="submit" class="tracker-btn" style="background:rgba(224,82,82,.3);border-color:rgba(224,82,82,.5)">
+          <i class="fas fa-stop"></i> Clock Out
+        </button>
+      </form>`;
+    }
+
+    let interval = null;
+
+    function startInterval(fn, ms) {
+      if (interval) clearInterval(interval);
+      interval = setInterval(fn, ms);
+    }
+
+    // ── STATE: none ──────────────────────────────────
+    if (SHIFT_STATE === 'none') {
+      labelEl.textContent   = 'Shift Tracker';
+      timerEl.textContent   = '--:--:--';
+      timerEl.style.opacity = '0.4';
+      statusEl.textContent  = 'No upcoming shifts scheduled';
+      actionsEl.innerHTML   = `<a href="/chatbot/messages/" class="tracker-btn">
+        <i class="fas fa-comments"></i> Chat with an Employer
+      </a>`;
+    }
+
+    // ── STATE: countdown ─────────────────────────────
+    else if (SHIFT_STATE === 'countdown') {
+      const startMs = new Date(SHIFT_START_ISO).getTime();
+
+      function tickCountdown() {
+        const remaining = Math.max(0, (startMs - Date.now()) / 1000);
+        if (remaining <= 0) {
+          // Transition to ready
+          clearInterval(interval);
+          initReady();
+          return;
+        }
+        labelEl.textContent   = 'Shift Starts In';
+        timerEl.textContent   = fmtCountdown(remaining);
+        timerEl.style.opacity = '1';
+        statusEl.textContent  = 'Shift #' + SHIFT_PK + ' — clock in when ready';
+      }
+
+      function initReady() {
+        labelEl.textContent   = 'Ready to Clock In';
+        timerEl.textContent   = '00:00:00';
+        timerEl.style.color   = '#f0a040';
+        statusEl.textContent  = 'Shift start time reached — clock in to begin tracking';
+        actionsEl.innerHTML   = clockInBtn();
+      }
+
+      tickCountdown();
+      startInterval(tickCountdown, 1000);
+      actionsEl.innerHTML = clockInBtn();
+    }
+
+    // ── STATE: ready ─────────────────────────────────
+    else if (SHIFT_STATE === 'ready') {
+      labelEl.textContent  = 'Ready to Clock In';
+      timerEl.textContent  = '00:00:00';
+      timerEl.style.color  = '#f0a040';
+      statusEl.textContent = 'Shift #' + SHIFT_PK + ' — clock in to start tracking';
+      actionsEl.innerHTML  = clockInBtn();
+    }
+
+    // ── STATE: active ─────────────────────────────────
+    else if (SHIFT_STATE === 'active') {
+      const clockInMs = new Date(CLOCK_IN_ISO).getTime();
+
+      function tickActive() {
+        const elapsed = Math.max(0, (Date.now() - clockInMs) / 1000);
+        labelEl.textContent   = 'Shift In Progress';
+        timerEl.textContent   = fmtDuration(elapsed);
+        timerEl.style.color   = '#4caf7d';
+        timerEl.style.opacity = '1';
+        const hrs = (elapsed / 3600).toFixed(2);
+        statusEl.textContent  = 'Shift #' + SHIFT_PK + ' — ' + hrs + ' hrs worked so far';
+      }
+
+      tickActive();
+      startInterval(tickActive, 1000);
+      actionsEl.innerHTML = clockOutBtn();
+    }
+
+    // ── STATE: completed ─────────────────────────────
+    else if (SHIFT_STATE === 'completed') {
+      labelEl.textContent   = 'Shift Completed';
+      timerEl.textContent   = '✓';
+      timerEl.style.fontSize = '2rem';
+      timerEl.style.color   = '#4caf7d';
+      statusEl.textContent  = 'Great work! Earnings will be settled by admin.';
+      actionsEl.innerHTML   = `<a href="/caregiver-acc/earnings/" class="tracker-btn">
+        <i class="fas fa-receipt"></i> View Earnings
+      </a>`;
+    }
+
+  })();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>

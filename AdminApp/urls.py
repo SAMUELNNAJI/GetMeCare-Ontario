@@ -15,4 +15,7 @@ urlpatterns = [
     path('admin-panel/documents/<int:doc_id>/view/',          views.serve_document,     name='serve_document'),
     path('admin-panel/caregivers/<int:profile_id>/activate/', views.activate_caregiver, name='activate_caregiver'),
     path('admin-panel/shifts/',                               views.manage_shifts,      name='manage_shifts'),
+    # Payout queue
+    path('admin-panel/payouts/',                              views.payout_queue,       name='payout_queue'),
+    path('admin-panel/payouts/<int:log_pk>/mark-paid/',       views.mark_paid,          name='mark_paid'),
 ]

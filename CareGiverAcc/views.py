@@ -51,7 +51,7 @@ def _sidebar_context(user):
 @caregiver_required
 def dashboard(request):
     import json
-    from datetime import timedelta
+    from datetime import timedelta, datetime as dt
 
     user  = request.user
     today = timezone.now().date()
@@ -81,7 +81,6 @@ def dashboard(request):
     )
 
     # ── Weekly earnings chart data ──────────────────────────────
-    # Find Monday of the current week
     monday = today - timedelta(days=today.weekday())
     week_days = [monday + timedelta(days=i) for i in range(7)]
     day_labels = [d.strftime('%a').upper() for d in week_days]
@@ -92,7 +91,6 @@ def dashboard(request):
         clock_out_time__date__lte=monday + timedelta(days=6),
     ).select_related('shift')
 
-    # Build a dict: date -> total earned that day
     day_totals = {d: Decimal('0.00') for d in week_days}
     for log in week_logs:
         if log.clock_out_time and log.amount_earned:
@@ -104,7 +102,6 @@ def dashboard(request):
     weekly_total  = sum(weekly_data)
     weekly_labels = day_labels
 
-    # Compare to previous week for % change badge
     prev_monday = monday - timedelta(days=7)
     prev_logs = ShiftLog.objects.filter(
         shift__caregiver=user,
@@ -122,6 +119,52 @@ def dashboard(request):
     hour = now.hour
     greeting = 'Good morning' if hour < 12 else ('Good afternoon' if hour < 17 else 'Good evening')
 
+    # ── Shift tracker state ──────────────────────────────────────
+    # Priority 1: active (clocked in)
+    active_log = ShiftLog.objects.filter(
+        shift__caregiver=user,
+        shift__status=Shift.STATUS_IN_PROGRESS,
+        clock_in_time__isnull=False,
+        clock_out_time__isnull=True,
+    ).select_related('shift').first()
+
+    # Priority 2: just completed (most recent completed today)
+    recently_completed = ShiftLog.objects.filter(
+        shift__caregiver=user,
+        shift__status=Shift.STATUS_COMPLETED,
+        clock_out_time__date=today,
+    ).order_by('-clock_out_time').first()
+
+    # Priority 3: next scheduled shift
+    next_shift = Shift.objects.filter(
+        caregiver=user,
+        status=Shift.STATUS_SCHEDULED,
+        start_date__gte=today,
+    ).order_by('start_date', 'start_time').first()
+
+    tracker_state      = 'none'
+    tracker_shift_pk   = 0
+    tracker_start_iso  = ''
+    tracker_clock_in_iso = ''
+
+    if active_log:
+        tracker_state        = 'active'
+        tracker_shift_pk     = active_log.shift.pk
+        tracker_clock_in_iso = active_log.clock_in_time.isoformat()
+    elif recently_completed and not active_log and not next_shift:
+        tracker_state      = 'completed'
+        tracker_shift_pk   = recently_completed.shift.pk
+    elif next_shift:
+        # Combine shift date + start_time to get naive datetime, then make aware
+        naive_start = dt.combine(next_shift.start_date, next_shift.start_time)
+        aware_start = timezone.make_aware(naive_start) if timezone.is_naive(naive_start) else naive_start
+        tracker_shift_pk  = next_shift.pk
+        tracker_start_iso = aware_start.isoformat()
+        if now >= aware_start:
+            tracker_state = 'ready'       # start time passed, not clocked in yet
+        else:
+            tracker_state = 'countdown'   # counting down to start
+
     ctx.update({
         'upcoming':          upcoming,
         'history':           history,
@@ -133,6 +176,11 @@ def dashboard(request):
         'weekly_total':      f"{weekly_total:,.2f}",
         'week_change_pct':   week_change_pct,
         'latest_jobs':       JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).order_by('-created_at')[:3],
+        # Tracker
+        'tracker_state':       tracker_state,
+        'tracker_shift_pk':    tracker_shift_pk,
+        'tracker_start_iso':   tracker_start_iso,
+        'tracker_clock_in_iso': tracker_clock_in_iso,
     })
     return render(request, 'CareGiverAcc/dashboard.html', ctx)
 

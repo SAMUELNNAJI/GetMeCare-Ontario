@@ -30,10 +30,9 @@
     margin-left:auto;
     background:linear-gradient(135deg,#1b3a2d,#1b7d4f);
     color:#fff; border-radius:10px;
-    padding:8px 14px; text-align:center;
-    flex-shrink:0;
+    padding:8px 14px; text-align:center; flex-shrink:0;
   }
-  .pq-amount-badge .amt { font-size:1.25rem; font-weight:800; line-height:1; }
+  .pq-amount-badge .amt     { font-size:1.25rem; font-weight:800; line-height:1; }
   .pq-amount-badge .amt-sub { font-size:.65rem; opacity:.8; margin-top:2px; }
 
   .pq-body { display:grid; grid-template-columns:1fr 1fr; gap:0; }
@@ -56,12 +55,9 @@
 
   .pq-bank-row {
     background:#f6f8f5; border-radius:8px; padding:10px 12px;
-    margin-top:8px; font-size:.8rem; color:#333;
+    margin-bottom:6px; font-size:.8rem; color:#333;
   }
-  .pq-bank-row .bk-label {
-    font-size:.66rem; font-weight:700; color:#aaa;
-    text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px;
-  }
+  .bk-label { font-size:.66rem; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
   .pq-bank-val { font-weight:600; color:#1a1a1a; word-break:break-all; }
 
   .pq-footer {
@@ -71,38 +67,29 @@
     gap:12px; flex-wrap:wrap;
   }
   .pq-shift-ref { font-size:.75rem; color:#aaa; }
-
   .pq-mark-paid-btn {
     display:inline-flex; align-items:center; gap:6px;
     padding:8px 18px;
     background:#1b7d4f; color:#fff;
     border:none; border-radius:9px;
     font-size:.84rem; font-weight:700;
-    cursor:pointer; font-family:inherit;
-    transition:background .15s;
+    cursor:pointer; font-family:inherit; transition:background .15s;
   }
   .pq-mark-paid-btn:hover { background:#145e3a; }
-
-  .pq-paid-label {
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:.84rem; font-weight:700; color:#1b7d4f;
-  }
+  .pq-paid-label { display:inline-flex; align-items:center; gap:6px; font-size:.84rem; font-weight:700; color:#1b7d4f; }
 
   .pq-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
   .pq-tab {
     padding:7px 16px; border-radius:20px;
     font-size:.8rem; font-weight:600;
     cursor:pointer; text-decoration:none;
-    border:1.5px solid transparent;
-    transition:all .15s;
+    border:1.5px solid transparent; transition:all .15s;
   }
   .pq-tab.active { background:#1b7d4f; color:#fff; border-color:#1b7d4f; }
   .pq-tab:not(.active) { background:#f6f8f5; color:#555; border-color:#dde2d8; }
   .pq-tab:not(.active):hover { border-color:#1b7d4f; color:#1b7d4f; }
 
-  .pq-summary-strip {
-    display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;
-  }
+  .pq-summary-strip { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
   .pq-stat {
     background:#fff; border-radius:12px; padding:14px 18px;
     box-shadow:0 1px 4px rgba(0,0,0,.06); flex:1; min-width:120px;
@@ -121,7 +108,7 @@
 <!-- Stats strip -->
 <div class="pq-summary-strip">
   <div class="pq-stat">
-    <div class="sv">{{ pending_logs|length }}</div>
+    <div class="sv">{{ pending_count }}</div>
     <div class="sl">Awaiting Payout</div>
   </div>
   <div class="pq-stat">
@@ -129,7 +116,7 @@
     <div class="sl">Total Pending (CAD)</div>
   </div>
   <div class="pq-stat">
-    <div class="sv">{{ paid_logs|length }}</div>
+    <div class="sv">{{ paid_count }}</div>
     <div class="sl">Paid Out</div>
   </div>
   <div class="pq-stat">
@@ -140,23 +127,19 @@
 
 <!-- Tab filters -->
 <div class="pq-tabs">
-  <a href="?tab=pending"
-     class="pq-tab {% if tab == 'pending' or not tab %}active{% endif %}">
-    Pending <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ pending_logs|length }}</span>
+  <a href="?tab=pending" class="pq-tab {% if tab != 'paid' %}active{% endif %}">
+    Pending
+    <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ pending_count }}</span>
   </a>
   <a href="?tab=paid" class="pq-tab {% if tab == 'paid' %}active{% endif %}">
-    Paid Out <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ paid_logs|length }}</span>
+    Paid Out
+    <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ paid_count }}</span>
   </a>
 </div>
 
-{% if tab == 'paid' %}
-  {% with display_logs=paid_logs %}
-  {% for log in display_logs %}
-{% else %}
-  {% with display_logs=pending_logs %}
-  {% for log in display_logs %}
-{% endif %}
+{% for log in display_logs %}
 <div class="pq-card">
+
   <!-- Header -->
   <div class="pq-card-head">
     <div class="pq-av">
@@ -171,7 +154,7 @@
     <div>
       <p class="pq-cg-name">{{ log.shift.caregiver.get_full_name }}</p>
       <p class="pq-cg-sub">
-        ID #{{ log.shift.caregiver.pk }} &bull; {{ log.shift.caregiver.email }}
+        User ID #{{ log.shift.caregiver.pk }} &bull; {{ log.shift.caregiver.email }}
       </p>
     </div>
     <div class="pq-amount-badge">
@@ -180,38 +163,22 @@
     </div>
   </div>
 
-  <!-- Body: shift info + bank details -->
+  <!-- Body -->
   <div class="pq-body">
     <!-- Shift info -->
     <div class="pq-section">
       <div class="pq-section-title"><i class="fas fa-calendar-alt"></i> Shift Info</div>
-      <div class="pq-row">
-        <span>Shift #</span><strong>#{{ log.shift.pk }}</strong>
-      </div>
-      <div class="pq-row">
-        <span>Date</span><strong>{{ log.shift.start_date|date:"M d, Y" }}</strong>
-      </div>
+      <div class="pq-row"><span>Shift #</span><strong>#{{ log.shift.pk }}</strong></div>
+      <div class="pq-row"><span>Date</span><strong>{{ log.shift.start_date|date:"M d, Y" }}</strong></div>
       <div class="pq-row">
         <span>Time</span>
         <strong>{{ log.shift.start_time|time:"g:i A" }} – {{ log.shift.end_time|time:"g:i A" }}</strong>
       </div>
-      <div class="pq-row">
-        <span>Hours Worked</span><strong>{{ log.hours_worked }} hrs</strong>
-      </div>
-      <div class="pq-row">
-        <span>Hourly Rate</span><strong>${{ log.shift.hourly_rate }}/hr</strong>
-      </div>
-      <div class="pq-row">
-        <span>Employer</span><strong>{{ log.shift.employer.get_full_name }}</strong>
-      </div>
-      <div class="pq-row">
-        <span>Clocked In</span>
-        <strong>{{ log.clock_in_time|date:"M d, g:i A" }}</strong>
-      </div>
-      <div class="pq-row">
-        <span>Clocked Out</span>
-        <strong>{{ log.clock_out_time|date:"M d, g:i A" }}</strong>
-      </div>
+      <div class="pq-row"><span>Hours Worked</span><strong>{{ log.hours_worked }} hrs</strong></div>
+      <div class="pq-row"><span>Hourly Rate</span><strong>${{ log.shift.hourly_rate }}/hr</strong></div>
+      <div class="pq-row"><span>Employer</span><strong>{{ log.shift.employer.get_full_name }}</strong></div>
+      <div class="pq-row"><span>Clocked In</span><strong>{{ log.clock_in_time|date:"M d, g:i A" }}</strong></div>
+      <div class="pq-row"><span>Clocked Out</span><strong>{{ log.clock_out_time|date:"M d, g:i A" }}</strong></div>
     </div>
 
     <!-- Bank details -->
@@ -249,18 +216,18 @@
     </div>
   </div>
 
-  <!-- Footer: action -->
+  <!-- Footer -->
   <div class="pq-footer">
     <span class="pq-shift-ref">
       Shift #{{ log.shift.pk }} &bull;
-      Employer paid: ${{ log.shift.hourly_rate|floatformat:2 }}/hr &bull;
-      Caregiver receives 85%: <strong style="color:#1b3a2d">${{ log.amount_earned|floatformat:2 }}</strong>
+      Rate: ${{ log.shift.hourly_rate }}/hr &bull;
+      Caregiver's 85%: <strong style="color:#1b3a2d">${{ log.amount_earned|floatformat:2 }}</strong>
     </span>
     {% if log.payment_status == 'pending' %}
-    <form method="post" action="{% url 'AdminApp:mark_paid' log.pk %}"
-          onsubmit="return confirm('Mark this payout as paid for {{ log.shift.caregiver.get_full_name }}?')">
+    <form method="post" action="{% url 'AdminApp:mark_paid' log.pk %}">
       {% csrf_token %}
-      <button type="submit" class="pq-mark-paid-btn">
+      <button type="submit" class="pq-mark-paid-btn"
+              onclick="return confirm('Mark payout as paid for {{ log.shift.caregiver.get_full_name }}?')">
         <i class="fas fa-check"></i> Mark as Paid
       </button>
     </form>
@@ -268,15 +235,17 @@
     <span class="pq-paid-label"><i class="fas fa-check-circle"></i> Paid Out</span>
     {% endif %}
   </div>
+
 </div>
 {% empty %}
 <div class="adm-card">
   <div class="adm-card-pad">
     <div class="adm-empty">
       <i class="fas fa-inbox"></i>
-      No {% if tab == 'paid' %}paid{% else %}pending{% endif %} payouts at this time.
+      No {% if tab == 'paid' %}completed{% else %}pending{% endif %} payouts at this time.
     </div>
   </div>
 </div>
 {% endfor %}
+
 {% endblock %}
