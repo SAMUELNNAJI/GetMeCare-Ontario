@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.conf import settings
 from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation
-from Account.models import CaregiverProfile
+from Account.models import CaregiverProfile, BookingProposal
 import json
 import re
 import requests
@@ -534,12 +534,29 @@ def chat_room(request, conv_id):
         sender=request.user
     ).update(is_read=True)
 
-    messages = conv.direct_messages.select_related('sender').all()
+    messages_qs = list(conv.direct_messages.select_related('sender').all())
+    proposals_qs = list(
+        BookingProposal.objects.filter(
+            conversation_id=conv_id,
+        ).filter(
+            Q(caregiver=request.user) | Q(employer=request.user)
+        ).order_by('created_at')
+    )
     other = conv.other_participant(request.user)
+
+    # Interleave messages and proposals by created_at
+    chat_items = []
+    for m in messages_qs:
+        chat_items.append({'type': 'message', 'obj': m, 'ts': m.created_at})
+    for p in proposals_qs:
+        chat_items.append({'type': 'proposal', 'obj': p, 'ts': p.created_at})
+    chat_items.sort(key=lambda x: x['ts'])
 
     return render(request, 'chat/chat-room.html', {
         'conv': conv,
-        'messages': messages,
+        'messages': messages_qs,
+        'proposals': proposals_qs,
+        'chat_items': chat_items,
         'other': other,
         'base_template': _chat_base(request.user),
     })
@@ -558,7 +575,7 @@ def chat_start(request, user_id):
 @login_required
 @require_POST
 def chat_send(request, conv_id):
-    """HTMX endpoint — POST a message, return the new message bubble HTML."""
+    """POST a message — returns the new message bubble HTML."""
     conv = get_object_or_404(
         DirectConversation,
         Q(participant_1=request.user) | Q(participant_2=request.user),
@@ -568,12 +585,22 @@ def chat_send(request, conv_id):
     if not body:
         return HttpResponse('')
 
+    # ── Server-side duplicate guard ───────────────────────────
+    # Reject if the same sender sent the identical body in the last 3 seconds
+    from django.utils import timezone as tz
+    cutoff = tz.now() - timezone.timedelta(seconds=3)
+    if conv.direct_messages.filter(
+        sender=request.user,
+        body=body,
+        created_at__gte=cutoff,
+    ).exists():
+        return HttpResponse('')   # silently drop — client already showed the bubble
+
     msg = DirectMessage.objects.create(
         conversation=conv,
         sender=request.user,
         body=body,
     )
-    # bump updated_at so the list re-sorts
     DirectConversation.objects.filter(pk=conv.pk).update(updated_at=timezone.now())
 
     return render(request, 'chat/partials/message_bubble.html', {
@@ -638,3 +665,109 @@ def admin_chat_monitor(request):
         'selected_conv': selected_conv,
         'messages': messages,
     })
+
+
+# ─────────────────────────────────────────────────────────────
+# Booking Proposal views (caregiver → employer)
+# ─────────────────────────────────────────────────────────────
+from django.template.loader import render_to_string
+
+
+@login_required
+@require_POST
+def send_proposal(request, conv_id):
+    """Caregiver sends a price proposal inside a chat thread."""
+    if request.user.role != 'caregiver':
+        return JsonResponse({'error': 'Only caregivers can send proposals.'}, status=403)
+
+    conv = get_object_or_404(
+        DirectConversation,
+        Q(participant_1=request.user) | Q(participant_2=request.user),
+        pk=conv_id,
+    )
+    employer = conv.other_participant(request.user)
+    if employer.role != 'employer':
+        return JsonResponse({'error': 'The other participant is not an employer.'}, status=400)
+
+    try:
+        rate = request.POST.get('rate', '').strip()
+        from decimal import Decimal, InvalidOperation
+        rate = Decimal(rate)
+        if rate <= 0:
+            raise ValueError
+    except (InvalidOperation, ValueError):
+        return JsonResponse({'error': 'Invalid rate.'}, status=400)
+
+    message = request.POST.get('message', '').strip()[:255]
+
+    # Expire any existing pending proposals in this conversation
+    BookingProposal.objects.filter(
+        conversation_id=conv_id,
+        caregiver=request.user,
+        employer=employer,
+        status=BookingProposal.STATUS_PENDING,
+    ).update(status=BookingProposal.STATUS_EXPIRED)
+
+    proposal = BookingProposal.objects.create(
+        conversation_id=conv_id,
+        caregiver=request.user,
+        employer=employer,
+        negotiated_rate=rate,
+        message=message,
+        status=BookingProposal.STATUS_PENDING,
+    )
+
+    html = render_to_string(
+        'chat/partials/proposal_card.html',
+        {'proposal': proposal, 'me': request.user},
+        request=request,
+    )
+    return JsonResponse({'html': html, 'proposal_pk': proposal.pk})
+
+
+@login_required
+def poll_proposals(request, conv_id):
+    """Return updated/new proposal cards after a given pk for HTMX polling."""
+    conv = get_object_or_404(
+        DirectConversation,
+        Q(participant_1=request.user) | Q(participant_2=request.user),
+        pk=conv_id,
+    )
+    after_pk = request.GET.get('after', 0)
+    try:
+        after_pk = int(after_pk)
+    except (ValueError, TypeError):
+        after_pk = 0
+
+    proposals = BookingProposal.objects.filter(
+        conversation_id=conv_id,
+        pk__gt=after_pk,
+    ).filter(
+        Q(caregiver=request.user) | Q(employer=request.user)
+    ).order_by('pk')
+
+    html_parts = []
+    for p in proposals:
+        html_parts.append(
+            render_to_string(
+                'chat/partials/proposal_card.html',
+                {'proposal': p, 'me': request.user},
+                request=request,
+            )
+        )
+    return HttpResponse(''.join(html_parts))
+
+
+@login_required
+@require_POST
+def decline_proposal(request, proposal_pk):
+    """Employer declines a proposal."""
+    proposal = get_object_or_404(
+        BookingProposal,
+        pk=proposal_pk,
+        employer=request.user,
+        status=BookingProposal.STATUS_PENDING,
+    )
+    proposal.status = BookingProposal.STATUS_DECLINED
+    proposal.save(update_fields=['status', 'updated_at'])
+    return redirect('chat_room', conv_id=proposal.conversation_id)

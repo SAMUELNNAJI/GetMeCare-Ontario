@@ -3,8 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 import datetime
+from decimal import Decimal
 
-from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting
+from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal
 from Account.forms import JobPostingForm
 
 
@@ -180,3 +181,157 @@ def pay_later(request):
     """Dismiss the activation modal and set a session flag."""
     request.session['modal_dismissed'] = True
     return redirect('EmployerApp:dashboard')
+
+
+# ──────────────────────────────────────────────────────────────
+# Caregiver Booking (from negotiation proposal)
+# ──────────────────────────────────────────────────────────────
+
+@employer_required
+def book_caregiver(request, proposal_pk):
+    """Employer fills in date/time and confirms the booking from a price proposal."""
+    from Account.models import BookingProposal
+    proposal = get_object_or_404(
+        BookingProposal,
+        pk=proposal_pk,
+        employer=request.user,
+        status__in=[BookingProposal.STATUS_PENDING, BookingProposal.STATUS_ACCEPTED],
+    )
+    today = timezone.now().date()
+    ctx = _employer_ctx(request.user)
+    ctx['proposal'] = proposal
+    ctx['today'] = today
+
+    if request.method == 'POST':
+        start_date_str = request.POST.get('start_date', '').strip()
+        start_time_str = request.POST.get('start_time', '').strip()
+        end_time_str   = request.POST.get('end_time', '').strip()
+        city           = request.POST.get('city', '').strip()
+
+        errors = []
+        if not start_date_str:
+            errors.append('Shift date is required.')
+        if not start_time_str:
+            errors.append('Start time is required.')
+        if not end_time_str:
+            errors.append('End time is required.')
+        if not city:
+            errors.append('City / location is required.')
+
+        if not errors:
+            try:
+                start_date = datetime.date.fromisoformat(start_date_str)
+                start_time = datetime.time.fromisoformat(start_time_str)
+                end_time   = datetime.time.fromisoformat(end_time_str)
+            except ValueError:
+                errors.append('Invalid date or time format.')
+
+        if not errors:
+            if start_date < today:
+                errors.append('Shift date cannot be in the past.')
+            if end_time <= start_time:
+                errors.append('End time must be after start time.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            # Keep form values
+            ctx['form'] = {
+                'start_date': {'value': lambda: start_date_str},
+                'start_time': {'value': lambda: start_time_str},
+                'end_time':   {'value': lambda: end_time_str},
+                'city':       {'value': lambda: city},
+            }
+            return render(request, 'EmployerApp/book-caregiver.html', ctx)
+
+        # Mark proposal accepted and create the Shift
+        proposal.status = BookingProposal.STATUS_ACCEPTED
+        proposal.save(update_fields=['status', 'updated_at'])
+
+        shift = Shift.objects.create(
+            caregiver   = proposal.caregiver,
+            employer    = request.user,
+            city        = city,
+            start_date  = start_date,
+            start_time  = start_time,
+            end_time    = end_time,
+            hourly_rate = proposal.negotiated_rate,
+            status      = Shift.STATUS_SCHEDULED,
+        )
+        # Link shift back to proposal
+        proposal.shift = shift
+        proposal.save(update_fields=['shift'])
+
+        return redirect('EmployerApp:payment_checkout', shift_pk=shift.pk)
+
+    # GET — render empty form
+    ctx['form'] = {
+        'start_date': {'value': lambda: ''},
+        'start_time': {'value': lambda: ''},
+        'end_time':   {'value': lambda: ''},
+        'city':       {'value': lambda: ''},
+    }
+    return render(request, 'EmployerApp/book-caregiver.html', ctx)
+
+
+@employer_required
+def payment_checkout(request, shift_pk):
+    """Show the Stripe payment placeholder for a newly created shift."""
+    shift = get_object_or_404(
+        Shift,
+        pk=shift_pk,
+        employer=request.user,
+        status=Shift.STATUS_SCHEDULED,
+    )
+    # Calculate estimated total
+    start_dt = datetime.datetime.combine(shift.start_date, shift.start_time)
+    end_dt   = datetime.datetime.combine(shift.start_date, shift.end_time)
+    duration_secs = (end_dt - start_dt).total_seconds()
+    duration_hrs  = round(duration_secs / 3600, 2)
+    total_charge  = round(Decimal(str(duration_hrs)) * shift.hourly_rate, 2)
+
+    ctx = _employer_ctx(request.user)
+    ctx.update({
+        'shift':        shift,
+        'duration_hrs': duration_hrs,
+        'total_charge': total_charge,
+    })
+    return render(request, 'EmployerApp/payment-checkout.html', ctx)
+
+
+@employer_required
+def confirm_payment(request, shift_pk):
+    """Simulate a successful Stripe payment.
+       Marks the proposal as booked, records payment reference, and redirects to employer shifts.
+    """
+    if request.method != 'POST':
+        return redirect('EmployerApp:my_shifts')
+
+    shift = get_object_or_404(
+        Shift,
+        pk=shift_pk,
+        employer=request.user,
+        status=Shift.STATUS_SCHEDULED,
+    )
+
+    # Mark proposal as booked
+    try:
+        proposal = shift.booking_proposal
+        proposal.status = BookingProposal.STATUS_BOOKED
+        proposal.save(update_fields=['status', 'updated_at'])
+    except Exception:
+        pass  # proposal may not exist if shift was created manually by admin
+
+    # Record simulated payment reference on EmployerProfile
+    emp_profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
+    ref = f'SIM-BOOKING-{shift.pk}-{int(timezone.now().timestamp())}'
+    emp_profile.payment_reference = ref
+    emp_profile.save(update_fields=['payment_reference', 'updated_at'])
+
+    messages.success(
+        request,
+        f'Payment confirmed! Shift #{shift.pk} with {shift.caregiver.get_full_name()} '
+        f'on {shift.start_date.strftime("%b %d, %Y")} is booked. '
+        f'The caregiver has been notified.'
+    )
+    return redirect('EmployerApp:my_shifts')

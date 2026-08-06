@@ -72,11 +72,9 @@ class CaregiverProfile(models.Model):
         ('psw_general',   'General PSW'),
         ('other',         'Other'),
     ]
-    care_type   = models.CharField(
-        max_length=30,
-        choices=CARE_TYPE_CHOICES,
+    care_type   = models.TextField(
         blank=True,
-        help_text='Primary type of care this caregiver provides',
+        help_text='Comma-separated care type keys e.g. senior_elder,dementia',
     )
 
     hourly_rate = models.DecimalField(
@@ -109,6 +107,17 @@ class CaregiverProfile(models.Model):
     @property
     def skills_list(self):
         return [s.strip() for s in self.skills.split(',') if s.strip()]
+
+    @property
+    def care_types_list(self):
+        """Return list of care type keys from the comma-separated field."""
+        return [v.strip() for v in self.care_type.split(',') if v.strip()]
+
+    @property
+    def care_types_display(self):
+        """Return list of human-readable care type labels."""
+        lookup = dict(self.CARE_TYPE_CHOICES)
+        return [lookup.get(k, k) for k in self.care_types_list]
 
     def has_all_required_documents(self):
         """Check if all 5 required documents are uploaded (approved or pending)."""
@@ -228,6 +237,74 @@ class CaregiverDocument(models.Model):
     def filename(self):
         import os
         return os.path.basename(self.file.name)
+
+
+# ──────────────────────────────────────────────────────────────
+# BookingProposal — created by caregiver during chat negotiation
+# ──────────────────────────────────────────────────────────────
+class BookingProposal(models.Model):
+    STATUS_PENDING  = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_BOOKED   = 'booked'
+    STATUS_DECLINED = 'declined'
+    STATUS_EXPIRED  = 'expired'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING,  'Pending'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_BOOKED,   'Booked & Paid'),
+        (STATUS_DECLINED, 'Declined'),
+        (STATUS_EXPIRED,  'Expired'),
+    ]
+
+    # Link back to the chat thread where this was proposed
+    conversation_id = models.PositiveIntegerField(
+        help_text='DirectConversation PK — soft FK to avoid circular import',
+    )
+    caregiver = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='sent_proposals',
+        limit_choices_to={'role': CustomUser.CAREGIVER},
+    )
+    employer = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='received_proposals',
+        limit_choices_to={'role': CustomUser.EMPLOYER},
+    )
+    negotiated_rate = models.DecimalField(
+        max_digits=6, decimal_places=2,
+        help_text='Agreed hourly rate in CAD',
+    )
+    message = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Optional note from caregiver',
+    )
+    # Set when employer accepts and books
+    shift = models.OneToOneField(
+        'Shift',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='booking_proposal',
+    )
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return (
+            f"Proposal #{self.pk} — {self.caregiver.get_full_name()} "
+            f"→ {self.employer.get_full_name()} @ ${self.negotiated_rate}/hr [{self.get_status_display()}]"
+        )
 
 
 class ShiftLog(models.Model):

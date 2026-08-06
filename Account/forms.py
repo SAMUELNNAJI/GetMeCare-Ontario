@@ -120,6 +120,12 @@ class EditUserForm(forms.ModelForm):
 
 
 class EditCaregiverProfileForm(forms.ModelForm):
+    care_type = forms.MultipleChoiceField(
+        choices=CaregiverProfile.CARE_TYPE_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(),
+        label='Care Types',
+    )
     hourly_rate = forms.DecimalField(
         max_digits=6, decimal_places=2, required=False,
         widget=forms.NumberInput(attrs={'placeholder': 'e.g. 28.00', 'step': '0.50', 'min': '15'}),
@@ -136,7 +142,25 @@ class EditCaregiverProfileForm(forms.ModelForm):
 
     class Meta:
         model = CaregiverProfile
-        fields = ('hourly_rate', 'city', 'skills')
+        fields = ('care_type', 'hourly_rate', 'city', 'skills')
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        if instance and instance.care_type:
+            # Pre-select the checkboxes from the comma-separated string
+            initial = kwargs.get('initial', {})
+            initial['care_type'] = instance.care_types_list
+            kwargs['initial'] = initial
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Join the list back to comma-separated string
+        selected = self.cleaned_data.get('care_type') or []
+        instance.care_type = ','.join(selected)
+        if commit:
+            instance.save()
+        return instance
 
 
 class ProfileImageForm(forms.ModelForm):

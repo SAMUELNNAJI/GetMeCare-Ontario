@@ -482,7 +482,7 @@ GetMeCare{% endblock %} {% block extra_head %}
   }
 
   /* ── Responsive ── */
-  @media (max-width: 960px) {
+  @media (max-width: 1024px) {
     .dash-stats {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -512,8 +512,7 @@ GetMeCare{% endblock %} {% block extra_head %}
 <div class="dash-header">
   <div class="dash-greeting">
     <h1>
-      {{ greeting }}, {{ request.user.first_name|default:request.user.username
-      }}
+      {{ greeting }}, {{ request.user.first_name|default:request.user.username }}
     </h1>
     <p>
       {% if upcoming %}{{ upcoming|length }} shift{{ upcoming|length|pluralize

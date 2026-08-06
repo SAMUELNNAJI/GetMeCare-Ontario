@@ -1,4 +1,4 @@
-{% extends "AdminApp/base_admin.html" %}
+﻿{% extends "AdminApp/base_admin.html" %}
 {% block title %}Chat Monitor – Admin{% endblock %}
 
 {% block content %}
@@ -176,6 +176,59 @@
     color: #666;
   }
   .acm-stat strong { display: block; font-size: 1.3rem; font-weight: 800; color: #1a1a1a; }
+
+  /* ── Mobile / tablet tabs ── */
+  .acm-tabs {
+    display: none;
+    background: #fff;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 1;
+  }
+  .acm-tab-btn {
+    flex: 1;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    font-size: .84rem;
+    font-weight: 600;
+    color: #aaa;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .acm-tab-btn.active { color: #1b7d4f; border-bottom-color: #1b7d4f; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .acm-grid {
+      grid-template-columns: 260px 1fr;
+      height: calc(100vh - 56px - 60px);
+    }
+  }
+  @media (max-width: 700px) {
+    .acm-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      height: calc(100vh - 56px - 130px);
+      border-radius: 0 0 14px 14px;
+    }
+    .acm-tabs { display: flex; }
+    .acm-sidebar {
+      display: none;
+      border-right: none;
+      overflow-y: auto;
+    }
+    .acm-sidebar.tab-active { display: block; }
+    .acm-main { display: none; }
+    .acm-main.tab-active { display: flex; }
+    .acm-bubble { max-width: 85%; }
+    .acm-stats { flex-wrap: wrap; }
+    .acm-page-title { font-size: 1rem; }
+  }
 </style>
 
 <div class="acm-page-title">
@@ -189,9 +242,14 @@
   </div>
 </div>
 
+<div class="acm-tabs" id="acm-tabs">
+  <button class="acm-tab-btn active" data-target="acm-sidebar" onclick="acmTab(this)"><i class="fas fa-list"></i> Conversations</button>
+  <button class="acm-tab-btn" data-target="acm-main" onclick="acmTab(this)"><i class="fas fa-comment-dots"></i> Messages</button>
+</div>
+
 <div class="acm-grid">
   <!-- Left: conversation list -->
-  <div class="acm-sidebar">
+  <div class="acm-sidebar tab-active" id="acm-sidebar">
     <div class="acm-sidebar-header">All Conversations</div>
     {% for item in conversations %}
     <a href="?conv={{ item.conv.pk }}" class="acm-conv-item {% if selected_conv and selected_conv.pk == item.conv.pk %}active{% endif %}">
@@ -215,7 +273,7 @@
   </div>
 
   <!-- Right: messages -->
-  <div class="acm-main">
+  <div class="acm-main" id="acm-main">
     {% if selected_conv %}
     <div class="acm-main-header">
       <h3>
@@ -258,4 +316,32 @@
   </div>
 </div>
 
+
+<script>
+function acmTab(btn) {
+  var targetId = btn.getAttribute('data-target');
+  document.querySelectorAll('.acm-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  ['acm-sidebar','acm-main'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.classList.toggle('tab-active', id === targetId); }
+  });
+}
+// Auto-switch to messages tab when a conversation link is clicked on mobile
+document.querySelectorAll('.acm-conv-item').forEach(function(a){
+  a.addEventListener('click', function(){
+    if(window.innerWidth <= 700){
+      var msgBtn = document.querySelector('.acm-tab-btn[data-target="acm-main"]');
+      if(msgBtn) acmTab(msgBtn);
+    }
+  });
+});
+// If a conv is already selected on page load, show messages tab on mobile
+{% if selected_conv %}
+if(window.innerWidth <= 700){
+  var msgBtn = document.querySelector('.acm-tab-btn[data-target="acm-main"]');
+  if(msgBtn) acmTab(msgBtn);
+}
+{% endif %}
+</script>
 {% endblock %}

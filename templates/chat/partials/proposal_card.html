@@ -1,0 +1,77 @@
+{% comment %}
+  Renders a single BookingProposal card inside the chat thread.
+  Context:
+    proposal  — BookingProposal instance
+    me        — request.user
+{% endcomment %}
+{% load static %}
+
+{% if proposal.caregiver == me %}
+{# Caregiver sees their own card on the right #}
+<div class="msg-row msg-mine proposal-card-row" id="proposal-{{ proposal.pk }}">
+  <div class="prop-card prop-card-mine">
+    <div class="prop-header">
+      <i class="fas fa-tag"></i> Price Proposal
+      <span class="prop-badge prop-badge-{{ proposal.status }}">{{ proposal.get_status_display }}</span>
+    </div>
+    <div class="prop-rate">${{ proposal.negotiated_rate }}<span>/hr</span></div>
+    {% if proposal.message %}<p class="prop-msg">"{{ proposal.message }}"</p>{% endif %}
+    <div class="prop-footer">
+      <span class="prop-time">{{ proposal.created_at|date:"M d, g:i A" }}</span>
+      {% if proposal.status == 'pending' %}
+        <span style="font-size:.72rem;color:rgba(255,255,255,.75)">Waiting for employer…</span>
+      {% elif proposal.status == 'accepted' %}
+        <span style="font-size:.72rem;color:rgba(255,255,255,.9)"><i class="fas fa-check"></i> Accepted — employer is booking</span>
+      {% elif proposal.status == 'booked' %}
+        <span style="font-size:.72rem;color:rgba(255,255,255,.9)"><i class="fas fa-calendar-check"></i> Shift booked!</span>
+      {% elif proposal.status == 'declined' %}
+        <span style="font-size:.72rem;color:rgba(255,255,255,.75)"><i class="fas fa-times"></i> Declined</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% else %}
+{# Employer sees the incoming card on the left #}
+<div class="msg-row msg-theirs proposal-card-row" id="proposal-{{ proposal.pk }}">
+  <div class="msg-av">
+    {% if proposal.caregiver.first_name %}{{ proposal.caregiver.first_name|first|upper }}{{ proposal.caregiver.last_name|first|upper }}{% else %}CG{% endif %}
+  </div>
+  <div class="prop-card prop-card-theirs">
+    <div class="prop-header">
+      <i class="fas fa-tag"></i> Price Proposal
+      <span class="prop-badge prop-badge-{{ proposal.status }}">{{ proposal.get_status_display }}</span>
+    </div>
+    <div class="prop-rate">${{ proposal.negotiated_rate }}<span>/hr</span></div>
+    {% if proposal.message %}<p class="prop-msg">"{{ proposal.message }}"</p>{% endif %}
+    <div class="prop-footer">
+      <span class="prop-time">{{ proposal.created_at|date:"M d, g:i A" }}</span>
+    </div>
+    {% if proposal.status == 'pending' %}
+    <div class="prop-actions">
+      {# Accept → go to booking page #}
+      <a href="{% url 'EmployerApp:book_caregiver' proposal.pk %}" class="prop-btn prop-btn-accept">
+        <i class="fas fa-calendar-plus"></i> Book Now
+      </a>
+      {# Decline #}
+      <form method="post" action="{% url 'chatbot_decline_proposal' proposal.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="prop-btn prop-btn-decline">
+          <i class="fas fa-times"></i> Decline
+        </button>
+      </form>
+    </div>
+    {% elif proposal.status == 'accepted' %}
+    <div class="prop-actions">
+      <a href="{% url 'EmployerApp:book_caregiver' proposal.pk %}" class="prop-btn prop-btn-accept">
+        <i class="fas fa-calendar-check"></i> Complete Booking
+      </a>
+    </div>
+    {% elif proposal.status == 'booked' %}
+    <div class="prop-actions" style="justify-content:center">
+      <span style="color:#1b7d4f;font-size:.82rem;font-weight:700"><i class="fas fa-check-circle"></i> Shift Booked</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

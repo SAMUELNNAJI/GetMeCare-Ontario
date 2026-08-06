@@ -223,9 +223,35 @@ GetMeCare{% endblock %} {% block extra_head %}
     cursor: not-allowed;
   }
 
-  /* Skills pills */
-  .skills-preview {
+  /* Care type chip grid */
+  .care-type-grid {
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .care-type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #dde2d8;
+    background: #fafafa;
+    color: #555;
+    font-size: .78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+    user-select: none;
+  }
+  .care-type-chip input[type="checkbox"] { display: none; }
+  .care-type-chip:hover { border-color: #1b7d4f; color: #1b7d4f; background: #f0faf5; }
+  .care-type-chip.selected { background: #e6f5ee; border-color: #1b7d4f; color: #1b5e35; font-weight: 600; }
+  .care-type-chip.selected::before { content: "✓ "; font-size: .72rem; }
+
+  /* Skills pills */
+  .skills-preview {    display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 8px;
@@ -493,25 +519,31 @@ GetMeCare{% endblock %} {% block extra_head %}
           <i class="fas fa-briefcase-medical" style="color: #1b7d4f"></i>
           Caregiver Profile
         </div>
+        <div class="ep-row single">
+          <div class="form-group">
+            <label><i class="fas fa-briefcase-medical" style="color:#1b7d4f;margin-right:4px"></i>Care Types <span style="font-size:.72rem;color:#aaa;font-weight:400">(select all that apply)</span></label>
+            <div class="care-type-grid">
+              {% for value, label in profile_form.care_type.field.choices %}
+              <label class="care-type-chip {% if value in profile_form.care_type.value %}selected{% endif %}">
+                <input type="checkbox" name="care_type" value="{{ value }}" {% if value in profile_form.care_type.value %}checked{% endif %} onchange="this.closest('label').classList.toggle('selected',this.checked)">
+                {{ label }}
+              </label>
+              {% endfor %}
+            </div>
+            {% if profile_form.care_type.errors %}<div class="field-error">{{ profile_form.care_type.errors|join:", " }}</div>{% endif %}
+          </div>
+        </div>
         <div class="ep-row">
           <div class="form-group">
-            <label for="{{ profile_form.city.id_for_label }}"
-              >City / Municipality</label
-            >
+            <label for="{{ profile_form.city.id_for_label }}">City / Municipality</label>
             {{ profile_form.city }} {% if profile_form.city.errors %}
-            <div class="field-error">
-              {{ profile_form.city.errors|join:", " }}
-            </div>
+            <div class="field-error">{{ profile_form.city.errors|join:", " }}</div>
             {% endif %}
           </div>
           <div class="form-group">
-            <label for="{{ profile_form.hourly_rate.id_for_label }}"
-              >Hourly Rate (CAD/hr)</label
-            >
+            <label for="{{ profile_form.hourly_rate.id_for_label }}">Hourly Rate (CAD/hr)</label>
             {{ profile_form.hourly_rate }} {% if profile_form.hourly_rate.errors %}
-            <div class="field-error">
-              {{ profile_form.hourly_rate.errors|join:", " }}
-            </div>
+            <div class="field-error">{{ profile_form.hourly_rate.errors|join:", " }}</div>
             {% endif %}
           </div>
         </div>

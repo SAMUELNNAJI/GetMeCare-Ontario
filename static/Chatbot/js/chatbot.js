@@ -100,24 +100,6 @@ class Chatbot {
         
         document.body.appendChild(container);
         
-        // Handle mobile centering
-        this.handleMobileCentering();
-        
-        // Re-handle on resize
-        window.addEventListener('resize', () => this.handleMobileCentering());
-    }
-    
-    handleMobileCentering() {
-        const container = document.querySelector('.chatbot-container');
-        if (window.innerWidth <= 480) {
-            // Mobile - center at bottom
-            container.style.right = '50%';
-            container.style.transform = 'translateX(50%)';
-        } else {
-            // Desktop/tablet - normal right position
-            container.style.right = '20px';
-            container.style.transform = 'none';
-        }
     }
 
     attachEventListeners() {

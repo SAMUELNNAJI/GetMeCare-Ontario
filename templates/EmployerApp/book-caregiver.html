@@ -1,0 +1,374 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}Book {{ proposal.caregiver.get_full_name }} — GetMeCare{% endblock %}
+
+{% block extra_head %}
+<style>
+  .book-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .book-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Form card ── */
+  .book-form-card { background:#fff; border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .book-form-head {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .book-form-head h2 { font-size:1.05rem; font-weight:700; color:#1a1a1a; margin:0; }
+  .book-form-head p  { font-size:.78rem; color:#888; margin:2px 0 0; }
+  .book-form-body { padding:24px; }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width:600px) { .form-row { grid-template-columns:1fr; } }
+
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group label {
+    font-size:.78rem; font-weight:700; color:#555;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 12px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size:.87rem;
+    font-family: inherit;
+    color:#1a1a1a;
+    outline:none;
+    transition: border-color .15s;
+    background:#fff;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color:#1b7d4f; }
+  .form-group .rate-input-wrap {
+    position:relative;
+  }
+  .form-group .rate-input-wrap span {
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    color:#555; font-weight:700; font-size:.88rem;
+  }
+  .form-group .rate-input-wrap input { padding-left:24px; }
+  .form-hint { font-size:.72rem; color:#aaa; margin-top:2px; }
+
+  .book-submit-btn {
+    width:100%;
+    padding:13px;
+    background: linear-gradient(135deg, #1b3a2d, #1b7d4f);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:.95rem;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition: opacity .15s;
+    margin-top:8px;
+  }
+  .book-submit-btn:hover { opacity:.88; }
+
+  /* ── Summary card ── */
+  .book-summary-card {
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+    position:sticky;
+    top:80px;
+  }
+  .book-summary-head {
+    background: linear-gradient(135deg, #1b3a2d, #2d5a42);
+    border-radius:14px 14px 0 0;
+    padding:18px 20px;
+    color:#fff;
+  }
+  .book-summary-head h3 { font-size:.95rem; font-weight:700; margin:0 0 2px; }
+  .book-summary-head p  { font-size:.75rem; opacity:.75; margin:0; }
+  .book-summary-body { padding:18px 20px; }
+
+  .sum-cg-row {
+    display:flex; align-items:center; gap:12px;
+    padding-bottom:14px; border-bottom:1px solid #f0f0f0; margin-bottom:14px;
+  }
+  .sum-av {
+    width:48px; height:48px; border-radius:50%;
+    background: linear-gradient(135deg,#1b3a2d,#2d5a42);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:.92rem; font-weight:700; flex-shrink:0; overflow:hidden;
+  }
+  .sum-av img { width:100%; height:100%; object-fit:cover; }
+  .sum-name { font-size:.92rem; font-weight:700; color:#1a1a1a; margin:0; }
+  .sum-role { font-size:.72rem; color:#888; margin:2px 0 0; }
+
+  .sum-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:5px 0; font-size:.83rem; color:#555;
+  }
+  .sum-row strong { color:#1a1a1a; }
+  .sum-divider { border:none; border-top:1px solid #f0f0f0; margin:10px 0; }
+  .sum-total-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:6px;
+  }
+  .sum-total-label { font-size:.82rem; font-weight:700; color:#555; }
+  .sum-total-val   { font-size:1.4rem; font-weight:800; color:#1b3a2d; }
+  .sum-note { font-size:.7rem; color:#aaa; text-align:center; margin-top:10px; }
+
+  .sum-rate-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#eef6f1; color:#1b7d4f;
+    border:1px solid #b2dfca; border-radius:20px;
+    padding:4px 10px; font-size:.75rem; font-weight:700;
+    margin-bottom:12px;
+  }
+
+  /* ── Alerts ── */
+  .alert { padding:10px 14px; border-radius:9px; font-size:.84rem; margin-bottom:16px; }
+  .alert-warn { background:#fff8e1; color:#b45309; border:1px solid #fde68a; }
+  .alert-err  { background:#fdecea; color:#c62828; border:1px solid #ffcdd2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ep-page-title">
+  <i class="fas fa-calendar-plus" style="color:#1b7d4f;margin-right:8px"></i>
+  Book a Caregiver
+</div>
+
+{% if messages %}
+  {% for m in messages %}
+  <div class="alert {% if m.tags == 'error' %}alert-err{% else %}alert-warn{% endif %}">
+    <i class="fas fa-{% if m.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+    {{ m }}
+  </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" id="booking-form">
+  {% csrf_token %}
+  <input type="hidden" name="proposal_id" value="{{ proposal.pk }}">
+
+  <div class="book-grid">
+
+    <!-- Left: booking form -->
+    <div class="book-form-card">
+      <div class="book-form-head">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1b3a2d,#1b7d4f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div>
+          <h2>Shift Details</h2>
+          <p>Set the date, time and location for the shift</p>
+        </div>
+      </div>
+      <div class="book-form-body">
+
+        <!-- Date + Start time -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start_date">Shift Date *</label>
+            <input type="date" id="start_date" name="start_date" required
+                   min="{{ today|date:'Y-m-d' }}"
+                   value="{{ form.start_date.value|default:'' }}">
+          </div>
+          <div class="form-group">
+            <label for="start_time">Start Time *</label>
+            <input type="time" id="start_time" name="start_time" required
+                   value="{{ form.start_time.value|default:'' }}">
+          </div>
+        </div>
+
+        <!-- End time + City -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="end_time">End Time *</label>
+            <input type="time" id="end_time" name="end_time" required
+                   value="{{ form.end_time.value|default:'' }}">
+            <span class="form-hint">Duration: <strong id="duration-display">—</strong></span>
+          </div>
+          <div class="form-group">
+            <label for="city">City / Location *</label>
+            <input type="text" id="city" name="city" placeholder="e.g. Ottawa, ON"
+                   required maxlength="100"
+                   value="{{ form.city.value|default:'' }}">
+          </div>
+        </div>
+
+        <!-- Agreed Rate (pre-filled, readonly) -->
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Agreed Hourly Rate</label>
+          <div class="rate-input-wrap">
+            <span>$</span>
+            <input type="number" name="hourly_rate" id="hourly_rate"
+                   value="{{ proposal.negotiated_rate }}"
+                   min="1" max="999" step="0.01"
+                   readonly style="background:#f6f8f5;cursor:not-allowed">
+          </div>
+          <span class="form-hint">Rate agreed during negotiation — cannot be changed here.</span>
+        </div>
+
+        <!-- Estimated total -->
+        <div style="background:#eef6f1;border:1px solid #b2dfca;border-radius:10px;padding:14px 16px;margin-bottom:20px">
+          <div style="font-size:.75rem;font-weight:700;color:#1b7d4f;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">
+            <i class="fas fa-calculator"></i> Estimated Total
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.82rem;color:#555">
+              <span id="est-hours">—</span> hrs × ${{ proposal.negotiated_rate }}/hr
+            </span>
+            <span style="font-size:1.35rem;font-weight:800;color:#1b3a2d">
+              $<span id="est-total">—</span>
+            </span>
+          </div>
+          <div style="font-size:.7rem;color:#888;margin-top:4px">
+            Final total calculated at checkout. You will be redirected to payment.
+          </div>
+        </div>
+
+        <button type="submit" class="book-submit-btn">
+          <i class="fas fa-arrow-right"></i>
+          Continue to Payment
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Right: summary -->
+    <div class="book-summary-card">
+      <div class="book-summary-head">
+        <h3>Booking Summary</h3>
+        <p>Proposal #{{ proposal.pk }}</p>
+      </div>
+      <div class="book-summary-body">
+        <!-- Caregiver info -->
+        <div class="sum-cg-row">
+          <div class="sum-av">
+            {% with cg=proposal.caregiver %}
+              {% if cg.caregiver_profile.profile_image %}
+                <img src="{{ cg.caregiver_profile.profile_image.url }}" alt="">
+              {% else %}
+                {{ cg.first_name|first|upper }}{{ cg.last_name|first|upper }}
+              {% endif %}
+            {% endwith %}
+          </div>
+          <div>
+            <p class="sum-name">{{ proposal.caregiver.get_full_name }}</p>
+            <p class="sum-role"><i class="fas fa-user-nurse"></i> Caregiver / PSW</p>
+          </div>
+        </div>
+
+        <div class="sum-rate-badge">
+          <i class="fas fa-tag"></i> Negotiated: ${{ proposal.negotiated_rate }}/hr
+        </div>
+
+        {% if proposal.message %}
+        <div style="background:#f6f8f5;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#555;margin-bottom:12px;font-style:italic">
+          "{{ proposal.message }}"
+        </div>
+        {% endif %}
+
+        <div class="sum-row">
+          <span>Date</span>
+          <strong id="sum-date">—</strong>
+        </div>
+        <div class="sum-row">
+          <span>Start time</span>
+          <strong id="sum-start">—</strong>
+        </div>
+        <div class="sum-row">
+          <span>End time</span>
+          <strong id="sum-end">—</strong>
+        </div>
+        <div class="sum-row">
+          <span>Duration</span>
+          <strong id="sum-dur">—</strong>
+        </div>
+        <div class="sum-row">
+          <span>Location</span>
+          <strong id="sum-city">—</strong>
+        </div>
+
+        <hr class="sum-divider">
+
+        <div class="sum-total-row">
+          <span class="sum-total-label">Estimated Total</span>
+          <span class="sum-total-val">$<span id="sum-total">—</span></span>
+        </div>
+        <p class="sum-note">Stripe payment processed at next step.<br>Caregiver receives 85% after completion.</p>
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const dateEl  = document.getElementById('start_date');
+  const startEl = document.getElementById('start_time');
+  const endEl   = document.getElementById('end_time');
+  const cityEl  = document.getElementById('city');
+  const rate    = parseFloat('{{ proposal.negotiated_rate }}');
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function fmtTime(t) {
+    if (!t) return '—';
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = ((h % 12) || 12);
+    return `${h12}:${pad(m)} ${ampm}`;
+  }
+
+  function calcDuration() {
+    const s = startEl.value, e = endEl.value;
+    if (!s || !e) return null;
+    const [sh, sm] = s.split(':').map(Number);
+    const [eh, em] = e.split(':').map(Number);
+    const mins = (eh * 60 + em) - (sh * 60 + sm);
+    return mins > 0 ? mins : null;
+  }
+
+  function update() {
+    const mins  = calcDuration();
+    const hours = mins ? (mins / 60).toFixed(2) : null;
+    const total = hours ? (parseFloat(hours) * rate).toFixed(2) : null;
+
+    // Duration display
+    document.getElementById('duration-display').textContent = mins
+      ? `${Math.floor(mins/60)}h ${mins%60}m` : '—';
+
+    // Estimates
+    document.getElementById('est-hours').textContent  = hours || '—';
+    document.getElementById('est-total').textContent  = total || '—';
+
+    // Summary panel
+    document.getElementById('sum-date').textContent  = dateEl.value  || '—';
+    document.getElementById('sum-start').textContent = fmtTime(startEl.value);
+    document.getElementById('sum-end').textContent   = fmtTime(endEl.value);
+    document.getElementById('sum-dur').textContent   = mins
+      ? `${Math.floor(mins/60)}h ${mins%60}m` : '—';
+    document.getElementById('sum-city').textContent  = cityEl.value  || '—';
+    document.getElementById('sum-total').textContent = total || '—';
+  }
+
+  [dateEl, startEl, endEl, cityEl].forEach(el => el && el.addEventListener('input', update));
+  update();
+})();
+</script>
+{% endblock %}

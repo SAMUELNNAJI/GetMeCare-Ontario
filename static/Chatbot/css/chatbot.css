@@ -89,43 +89,56 @@
     animation: slideUp 0.3s ease;
 }
 
-/* Tablet Styles */
+/* Tablet Styles — icon stays bottom-right, window centered in viewport */
 @media (max-width: 768px) {
-    .chatbot-window {
-        width: calc(100vw - 40px);
-        max-width: 420px;
-        height: calc(100vh - 120px);
-        max-height: 700px;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        border-radius: 20px;
-    }
-    
     .chatbot-container {
         right: 20px;
         bottom: 20px;
+        left: auto;
+        transform: none;
     }
-    
+
+    .chatbot-window {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: calc(100vw - 40px);
+        max-width: 420px;
+        height: calc(100vh - 140px);
+        max-height: 700px;
+        border-radius: 20px;
+    }
+
     .chatbot-sidebar.active {
         width: 240px;
     }
 }
 
-/* Mobile Styles */
+/* Mobile Styles — icon stays bottom-right, window fills screen */
 @media (max-width: 480px) {
+    .chatbot-container {
+        right: 16px;
+        bottom: 16px;
+        left: auto;
+        transform: none;
+    }
+
     .chatbot-window {
-        width: 100vw;
-        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
         max-height: none;
         max-width: none;
         border-radius: 0;
-        left: 0;
-        right: 0;
         transform: none;
-        bottom: 0;
     }
-    
+
     .chatbot-sidebar.active {
         position: absolute;
         left: 0;
@@ -135,7 +148,7 @@
         z-index: 10;
         background: white;
     }
-    
+
     .chatbot-sidebar.active .chatbot-sidebar-header {
         background: #f8f9fa;
     }
@@ -149,6 +162,20 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* On tablet, the window uses translateX(-50%) for centering — override animation to preserve that */
+@media (min-width: 481px) and (max-width: 768px) {
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 }
 
@@ -617,21 +644,4 @@
     border-color: #f57c00;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-    .chatbot-window {
-        width: 100vw;
-        height: 100vh;
-        max-height: none;
-        max-width: none;
-        border-radius: 0;
-        left: 0;
-        right: 0;
-        transform: none;
-        bottom: 0;
-    }
-    
-    .chatbot-container {
-        bottom: 15px;
-    }
-}
+/* Responsive — mobile rules handled in the main mobile block above */

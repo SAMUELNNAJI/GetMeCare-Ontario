@@ -1,10 +1,11 @@
-{% load static %}
+﻿{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}Admin — GetMeCare{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23f0a040'/%3E%3Cpath d='M16 8c-1 0-1.9.4-2.5 1.05C12.9 8.4 12 8 11 8 9.1 8 7.5 9.6 7.5 11.5c0 2.8 3.1 5.3 8 8.4 4.9-3.1 8-5.6 8-8.4C23.5 9.6 21.9 8 20 8c-1 0-1.9.4-2.5 1.05C16.9 8.4 16.5 8 16 8z' fill='%23fff'/%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
@@ -177,17 +178,12 @@
 
   /* ═══ RESPONSIVE ═══ */
   @media (max-width: 1024px) {
-    .adm-sidebar { width: 210px; }
-    .adm-topbar  { left: 210px; }
-    .adm-main    { margin-left: 210px; }
-  }
-  @media (max-width: 768px) {
     .adm-sidebar { transform: translateX(-100%); width: 260px; }
     .adm-sidebar.open { transform: translateX(0); }
     .adm-topbar  { left: 0; padding: 0 16px; }
     .adm-main    { margin-left: 0; }
     .adm-hamburger { display: flex; }
-    .adm-search  { max-width: 180px; }
+    .adm-search  { max-width: 200px; }
     .adm-content { padding: 16px 14px 40px; }
   }
   
@@ -208,13 +204,9 @@
 <aside class="adm-sidebar" id="adm-sidebar">
   <div class="adm-logo">
     <a href="{% url 'home' %}">
-      <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
-        <circle cx="22" cy="22" r="22" fill="#2d5a42"/>
-        <path d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z" fill="#f0a040" opacity=".95"/>
-        <path d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z" fill="#4caf7d"/>
-      </svg>
+      <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" style="width:32px;height:32px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
       <div>
-        <div class="adm-logo-name">GetMe<span style="color:#f0a040">Care</span></div>
+        <div class="adm-logo-name">GetMe<span style="color:#F0A040">Care</span></div>
         <div class="adm-logo-sub">Admin Panel</div>
       </div>
     </a>

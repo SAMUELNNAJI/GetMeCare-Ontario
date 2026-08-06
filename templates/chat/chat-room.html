@@ -110,8 +110,12 @@
     border-top: 1px solid #eee;
     background: #fff;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .cr-input-bar form {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -153,6 +157,144 @@
   }
   .cr-send-btn:hover { background: #145e3a; }
   .cr-send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* ── Proposal button (caregiver only) ── */
+  .cr-proposal-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .78rem; font-weight: 700;
+    color: #1b7d4f;
+    background: #eef6f1;
+    border: 1.5px solid #b2dfca;
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .cr-proposal-btn:hover { background: #d4eddf; border-color: #1b7d4f; }
+
+  /* ── Proposal slide-up panel ── */
+  .proposal-panel {
+    display: none;
+    position: absolute;
+    bottom: 70px; left: 14px; right: 14px;
+    background: #fff;
+    border: 1.5px solid #b2dfca;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.12);
+    z-index: 50;
+  }
+  .proposal-panel.open { display: block; }
+  .proposal-panel h4 {
+    margin: 0 0 14px;
+    font-size: .9rem; font-weight: 700; color: #1a1a1a;
+  }
+  .proposal-panel label {
+    display: block; font-size: .78rem; font-weight: 600;
+    color: #555; margin-bottom: 4px;
+  }
+  .proposal-panel input[type="number"],
+  .proposal-panel input[type="text"] {
+    width: 100%; padding: 8px 12px;
+    border: 1.5px solid #dde2d8; border-radius: 8px;
+    font-size: .88rem; outline: none; margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .proposal-panel input:focus { border-color: #1b7d4f; }
+  .proposal-panel-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+  .proposal-send-btn {
+    background: #1b7d4f; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 18px; font-size: .85rem; font-weight: 700;
+    cursor: pointer; transition: background .15s;
+  }
+  .proposal-send-btn:hover { background: #145e3a; }
+  .proposal-cancel-btn {
+    background: #f5f5f5; color: #555;
+    border: 1.5px solid #ddd; border-radius: 8px;
+    padding: 8px 14px; font-size: .85rem; font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ── Proposal cards in message stream ── */
+  .prop-card {
+    max-width: 300px;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.1);
+  }
+  .prop-card-mine {
+    background: linear-gradient(135deg, #1b7d4f, #2d9966);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .prop-card-theirs {
+    background: #fff;
+    border: 1.5px solid #b2dfca;
+    border-bottom-left-radius: 4px;
+  }
+  .prop-header {
+    font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .prop-card-mine .prop-header { color: rgba(255,255,255,.8); }
+  .prop-card-theirs .prop-header { color: #1b7d4f; }
+  .prop-rate {
+    font-size: 1.6rem; font-weight: 800; line-height: 1;
+    margin-bottom: 6px;
+  }
+  .prop-card-theirs .prop-rate { color: #1a1a1a; }
+  .prop-rate span { font-size: .85rem; font-weight: 600; opacity: .75; }
+  .prop-msg {
+    font-size: .78rem; font-style: italic;
+    margin: 6px 0 8px;
+    opacity: .85;
+  }
+  .prop-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-top: 4px;
+  }
+  .prop-time { font-size: .65rem; opacity: .65; }
+  .prop-actions {
+    display: flex; gap: 8px; margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .prop-btn {
+    flex: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: .78rem; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+    border: none; transition: background .15s;
+  }
+  .prop-btn-accept {
+    background: #1b7d4f; color: #fff;
+  }
+  .prop-btn-accept:hover { background: #145e3a; color: #fff; }
+  .prop-btn-decline {
+    background: #fdecea; color: #c62828;
+    border: 1px solid #f5c6c6;
+    font-family: inherit;
+  }
+  .prop-btn-decline:hover { background: #fbd8d7; }
+  .prop-badge {
+    margin-left: auto;
+    font-size: .62rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .prop-badge-pending  { background: rgba(255,255,255,.2); color: inherit; }
+  .prop-badge-accepted { background: #fff3e0; color: #e65100; }
+  .prop-badge-booked   { background: #e6f5ee; color: #1b7d4f; }
+  .prop-badge-declined { background: #fdecea; color: #c62828; }
+  .prop-badge-expired  { background: #f5f5f5; color: #aaa; }
 </style>
 {% endblock %}
 
@@ -162,29 +304,45 @@
   <!-- Header -->
   <div class="cr-header">
     <a href="{% url 'chat_list' %}" class="cr-back"><i class="fas fa-arrow-left"></i></a>
-    <div class="cr-av">
+    {% if other.role == 'caregiver' %}
+    <a href="{% url 'caregiver_profile' other.caregiver_profile.pk %}" title="View profile" style="flex-shrink:0">
+    {% endif %}
+    <div class="cr-av" style="{% if other.role == 'caregiver' %}cursor:pointer;outline:2px solid #1b7d4f;outline-offset:2px{% endif %}">
       {% if other.role == 'caregiver' %}
         {% with prof=other.caregiver_profile %}
-          {% if prof.profile_image %}
-            <img src="{{ prof.profile_image.url }}" alt="">
-          {% else %}
-            {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
+          {% if prof.profile_image %}<img src="{{ prof.profile_image.url }}" alt="">
+          {% else %}{% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
           {% endif %}
         {% endwith %}
       {% else %}
         {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
       {% endif %}
     </div>
+    {% if other.role == 'caregiver' %}</a>{% endif %}
     <div class="cr-hinfo">
-      <h2>{{ other.get_full_name|default:other.username }}</h2>
+      <h2>
+        {% if other.role == 'caregiver' %}
+        <a href="{% url 'caregiver_profile' other.caregiver_profile.pk %}" style="color:inherit;text-decoration:none">{{ other.get_full_name|default:other.username }}</a>
+        {% else %}
+        {{ other.get_full_name|default:other.username }}
+        {% endif %}
+      </h2>
       <span><span class="cr-online-dot"></span>{{ other.get_role_display }}</span>
     </div>
+    {% if other.role == 'caregiver' %}
+    <a href="{% url 'caregiver_profile' other.caregiver_profile.pk %}" style="margin-left:auto;font-size:.75rem;font-weight:600;color:#1b7d4f;text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid #b2dfca;border-radius:7px;background:#eef6f1"><i class="fas fa-user"></i> View Profile</a>
+    {% endif %}
   </div>
 
   <!-- Messages -->
   <div class="cr-messages" id="msg-list">
-    {% for msg in messages %}
-      {% include "chat/partials/message_bubble.html" with msg=msg me=request.user %}
+    {# Render existing text messages and existing proposals interleaved by time #}
+    {% for item in chat_items %}
+      {% if item.type == 'message' %}
+        {% include "chat/partials/message_bubble.html" with msg=item.obj me=request.user %}
+      {% else %}
+        {% include "chat/partials/proposal_card.html" with proposal=item.obj me=request.user %}
+      {% endif %}
     {% empty %}
       <div id="empty-hint" style="text-align:center;color:#ccc;padding:40px 20px;font-size:.85rem">
         <i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:10px"></i>
@@ -193,9 +351,33 @@
     {% endfor %}
   </div>
 
+  <!-- Proposal slide-up panel (caregiver only) -->
+  {% if request.user.role == 'caregiver' %}
+  <div style="position:relative">
+    <div class="proposal-panel" id="proposal-panel">
+      <h4><i class="fas fa-tag" style="color:#1b7d4f;margin-right:6px"></i>Drop a Price Proposal</h4>
+      <label for="prop-rate">Your Rate (CAD/hr)</label>
+      <input type="number" id="prop-rate" placeholder="e.g. 22.00" min="1" max="999" step="0.01">
+      <label for="prop-msg">Note <span style="font-weight:400;color:#aaa">(optional)</span></label>
+      <input type="text" id="prop-msg" placeholder="e.g. I'm available weekends" maxlength="255">
+      <div class="proposal-panel-actions">
+        <button class="proposal-cancel-btn" id="proposal-cancel">Cancel</button>
+        <button class="proposal-send-btn" id="proposal-submit">
+          <i class="fas fa-paper-plane"></i> Send Proposal
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Input bar -->
   <div class="cr-input-bar">
-    <form id="send-form">
+    {% if request.user.role == 'caregiver' %}
+    <button class="cr-proposal-btn" id="proposal-toggle" type="button" title="Drop a price proposal">
+      <i class="fas fa-tag"></i> Propose Price
+    </button>
+    {% endif %}
+    <form id="send-form" style="flex:1">
       {% csrf_token %}
       <textarea
         id="chat-input"
@@ -214,6 +396,7 @@
 
 <span id="last-msg-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
 <span id="conv-id" style="display:none">{{ conv.pk }}</span>
+<span id="last-proposal-pk" style="display:none">{% if proposals %}{{ proposals.last.pk }}{% else %}0{% endif %}</span>
 <meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}
 
@@ -245,12 +428,14 @@
     }
   }
 
-  // Send message
+  // ── Send message ──────────────────────────────────────────
   function sendMessage() {
     const body = input.value.trim();
     if (!body || isSending) return;
 
     isSending = true;
+    input.value = '';
+    input.style.height = 'auto';
     const btn = form.querySelector('.cr-send-btn');
     if (btn) btn.disabled = true;
 
@@ -273,9 +458,8 @@
         updateLastPk();
         scrollToBottom();
       }
-      input.value = '';
-      input.style.height = 'auto';
     })
+    .catch(() => { input.value = body; })
     .finally(() => {
       isSending = false;
       if (btn) btn.disabled = false;
@@ -285,17 +469,19 @@
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
+    e.stopImmediatePropagation();
     sendMessage();
   });
 
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      e.stopImmediatePropagation();
       sendMessage();
     }
   });
 
-  // Poll every 2s
+  // ── Poll messages every 2s ────────────────────────────────
   function poll() {
     const after = document.getElementById('last-msg-pk').textContent.trim() || '0';
     fetch(`/chatbot/messages/${convId}/poll/?after=${after}`, {
@@ -310,6 +496,95 @@
     });
   }
   setInterval(poll, 2000);
+
+  // ── Poll proposals every 3s ───────────────────────────────
+  let lastProposalPk = parseInt(document.getElementById('last-proposal-pk').textContent.trim() || '0');
+
+  function pollProposals() {
+    fetch(`/chatbot/messages/${convId}/proposals/poll/?after=${lastProposalPk}`, {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(r => r.text())
+    .then(html => {
+      if (!html.trim()) return;
+      // Update existing proposal cards or append new ones
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      tmp.querySelectorAll('[id^="proposal-"]').forEach(newCard => {
+        const existing = document.getElementById(newCard.id);
+        if (existing) {
+          existing.replaceWith(newCard);
+        } else {
+          list.appendChild(newCard);
+          const pk = parseInt(newCard.id.replace('proposal-', ''));
+          if (pk > lastProposalPk) lastProposalPk = pk;
+          scrollToBottom();
+        }
+      });
+      // update the hidden span
+      document.getElementById('last-proposal-pk').textContent = lastProposalPk;
+    });
+  }
+  setInterval(pollProposals, 3000);
+
+  // ── Proposal panel (caregiver only) ──────────────────────
+  const toggleBtn  = document.getElementById('proposal-toggle');
+  const panel      = document.getElementById('proposal-panel');
+  const cancelBtn  = document.getElementById('proposal-cancel');
+  const submitBtn  = document.getElementById('proposal-submit');
+
+  if (toggleBtn && panel) {
+    toggleBtn.addEventListener('click', () => {
+      panel.classList.toggle('open');
+    });
+    cancelBtn.addEventListener('click', () => {
+      panel.classList.remove('open');
+    });
+    submitBtn.addEventListener('click', () => {
+      const rate = parseFloat(document.getElementById('prop-rate').value);
+      const msg  = document.getElementById('prop-msg').value.trim();
+
+      if (!rate || rate <= 0) {
+        alert('Please enter a valid hourly rate.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+
+      const fd = new FormData();
+      fd.append('csrfmiddlewaretoken', csrfToken);
+      fd.append('rate', rate.toFixed(2));
+      fd.append('message', msg);
+
+      fetch(`/chatbot/messages/${convId}/proposals/send/`, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        body: fd,
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.html) {
+          const hint = document.getElementById('empty-hint');
+          if (hint) hint.remove();
+          list.insertAdjacentHTML('beforeend', data.html);
+          const pk = data.proposal_pk;
+          if (pk > lastProposalPk) lastProposalPk = pk;
+          document.getElementById('last-proposal-pk').textContent = lastProposalPk;
+          scrollToBottom();
+        }
+        panel.classList.remove('open');
+        document.getElementById('prop-rate').value = '';
+        document.getElementById('prop-msg').value  = '';
+      })
+      .catch(err => { console.error(err); alert('Failed to send proposal.'); })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Proposal';
+      });
+    });
+  }
+
 })();
 </script>
 {% endblock %}

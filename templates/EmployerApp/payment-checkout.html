@@ -1,0 +1,193 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}Checkout — GetMeCare{% endblock %}
+
+{% block extra_head %}
+<style>
+  .checkout-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .checkout-card {
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.08);
+    overflow:hidden;
+  }
+  .checkout-header {
+    background: linear-gradient(135deg, #1b3a2d, #1b7d4f);
+    padding: 28px 28px 22px;
+    color:#fff;
+  }
+  .checkout-header h2 { font-size:1.2rem; font-weight:700; margin:0 0 4px; }
+  .checkout-header p  { font-size:.8rem; opacity:.8; margin:0; }
+
+  .checkout-body { padding:26px 28px; }
+
+  .co-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 0; font-size:.86rem; color:#555; border-bottom:1px solid #f5f5f5;
+  }
+  .co-row:last-of-type { border-bottom:none; }
+  .co-row strong { color:#1a1a1a; }
+
+  .co-total-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin:16px 0 24px;
+    padding:14px 16px;
+    background:#eef6f1; border-radius:10px;
+    border:1px solid #b2dfca;
+  }
+  .co-total-label { font-size:.85rem; font-weight:700; color:#555; }
+  .co-total-val   { font-size:1.7rem; font-weight:800; color:#1b3a2d; }
+
+  .stripe-placeholder {
+    border: 2px dashed #dde2d8;
+    border-radius:12px;
+    padding:22px;
+    text-align:center;
+    margin-bottom:22px;
+    background:#fafcf9;
+  }
+  .stripe-placeholder i { font-size:2rem; color:#bbb; display:block; margin-bottom:8px; }
+  .stripe-placeholder p { font-size:.8rem; color:#aaa; margin:0; }
+  .stripe-placeholder strong { font-size:.85rem; color:#555; display:block; margin-bottom:6px; }
+
+  .co-pay-btn {
+    width:100%;
+    padding:14px;
+    background: linear-gradient(135deg,#1b3a2d,#1b7d4f);
+    color:#fff;
+    border:none;
+    border-radius:11px;
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:opacity .15s;
+  }
+  .co-pay-btn:hover { opacity:.88; }
+  .co-pay-btn .lock-icon { font-size:.85rem; opacity:.7; }
+
+  .co-back-link {
+    display:block; text-align:center; margin-top:14px;
+    font-size:.8rem; color:#aaa; text-decoration:none;
+  }
+  .co-back-link:hover { color:#555; }
+
+  .co-secure-note {
+    display:flex; align-items:center; justify-content:center;
+    gap:6px; font-size:.72rem; color:#aaa; margin-top:16px;
+  }
+  .co-secure-note i { color:#1b7d4f; }
+
+  .co-cg-strip {
+    display:flex; align-items:center; gap:10px;
+    background:#f6f8f5; border-radius:9px; padding:10px 12px;
+    margin-bottom:18px;
+  }
+  .co-cg-av {
+    width:38px; height:38px; border-radius:50%;
+    background:linear-gradient(135deg,#1b3a2d,#2d5a42);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:.82rem; font-weight:700; flex-shrink:0; overflow:hidden;
+  }
+  .co-cg-av img { width:100%; height:100%; object-fit:cover; }
+  .co-cg-name { font-size:.85rem; font-weight:700; color:#1a1a1a; }
+  .co-cg-sub  { font-size:.72rem; color:#888; margin-top:1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ep-page-title">
+  <i class="fas fa-credit-card" style="color:#1b7d4f;margin-right:8px"></i>
+  Payment Checkout
+</div>
+
+<div class="checkout-wrap">
+  <div class="checkout-card">
+    <div class="checkout-header">
+      <h2><i class="fas fa-shield-alt" style="margin-right:7px"></i>Secure Booking Checkout</h2>
+      <p>Shift #{{ shift.pk }} — Review and complete your payment</p>
+    </div>
+    <div class="checkout-body">
+
+      <!-- Caregiver strip -->
+      <div class="co-cg-strip">
+        <div class="co-cg-av">
+          {% with cg=shift.caregiver %}
+            {% if cg.caregiver_profile.profile_image %}
+              <img src="{{ cg.caregiver_profile.profile_image.url }}" alt="">
+            {% else %}
+              {{ cg.first_name|first|upper }}{{ cg.last_name|first|upper }}
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div>
+          <div class="co-cg-name">{{ shift.caregiver.get_full_name }}</div>
+          <div class="co-cg-sub">Caregiver / PSW</div>
+        </div>
+        <div style="margin-left:auto">
+          <span style="background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:4px 10px;font-size:.72rem;font-weight:700">
+            <i class="fas fa-tag"></i> ${{ shift.hourly_rate }}/hr
+          </span>
+        </div>
+      </div>
+
+      <!-- Shift details -->
+      <div class="co-row">
+        <span>Shift Date</span>
+        <strong>{{ shift.start_date|date:"D, M d, Y" }}</strong>
+      </div>
+      <div class="co-row">
+        <span>Time</span>
+        <strong>{{ shift.start_time|time:"g:i A" }} – {{ shift.end_time|time:"g:i A" }}</strong>
+      </div>
+      <div class="co-row">
+        <span>Duration</span>
+        <strong>{{ duration_hrs }} hrs</strong>
+      </div>
+      <div class="co-row">
+        <span>Location</span>
+        <strong>{{ shift.city|default:"Ontario" }}</strong>
+      </div>
+      <div class="co-row">
+        <span>Hourly Rate</span>
+        <strong>${{ shift.hourly_rate }}/hr</strong>
+      </div>
+
+      <!-- Total -->
+      <div class="co-total-row">
+        <span class="co-total-label">Total Charge</span>
+        <span class="co-total-val">${{ total_charge }}</span>
+      </div>
+
+      <!-- Stripe placeholder -->
+      <div class="stripe-placeholder">
+        <i class="fab fa-stripe" style="color:#635bff;font-size:2.5rem"></i>
+        <strong>Stripe Payment — Coming Soon</strong>
+        <p>Card processing via Stripe will be integrated here.<br>
+           Click "Confirm Booking" below to simulate a successful payment.</p>
+      </div>
+
+      <!-- Pay button (simulates payment for now) -->
+      <form method="post" action="{% url 'EmployerApp:confirm_payment' shift.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="co-pay-btn">
+          <i class="fas fa-lock lock-icon"></i>
+          Confirm Booking — Pay ${{ total_charge }}
+        </button>
+      </form>
+
+      <a href="{% url 'EmployerApp:book_caregiver' shift.booking_proposal.pk %}" class="co-back-link">
+        <i class="fas fa-arrow-left"></i> Go back and edit booking
+      </a>
+
+      <div class="co-secure-note">
+        <i class="fas fa-shield-alt"></i>
+        Payments are secured by Stripe. GetMeCare never stores card details.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

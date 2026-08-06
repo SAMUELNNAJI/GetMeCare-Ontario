@@ -139,12 +139,15 @@
 <h4>{{ profile.user.first_name }} {{ profile.user.last_name|first }}.</h4>
 <span class="bc-verified"><i class="fas fa-check-circle"></i></span>
 </div>
-<p class="bc-cred">Certified PSW</p>
+<p class="bc-cred">{% if profile.care_types_display %}{{ profile.care_types_display|first }}{% else %}Certified PSW{% endif %}</p>
 <p class="bc-loc"><i class="fas fa-map-marker-alt"></i> {{ profile.city|default:"Ontario" }}, ON</p>
 </div>
 </div>
+{% if profile.care_types_display %}
+<div class="bc-care-tags">{% for label in profile.care_types_display|slice:":3" %}<span class="bc-care-tag">{{ label }}</span>{% endfor %}</div>
+{% endif %}
 {% if profile.skills_list %}
-<div class="bc-skills">{% for skill in profile.skills_list|slice:":4" %}<span class="stag">{{ skill }}</span>{% endfor %}</div>
+<div class="bc-skills">{% for skill in profile.skills_list|slice:":3" %}<span class="stag">{{ skill }}</span>{% endfor %}</div>
 {% endif %}
 <div class="bc-footer">
 <span class="bc-rate">{% if profile.hourly_rate %}${{ profile.hourly_rate }} CAD / hr{% else %}Rate on request{% endif %}</span>
