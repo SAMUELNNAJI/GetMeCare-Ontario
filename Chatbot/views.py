@@ -295,7 +295,7 @@ Here is the site information you should use:
 If the user asks about finding caregivers or needs caregiver recommendations, suggest they use the caregiver search feature or provide guidance on what to look for."""
 
         payload = {
-            "model": "llama3-70b-8192",
+            "model": "llama-3.3-70b-versatile",
             "messages": [
                 {
                     "role": "system",

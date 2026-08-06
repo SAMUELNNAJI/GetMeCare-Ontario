@@ -1,7 +1,6 @@
 {% extends "EmployerApp/base_employer.html" %} {% block title %}Dashboard —
 Employer{% endblock %} {% block extra_head %}
 <style>
-  /* ── Page header ── */
   .dash-header {
     display: flex;
     align-items: flex-start;
@@ -33,8 +32,6 @@ Employer{% endblock %} {% block extra_head %}
     border-radius: 20px;
     padding: 6px 13px;
   }
-
-  /* ── Alert ── */
   .dash-alert {
     display: flex;
     align-items: center;
@@ -84,8 +81,6 @@ Employer{% endblock %} {% block extra_head %}
     background: #c96e00;
     color: #fff;
   }
-
-  /* ── Stat cards ── */
   .dash-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -143,8 +138,6 @@ Employer{% endblock %} {% block extra_head %}
   .dash-stat-sub.muted {
     color: #aaa;
   }
-
-  /* ── Mid row ── */
   .dash-mid {
     display: grid;
     grid-template-columns: 1fr 290px;
@@ -152,8 +145,6 @@ Employer{% endblock %} {% block extra_head %}
     margin-bottom: 22px;
     align-items: start;
   }
-
-  /* Dark action card */
   .action-card {
     background: #1b3a2d;
     border-radius: 14px;
@@ -212,8 +203,6 @@ Employer{% endblock %} {% block extra_head %}
     background: #d88c2a;
     border-color: #d88c2a;
   }
-
-  /* Chart card */
   .chart-card {
     background: #fff;
     border-radius: 14px;
@@ -247,8 +236,6 @@ Employer{% endblock %} {% block extra_head %}
     color: #bbb;
     margin-top: 6px;
   }
-
-  /* Account checklist card */
   .qa-card {
     background: #fff;
     border-radius: 14px;
@@ -317,8 +304,6 @@ Employer{% endblock %} {% block extra_head %}
     background: #142e21;
     color: #fff;
   }
-
-  /* ── Bottom row ── */
   .dash-bottom {
     display: grid;
     grid-template-columns: 1fr 290px;
@@ -351,8 +336,6 @@ Employer{% endblock %} {% block extra_head %}
   .view-all:hover {
     text-decoration: underline;
   }
-
-  /* Shift rows */
   .shift-row {
     display: flex;
     align-items: center;
@@ -423,8 +406,6 @@ Employer{% endblock %} {% block extra_head %}
   .shift-badge {
     flex-shrink: 0;
   }
-
-  /* Job rows */
   .job-row {
     padding: 11px 0;
     border-bottom: 1px solid #f2f4f0;
@@ -483,15 +464,11 @@ Employer{% endblock %} {% block extra_head %}
     background: #f2f4f0;
     color: #1a1a1a;
   }
-
-  /* ── Responsive ── */
   @media (max-width: 960px) {
     .dash-stats {
       grid-template-columns: repeat(2, 1fr);
     }
-    .dash-mid {
-      grid-template-columns: 1fr;
-    }
+    .dash-mid,
     .dash-bottom {
       grid-template-columns: 1fr;
     }
@@ -507,8 +484,6 @@ Employer{% endblock %} {% block extra_head %}
   }
 </style>
 {% endblock %} {% block content %}
-
-<!-- Page header -->
 <div class="dash-header">
   <div class="dash-greeting">
     <h1>
@@ -526,7 +501,6 @@ Employer{% endblock %} {% block extra_head %}
     <i class="fas fa-calendar-day"></i> {{ today|date:"l, F j" }}
   </div>
 </div>
-
 {% for msg in messages %}
 <div
   class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
@@ -536,24 +510,18 @@ Employer{% endblock %} {% block extra_head %}
   ></i>
   {{ msg }}
 </div>
-{% endfor %}
-
-<!-- Alert: not activated -->
-{% if not is_activated %}
+{% endfor %} {% if not is_activated %}
 <div class="dash-alert">
   <div class="dash-alert-icon"><i class="fas fa-bolt"></i></div>
   <div class="dash-alert-body">
-    <strong>Activate your account to post jobs.</strong>
-    Pay the one-time fee to unlock job posting and connect with verified
-    caregivers across Ontario.
+    <strong>Activate your account to post jobs.</strong> Pay the one-time fee to
+    unlock job posting and connect with verified caregivers across Ontario.
   </div>
   <a href="{% url 'EmployerApp:activate_account' %}" class="dash-alert-btn"
     >Activate now</a
   >
 </div>
 {% endif %}
-
-<!-- Stat cards -->
 <div class="dash-stats">
   <div class="dash-stat">
     <div class="dash-stat-icon si-blue">
@@ -588,11 +556,8 @@ Employer{% endblock %} {% block extra_head %}
     <div class="dash-stat-sub muted">live listings</div>
   </div>
 </div>
-
-<!-- Mid row -->
 <div class="dash-mid">
   <div>
-    <!-- Dark green action card -->
     <div class="action-card">
       <div class="action-label">Quick Actions</div>
       <div class="action-heading">Find &amp; schedule<br />a caregiver</div>
@@ -603,26 +568,24 @@ Employer{% endblock %} {% block extra_head %}
         <a
           href="{% url 'EmployerApp:find_caregiver' %}"
           class="action-btn solid"
+          ><i class="fas fa-search"></i> Find Caregiver</a
         >
-          <i class="fas fa-search"></i> Find Caregiver
-        </a>
-        {% if is_activated %}
-        <a href="{% url 'EmployerApp:post_job' %}" class="action-btn">
-          <i class="fas fa-plus"></i> Post a Job
-        </a>
-        {% else %}
-        <a href="{% url 'EmployerApp:activate_account' %}" class="action-btn">
-          <i class="fas fa-bolt"></i> Activate Account
-        </a>
-        {% endif %}
+        {% if is_activated %}<a
+          href="{% url 'EmployerApp:post_job' %}"
+          class="action-btn"
+          ><i class="fas fa-plus"></i> Post a Job</a
+        >
+        {% else %}<a
+          href="{% url 'EmployerApp:activate_account' %}"
+          class="action-btn"
+          ><i class="fas fa-bolt"></i> Activate Account</a
+        >{% endif %}
       </div>
     </div>
-
-    <!-- Weekly chart -->
     <div class="chart-card">
       <div class="chart-head">
-        <span class="chart-title">Shifts this week</span>
-        <span class="chart-badge">{{ total_scheduled }} scheduled</span>
+        <span class="chart-title">Shifts this week</span
+        ><span class="chart-badge">{{ total_scheduled }} scheduled</span>
       </div>
       <div style="position: relative; height: 110px">
         <canvas id="weeklyShiftsChart"></canvas>
@@ -630,8 +593,6 @@ Employer{% endblock %} {% block extra_head %}
       <div class="chart-days" id="chart-day-labels"></div>
     </div>
   </div>
-
-  <!-- Account checklist -->
   <div class="qa-card">
     <div class="qa-title">Account checklist</div>
     <div class="qa-sub">
@@ -640,54 +601,50 @@ Employer{% endblock %} {% block extra_head %}
     </div>
     <ul class="qa-list">
       <li>
-        <span class="qi done"><i class="fas fa-check"></i></span>
-        Profile created
+        <span class="qi done"><i class="fas fa-check"></i></span> Profile
+        created
       </li>
       <li>
         <span
           class="qi {% if employer_profile.phone %}done{% else %}pending{% endif %}"
+          >{% if employer_profile.phone %}<i class="fas fa-check"></i>{% endif
+          %}</span
         >
-          {% if employer_profile.phone %}<i class="fas fa-check"></i>{% endif %}
-        </span>
         Phone number added
       </li>
       <li>
         <span
           class="qi {% if employer_profile.address %}done{% else %}pending{% endif %}"
+          >{% if employer_profile.address %}<i class="fas fa-check"></i>{% endif
+          %}</span
         >
-          {% if employer_profile.address %}<i class="fas fa-check"></i>{% endif
-          %}
-        </span>
         Address on file
       </li>
       <li>
-        <span class="qi {% if is_activated %}done{% else %}pending{% endif %}">
-          {% if is_activated %}<i class="fas fa-check"></i>{% endif %}
-        </span>
+        <span class="qi {% if is_activated %}done{% else %}pending{% endif %}"
+          >{% if is_activated %}<i class="fas fa-check"></i>{% endif %}</span
+        >
         Account activated
       </li>
       <li>
         <span
           class="qi {% if open_jobs_count %}done{% else %}pending{% endif %}"
+          >{% if open_jobs_count %}<i class="fas fa-check"></i>{% endif %}</span
         >
-          {% if open_jobs_count %}<i class="fas fa-check"></i>{% endif %}
-        </span>
         First job posted
       </li>
     </ul>
-    {% if not is_activated %}
-    <a href="{% url 'EmployerApp:activate_account' %}" class="qa-btn"
+    {% if not is_activated %}<a
+      href="{% url 'EmployerApp:activate_account' %}"
+      class="qa-btn"
       >Complete activation</a
     >
-    {% else %}
-    <a href="{% url 'EmployerApp:post_job' %}" class="qa-btn">Post a new job</a>
-    {% endif %}
+    {% else %}<a href="{% url 'EmployerApp:post_job' %}" class="qa-btn"
+      >Post a new job</a
+    >{% endif %}
   </div>
 </div>
-
-<!-- Bottom row -->
 <div class="dash-bottom">
-  <!-- Shifts column -->
   <div class="section-card">
     <div class="section-head">
       <h3>Upcoming Shifts</h3>
@@ -695,8 +652,7 @@ Employer{% endblock %} {% block extra_head %}
         >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
       ></a>
     </div>
-
-    {% if active_shifts %} {% for s in active_shifts %}
+    {% if active_shifts %}{% for s in active_shifts %}
     <div class="shift-row">
       <div class="shift-av av-{{ forloop.counter }}">
         {{ s.caregiver.first_name|first|upper }}{{
@@ -718,7 +674,7 @@ Employer{% endblock %} {% block extra_head %}
         <span class="badge badge-orange">In Progress</span>
       </div>
     </div>
-    {% endfor %} {% endif %} {% for s in scheduled_shifts %}
+    {% endfor %}{% endif %} {% for s in scheduled_shifts %}
     <div class="shift-row">
       <div class="shift-av av-{{ forloop.counter }}">
         {{ s.caregiver.first_name|first|upper }}{{
@@ -736,8 +692,7 @@ Employer{% endblock %} {% block extra_head %}
             ><i class="fas fa-clock"></i> {% if s.start_date == today %}Today{%
             else %}{{ s.start_date|date:"D, M j" }}{% endif %} · {{
             s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}</span
-          >
-          <span
+          ><span
             ><i class="fas fa-dollar-sign"></i> ${{ s.hourly_rate }}/hr</span
           >
         </div>
@@ -746,7 +701,7 @@ Employer{% endblock %} {% block extra_head %}
         <span class="badge badge-blue">Scheduled</span>
       </div>
     </div>
-    {% empty %} {% if not active_shifts %}
+    {% empty %}{% if not active_shifts %}
     <div
       style="
         text-align: center;
@@ -758,13 +713,11 @@ Employer{% endblock %} {% block extra_head %}
       <i
         class="fas fa-calendar-xmark"
         style="font-size: 1.6rem; display: block; margin-bottom: 8px"
-      ></i>
-      No upcoming shifts scheduled
+      ></i
+      >No upcoming shifts scheduled
     </div>
-    {% endif %} {% endfor %}
+    {% endif %}{% endfor %}
   </div>
-
-  <!-- Open jobs column -->
   <div class="section-card">
     <div class="section-head">
       <h3>My Open Jobs</h3>
@@ -772,7 +725,6 @@ Employer{% endblock %} {% block extra_head %}
         >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
       ></a>
     </div>
-
     {% for job in recent_jobs %}
     <div class="job-row">
       <div class="job-top">
@@ -796,22 +748,21 @@ Employer{% endblock %} {% block extra_head %}
       <i
         class="fas fa-briefcase"
         style="font-size: 1.6rem; display: block; margin-bottom: 8px"
-      ></i>
-      No open jobs yet
+      ></i
+      >No open jobs yet
     </div>
-    {% endfor %} {% if is_activated %}
-    <a href="{% url 'EmployerApp:post_job' %}" class="post-btn"
+    {% endfor %} {% if is_activated %}<a
+      href="{% url 'EmployerApp:post_job' %}"
+      class="post-btn"
       ><i class="fas fa-plus"></i> Post a new job</a
     >
-    {% else %}
-    <a href="{% url 'EmployerApp:activate_account' %}" class="post-btn"
+    {% else %}<a
+      href="{% url 'EmployerApp:activate_account' %}"
+      class="post-btn"
       ><i class="fas fa-bolt"></i> Activate to post jobs</a
-    >
-    {% endif %}
+    >{% endif %}
   </div>
 </div>
-
-<!-- Activation Modal -->
 {% if show_modal %}
 <div class="ep-modal-backdrop" id="activationModal">
   <div class="ep-modal">
@@ -843,78 +794,39 @@ Employer{% endblock %} {% block extra_head %}
       <a
         href="{% url 'EmployerApp:activate_account' %}"
         class="ep-modal-pay-btn"
+        ><i class="fas fa-lock"></i> Pay Now &amp; Activate</a
       >
-        <i class="fas fa-lock"></i> Pay Now &amp; Activate
-      </a>
       <button class="ep-modal-later" id="closeModalBtn">Pay Later</button>
     </div>
   </div>
 </div>
 {% endif %}
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
   (function(){
-    var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    var todayIdx = new Date().getDay();
-    var labels = [];
-    for(var i = 6; i >= 0; i--){
-      var d = (todayIdx - i + 7) % 7;
-      labels.push(days[d === 0 ? 6 : d - 1]);
-    }
-    var labelRow = document.getElementById('chart-day-labels');
-    if(labelRow){ labelRow.innerHTML = labels.map(function(l){ return '<span>'+l+'</span>'; }).join(''); }
-
-    var canvas = document.getElementById('weeklyShiftsChart');
-    if(!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var gradient = ctx.createLinearGradient(0,0,0,110);
-    gradient.addColorStop(0,'rgba(27,125,79,0.2)');
-    gradient.addColorStop(1,'rgba(27,125,79,0.0)');
-
-    var data = [0,0,0,0,0,0,{{ total_scheduled|default:0 }}];
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          borderColor: '#1b7d4f',
-          borderWidth: 2.5,
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: function(c){
-            var max = Math.max.apply(null, data);
-            return data[c.dataIndex] === max ? '#f0a040' : '#fff';
-          },
-          pointBorderColor: '#1b7d4f',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { display: false },
-          y: { display: false, beginAtZero: true }
-        }
-      }
-    });
+    var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    var idx=new Date().getDay();
+    var labels=[];
+    for(var i=6;i>=0;i--){var d=(idx-i+7)%7;labels.push(days[d===0?6:d-1]);}
+    var lr=document.getElementById('chart-day-labels');
+    if(lr){lr.innerHTML=labels.map(function(l){return '<span>'+l+'</span>';}).join('');}
+    var cv=document.getElementById('weeklyShiftsChart');
+    if(!cv)return;
+    var ctx=cv.getContext('2d');
+    var g=ctx.createLinearGradient(0,0,0,110);
+    g.addColorStop(0,'rgba(27,125,79,0.2)');g.addColorStop(1,'rgba(27,125,79,0.0)');
+    var data=[0,0,0,0,0,0,{{ total_scheduled|default:0 }}];
+    new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:'#1b7d4f',borderWidth:2.5,backgroundColor:g,fill:true,tension:0.4,pointBackgroundColor:function(c){var mx=Math.max.apply(null,data);return data[c.dataIndex]===mx?'#f0a040':'#fff';},pointBorderColor:'#1b7d4f',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,beginAtZero:true}}}});
   })();
 </script>
-
 {% endblock %} {% block extra_scripts %} {% if show_modal %}
 <script>
   (function () {
-    var modal = document.getElementById("activationModal");
-    var closeBtn = document.getElementById("closeModalBtn");
-    if (closeBtn && modal) {
-      closeBtn.addEventListener("click", function () {
-        modal.style.display = "none";
+    var m = document.getElementById("activationModal"),
+      b = document.getElementById("closeModalBtn");
+    if (b && m) {
+      b.addEventListener("click", function () {
+        m.style.display = "none";
       });
     }
   })();
