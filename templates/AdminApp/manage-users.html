@@ -90,7 +90,7 @@
           <td>
             <div class="u-info">
               <div class="u-av {% if u.is_employer %}employer{% endif %}">
-                {{ u.first_name|first|upper }}{{ u.last_name|first|upper }}
+                {% if u.first_name %}{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}{% else %}{{ u.username|slice:":2"|upper }}{% endif %}
               </div>
               <div>
                 <div class="u-name">

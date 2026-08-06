@@ -129,8 +129,7 @@ Admin{% endblock %} {% block extra_head %}
           <td>
             <div class="cg-info">
               <div class="cg-av-sm">
-                {{ p.user.first_name|first|upper }}{{
-                p.user.last_name|first|upper }}
+                {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
               </div>
               <div>
                 <div class="cg-nm">

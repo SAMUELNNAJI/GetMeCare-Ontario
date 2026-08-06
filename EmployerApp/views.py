@@ -95,17 +95,6 @@ def my_shifts(request):
 
 
 @employer_required
-def find_caregiver(request):
-    from Account.models import CaregiverProfile
-    profiles = CaregiverProfile.objects.filter(
-        status=CaregiverProfile.STATUS_ACTIVE
-    ).select_related('user').order_by('user__first_name')
-    ctx = _employer_ctx(request.user)
-    ctx['profiles'] = profiles
-    return render(request, 'EmployerApp/find-caregiver.html', ctx)
-
-
-@employer_required
 def payment_history(request):
     logs = ShiftLog.objects.filter(
         shift__employer=request.user,

@@ -154,8 +154,7 @@ Admin{% endblock %} {% block extra_head %}
           <td>
             <div class="doc-caregiver">
               <div class="doc-av">
-                {{ doc.user.first_name|first|upper }}{{
-                doc.user.last_name|first|upper }}
+                {% if doc.user.first_name %}{{ doc.user.first_name|first|upper }}{{ doc.user.last_name|first|upper }}{% else %}{{ doc.user.username|slice:":2"|upper }}{% endif %}
               </div>
               <div>
                 <div class="doc-name">
@@ -257,8 +256,7 @@ Admin{% endblock %} {% block extra_head %}
           <td>
             <div class="doc-caregiver">
               <div class="doc-av">
-                {{ doc.user.first_name|first|upper }}{{
-                doc.user.last_name|first|upper }}
+                {% if doc.user.first_name %}{{ doc.user.first_name|first|upper }}{{ doc.user.last_name|first|upper }}{% else %}{{ doc.user.username|slice:":2"|upper }}{% endif %}
               </div>
               <div>
                 <div class="doc-name">

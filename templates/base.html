@@ -62,6 +62,7 @@
             {% endif %}
             >Browse Caregivers</a
           >
+          <a href="{% url 'browse_jobs' %}" {% if request.resolver_match.url_name == "browse_jobs" %}class="nav-active"{% endif %}>Browse Jobs</a>
           <a
             href="{% url 'how_it_works' %}"
             {% if request.resolver_match.url_name == "how_it_works" %}class="nav-active"
@@ -108,6 +109,7 @@
       <div class="mobile-drawer" id="mobile-drawer">
         <nav class="mobile-nav">
           <a href="{% url 'browse' %}">Browse Caregivers</a>
+          <a href="{% url 'browse_jobs' %}">Browse Jobs</a>
           <a href="{% url 'how_it_works' %}">How It Works</a>
           <a href="{% url 'services' %}">Services</a>
         </nav>
@@ -191,6 +193,7 @@
           <h5>PLATFORM</h5>
           <ul>
             <li><a href="{% url 'browse' %}">Browse Caregivers</a></li>
+            <li><a href="{% url 'browse_jobs' %}">Browse Jobs</a></li>
             <li><a href="{% url 'how_it_works' %}">How It Works</a></li>
             <li><a href="{% url 'services' %}">Services</a></li>
             <li><a href="#">Open Jobs</a></li>

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Browse Jobs – GetMeCare Ontario{% endblock %}
+{% block content %}
+
+<style>
+.jobs-hero{background:linear-gradient(135deg,#1b3a2d 0%,#2d6e4e 100%);padding:64px 24px 56px;text-align:center;color:#fff}
+.jobs-hero-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:600;letter-spacing:.04em;margin-bottom:18px}
+.jobs-hero h1{font-size:clamp(1.7rem,4vw,2.6rem);font-weight:800;line-height:1.15;margin-bottom:12px}
+.jobs-hero p{font-size:.95rem;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 28px}
+.jobs-hero-search{max-width:600px;margin:0 auto}
+.jhs-inner{display:flex;align-items:center;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.18)}
+.jhs-field{display:flex;align-items:center;gap:8px;padding:0 16px;flex:1}
+.jhs-field i{color:#999;font-size:.85rem;flex-shrink:0}
+.jhs-field input,.jhs-field select{border:none;outline:none;font-size:.88rem;color:#333;width:100%;font-family:inherit;background:transparent;padding:14px 0}
+.jhs-field select{cursor:pointer}
+.jhs-divider{width:1px;height:36px;background:#eee;flex-shrink:0}
+.jhs-btn{background:#f0a040;color:#fff;border:none;padding:14px 24px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s}
+.jhs-btn:hover{background:#d88c2a}
+
+/* layout */
+.browse-layout{display:grid;grid-template-columns:260px 1fr;gap:28px;max-width:1200px;margin:0 auto;padding:36px 24px 60px;align-items:start}
+.browse-sidebar{position:sticky;top:80px}
+.filter-card{background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+.filter-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0f0f0}
+.filter-header h3{font-size:.9rem;font-weight:700;color:#1a1a1a;margin:0;display:flex;align-items:center;gap:7px}
+.filter-reset{font-size:.76rem;color:#1b7d4f;text-decoration:none;font-weight:600}
+.filter-reset:hover{text-decoration:underline}
+.filter-group{padding:16px 18px;border-bottom:1px solid #f6f6f6}
+.filter-group:last-child{border-bottom:none}
+.filter-group h4{font-size:.76rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.filter-check{display:flex;align-items:center;gap:8px;font-size:.83rem;color:#333;padding:3px 0;cursor:pointer}
+.filter-check input{accent-color:#1b7d4f;width:14px;height:14px;flex-shrink:0}
+.rate-range{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.78rem;color:#555}
+.rate-range input[type=range]{flex:1;min-width:60px;accent-color:#1b7d4f}
+
+/* toolbar */
+.browse-results{min-width:0}
+.results-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.results-count{font-size:.88rem;color:#555;flex:1}
+.results-count strong{color:#1a1a1a;font-size:1rem}
+.results-sort{display:flex;align-items:center;gap:7px;font-size:.82rem;color:#555}
+.results-sort select{border:1px solid #dde2d8;border-radius:8px;padding:6px 10px;font-size:.82rem;font-family:inherit;outline:none;background:#fff;color:#333}
+.mobile-filter-btn{display:none;align-items:center;gap:6px;background:#fff;border:1px solid #dde2d8;border-radius:8px;padding:7px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* active filter chips */
+.active-filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.af-chip{display:inline-flex;align-items:center;gap:5px;background:#eef6f1;color:#1b5e35;border:1px solid #b2dfca;border-radius:20px;padding:4px 10px;font-size:.76rem;font-weight:600}
+.af-chip-remove{color:#1b7d4f;text-decoration:none;font-weight:700;font-size:.85rem;line-height:1}
+
+/* job cards grid */
+.jb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px}
+.jb-card{background:#fff;border-radius:14px;box-shadow:0 1px 5px rgba(0,0,0,.07);border:1px solid #eee;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
+.jb-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+.jb-card-body{padding:20px 20px 14px;flex:1}
+.jb-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.jb-title{font-size:.95rem;font-weight:700;color:#1a1a1a;line-height:1.3}
+.jb-rate-badge{background:#e6f5ee;color:#1b7d4f;font-size:.72rem;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap;flex-shrink:0}
+.jb-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.jb-meta-item{display:flex;align-items:center;gap:5px;font-size:.75rem;color:#666;background:#f6f8f5;border-radius:6px;padding:3px 8px}
+.jb-meta-item i{color:#1b7d4f;font-size:.68rem}
+.jb-desc{font-size:.8rem;color:#777;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jb-type-badge{display:inline-block;background:#fff3e0;color:#c96000;border-radius:6px;padding:3px 9px;font-size:.72rem;font-weight:600;margin-bottom:12px}
+.jb-footer{padding:12px 20px 16px;border-top:1px solid #f2f4f0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.jb-posted{font-size:.72rem;color:#aaa}
+.jb-apply-btn{display:inline-flex;align-items:center;gap:6px;background:#1b3a2d;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.8rem;font-weight:600;text-decoration:none;cursor:pointer;font-family:inherit;transition:background .15s}
+.jb-apply-btn:hover{background:#142e21;color:#fff}
+
+/* schedule badge colours */
+.sched-weekdays{background:#e8f0fe;color:#1a56c4}
+.sched-weekends{background:#fce4ec;color:#ad1457}
+.sched-flexible{background:#e6f5ee;color:#1b7d4f}
+.sched-live_in{background:#f3e5f5;color:#7b1fa2}
+.sched-overnight{background:#fff3e0;color:#c96000}
+
+/* pagination */
+.pagination{display:flex;justify-content:center;align-items:center;gap:6px;padding:32px 0 8px;flex-wrap:wrap}
+.page-btn{padding:7px 14px;border:1px solid #dde2d8;border-radius:8px;text-decoration:none;color:#333;font-size:.84rem;background:#fff;transition:background .15s}
+.page-btn:hover{background:#f2f4f0}
+.page-btn.active{background:#1b7d4f;border-color:#1b7d4f;color:#fff;font-weight:600}
+
+@media(max-width:900px){.browse-layout{grid-template-columns:1fr}.browse-sidebar{position:static;display:none}.browse-sidebar.mobile-open{display:block}.mobile-filter-btn{display:flex}}
+@media(max-width:520px){.jb-grid{grid-template-columns:1fr}.jhs-inner{flex-direction:column;border-radius:10px}.jhs-field{width:100%;border-bottom:1px solid #eee}.jhs-btn{width:100%;justify-content:center}}
+</style>
+
+<!-- HERO -->
+<section class="jobs-hero">
+<div class="jobs-hero-eyebrow"><i class="fas fa-briefcase"></i> {{ total }} Open Job{% if total != 1 %}s{% endif %} in Ontario</div>
+<h1>Find Care Jobs<br>Across Ontario</h1>
+<p>Families and households across Ontario are looking for qualified caregivers. Browse open listings and apply today.</p>
+<div class="jobs-hero-search">
+<form method="get" action="{% url 'browse_jobs' %}">
+<div class="jhs-inner">
+<span class="jhs-field"><i class="fas fa-map-marker-alt"></i><input type="text" name="city" placeholder="City or area" value="{{ city }}"></span>
+<div class="jhs-divider"></div>
+<span class="jhs-field"><i class="fas fa-briefcase-medical"></i>
+<select name="care_type">
+<option value="">Care type</option>
+{% for value, label in care_type_choices %}<option value="{{ value }}" {% if care_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</span>
+<button type="submit" class="jhs-btn"><i class="fas fa-search"></i> Search</button>
+</div>
+</form>
+</div>
+</section>
+
+<!-- LAYOUT -->
+<div class="browse-layout">
+
+<!-- SIDEBAR -->
+<aside class="browse-sidebar" id="jobsSidebar">
+<form method="get" action="{% url 'browse_jobs' %}" id="filterForm">
+<div class="filter-card">
+<div class="filter-header">
+<h3><i class="fas fa-sliders-h"></i> Filters</h3>
+<a href="{% url 'browse_jobs' %}" class="filter-reset">Reset all</a>
+</div>
+
+<div class="filter-group">
+<h4>City</h4>
+{% for c in cities %}
+<label class="filter-check"><input type="radio" name="city" value="{{ c }}" {% if city == c %}checked{% endif %} onchange="this.form.submit()"><span>{{ c }}</span></label>
+{% empty %}<p style="font-size:.8rem;color:#aaa">No listings yet</p>{% endfor %}
+{% if city %}<label class="filter-check"><input type="radio" name="city" value="" onchange="this.form.submit()"><span>All cities</span></label>{% endif %}
+</div>
+
+<div class="filter-group">
+<h4>Care Type</h4>
+{% for value, label in care_type_choices %}
+<label class="filter-check"><input type="radio" name="care_type" value="{{ value }}" {% if care_type == value %}checked{% endif %} onchange="this.form.submit()"><span>{{ label }}</span></label>
+{% endfor %}
+{% if care_type %}<label class="filter-check"><input type="radio" name="care_type" value="" onchange="this.form.submit()"><span>All types</span></label>{% endif %}
+</div>
+
+<div class="filter-group">
+<h4>Schedule</h4>
+{% for value, label in schedule_choices %}
+<label class="filter-check"><input type="radio" name="schedule" value="{{ value }}" {% if schedule == value %}checked{% endif %} onchange="this.form.submit()"><span>{{ label }}</span></label>
+{% endfor %}
+{% if schedule %}<label class="filter-check"><input type="radio" name="schedule" value="" onchange="this.form.submit()"><span>All schedules</span></label>{% endif %}
+</div>
+
+<div class="filter-group">
+<h4>Hourly Rate (CAD)</h4>
+<div class="rate-range">
+<span id="rate-min">${{ rate_min|default:"15" }}</span>
+<input type="range" min="15" max="80" value="{{ rate_min|default:'15' }}" id="rateMin" name="rate_min">
+<span>–</span>
+<input type="range" min="15" max="80" value="{{ rate_max|default:'80' }}" id="rateMax" name="rate_max">
+<span id="rate-max">${{ rate_max|default:"80" }}</span>
+</div>
+<button type="submit" style="margin-top:8px;cursor:pointer;border:none;background:none;text-decoration:underline;color:#1b7d4f;font-size:.8rem;padding:0">Apply rate filter</button>
+</div>
+
+{% if city %}<input type="hidden" name="city" value="{{ city }}">{% endif %}
+{% if care_type %}<input type="hidden" name="care_type" value="{{ care_type }}">{% endif %}
+{% if schedule %}<input type="hidden" name="schedule" value="{{ schedule }}">{% endif %}
+{% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+</div>
+</form>
+</aside>
+
+<!-- RESULTS -->
+<main class="browse-results">
+<div class="results-toolbar">
+<div class="results-count"><strong>{{ total }}</strong> job{% if total != 1 %}s{% endif %} found</div>
+<form method="get" action="{% url 'browse_jobs' %}" style="display:contents">
+{% if city %}<input type="hidden" name="city" value="{{ city }}">{% endif %}
+{% if care_type %}<input type="hidden" name="care_type" value="{{ care_type }}">{% endif %}
+{% if schedule %}<input type="hidden" name="schedule" value="{{ schedule }}">{% endif %}
+{% if rate_min %}<input type="hidden" name="rate_min" value="{{ rate_min }}">{% endif %}
+{% if rate_max %}<input type="hidden" name="rate_max" value="{{ rate_max }}">{% endif %}
+<div class="results-sort">
+<label>Sort by</label>
+<select name="sort" onchange="this.form.submit()">
+<option value="" {% if not sort %}selected{% endif %}>Newest</option>
+<option value="oldest" {% if sort == "oldest" %}selected{% endif %}>Oldest</option>
+<option value="rate_asc" {% if sort == "rate_asc" %}selected{% endif %}>Lowest Rate</option>
+<option value="rate_desc" {% if sort == "rate_desc" %}selected{% endif %}>Highest Rate</option>
+</select>
+</div>
+<button class="mobile-filter-btn" type="button" id="mobileFilterBtn"><i class="fas fa-sliders-h"></i> Filters</button>
+</form>
+</div>
+
+{% if city or care_type or schedule or rate_min or rate_max %}
+<div class="active-filters">
+{% if city %}<span class="af-chip">{{ city }} <a href="{% url 'browse_jobs' %}?{% if care_type %}care_type={{ care_type }}&{% endif %}{% if schedule %}schedule={{ schedule }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="af-chip-remove">×</a></span>{% endif %}
+{% if care_type %}<span class="af-chip">{{ care_type }} <a href="{% url 'browse_jobs' %}?{% if city %}city={{ city }}&{% endif %}{% if schedule %}schedule={{ schedule }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="af-chip-remove">×</a></span>{% endif %}
+{% if schedule %}<span class="af-chip">{{ schedule }} <a href="{% url 'browse_jobs' %}?{% if city %}city={{ city }}&{% endif %}{% if care_type %}care_type={{ care_type }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="af-chip-remove">×</a></span>{% endif %}
+{% if rate_min or rate_max %}<span class="af-chip">${{ rate_min|default:"15" }}–${{ rate_max|default:"80" }}/hr <a href="{% url 'browse_jobs' %}?{% if city %}city={{ city }}&{% endif %}{% if care_type %}care_type={{ care_type }}&{% endif %}{% if schedule %}schedule={{ schedule }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="af-chip-remove">×</a></span>{% endif %}
+</div>
+{% endif %}
+
+<div class="jb-grid">
+{% for job in page_obj %}
+<div class="jb-card">
+<div class="jb-card-body">
+<div class="jb-header">
+<div class="jb-title">{{ job.title }}</div>
+{% if job.hourly_rate %}<span class="jb-rate-badge">${{ job.hourly_rate }}/hr</span>{% endif %}
+</div>
+<span class="jb-type-badge">{{ job.get_care_type_display }}</span>
+<div class="jb-meta">
+<span class="jb-meta-item"><i class="fas fa-map-marker-alt"></i> {{ job.city|default:"Ontario" }}</span>
+{% if job.hours_per_week %}<span class="jb-meta-item"><i class="fas fa-clock"></i> {{ job.hours_per_week }} hrs/wk</span>{% endif %}
+<span class="jb-meta-item sched-{{ job.schedule }}"><i class="fas fa-calendar-alt"></i> {{ job.get_schedule_display }}</span>
+{% if job.start_date %}<span class="jb-meta-item"><i class="fas fa-calendar-day"></i> Starts {{ job.start_date|date:"M j, Y" }}</span>{% endif %}
+</div>
+{% if job.description %}<p class="jb-desc">{{ job.description }}</p>{% endif %}
+</div>
+<div class="jb-footer">
+<span class="jb-posted"><i class="far fa-clock"></i> Posted {{ job.created_at|timesince }} ago</span>
+<a href="{% url 'contact' %}" class="jb-apply-btn"><i class="fas fa-paper-plane"></i> Apply</a>
+</div>
+</div>
+{% empty %}
+<div style="grid-column:1/-1;text-align:center;padding:70px 20px;color:#aaa">
+<i class="fas fa-briefcase" style="font-size:2.5rem;display:block;margin-bottom:14px;color:#ddd"></i>
+<strong style="color:#555;font-size:1rem">No open jobs found</strong>
+<p style="font-size:.85rem;margin-top:6px">Try adjusting your filters or <a href="{% url 'browse_jobs' %}" style="color:#1b7d4f">reset all</a>.</p>
+</div>
+{% endfor %}
+</div>
+
+<!-- PAGINATION -->
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+{% if page_obj.has_previous %}
+<a class="page-btn" href="?page={{ page_obj.previous_page_number }}{% if city %}&city={{ city }}{% endif %}{% if care_type %}&care_type={{ care_type }}{% endif %}{% if schedule %}&schedule={{ schedule }}{% endif %}{% if rate_min %}&rate_min={{ rate_min }}{% endif %}{% if rate_max %}&rate_max={{ rate_max }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">&laquo; Prev</a>
+{% endif %}
+{% for num in page_obj.paginator.page_range %}
+{% if page_obj.number == num %}
+<span class="page-btn active">{{ num }}</span>
+{% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+<a class="page-btn" href="?page={{ num }}{% if city %}&city={{ city }}{% endif %}{% if care_type %}&care_type={{ care_type }}{% endif %}{% if schedule %}&schedule={{ schedule }}{% endif %}{% if rate_min %}&rate_min={{ rate_min }}{% endif %}{% if rate_max %}&rate_max={{ rate_max }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+{% endif %}
+{% endfor %}
+{% if page_obj.has_next %}
+<a class="page-btn" href="?page={{ page_obj.next_page_number }}{% if city %}&city={{ city }}{% endif %}{% if care_type %}&care_type={{ care_type }}{% endif %}{% if schedule %}&schedule={{ schedule }}{% endif %}{% if rate_min %}&rate_min={{ rate_min }}{% endif %}{% if rate_max %}&rate_max={{ rate_max }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next &raquo;</a>
+{% endif %}
+</div>
+{% endif %}
+
+</main>
+</div>
+
+<script>
+(function(){
+const rMin=document.getElementById('rateMin'),rMax=document.getElementById('rateMax');
+const rMinL=document.getElementById('rate-min'),rMaxL=document.getElementById('rate-max');
+if(rMin&&rMax){
+  function upd(){rMinL.textContent='$'+rMin.value;rMaxL.textContent='$'+rMax.value;}
+  rMin.addEventListener('input',upd);rMax.addEventListener('input',upd);
+}
+const mfb=document.getElementById('mobileFilterBtn'),sb=document.getElementById('jobsSidebar');
+if(mfb&&sb){mfb.addEventListener('click',()=>sb.classList.toggle('mobile-open'));}
+})();
+</script>
+{% endblock %}

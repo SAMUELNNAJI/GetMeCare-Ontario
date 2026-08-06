@@ -1,32 +1,17 @@
-{% extends "base.html" %}
-{% block title %}Payment History — Employer{% endblock %}
-
-{% block extra_head %}
-<style>
-  .container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; }
-  .page-header { padding: 2rem 0 1rem; }
-  .page-header h1 { font-size: 1.8rem; color: #1e3a35; margin: 0; }
-  .back-link { display: inline-flex; align-items: center; gap: .4rem; color: #00695c; text-decoration: none; margin-bottom: 1rem; font-size: .9rem; }
-  .section-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
-  .admin-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  .admin-table th { background: #f0f7f5; padding: .7rem 1rem; text-align: left; color: #1e3a35; }
-  .admin-table td { padding: .7rem 1rem; border-bottom: 1px solid #f0f0f0; }
-  .badge { display: inline-block; padding: .2rem .6rem; border-radius: 20px; font-size: .75rem; font-weight: 600; }
-  .badge-green  { background: #e8f5f3; color: #00695c; }
-  .badge-orange { background: #fff3e0; color: #e65100; }
-  .badge-red    { background: #fdecea; color: #c62828; }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-  <a href="{% url 'EmployerApp:dashboard' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-  <div class="page-header">
-    <h1><i class="fas fa-receipt"></i> Payment History</h1>
-  </div>
-
-  <div class="section-card">
-    <table class="admin-table">
+{% extends "EmployerApp/base_employer.html" %} {% block title %}Payment History
+— Employer{% endblock %} {% block content %}
+<div style="margin-bottom: 20px">
+  <h1 class="ep-page-title" style="margin-bottom: 6px">
+    <i class="fas fa-receipt" style="color: #1b7d4f; margin-right: 8px"></i
+    >Payment History
+  </h1>
+  <p style="font-size: 0.85rem; color: #888">
+    A record of all completed shift payments.
+  </p>
+</div>
+<div class="ep-card">
+  <div class="ep-card-pad">
+    <table class="ep-table">
       <thead>
         <tr>
           <th>Date</th>
@@ -41,21 +26,37 @@
         {% for log in logs %}
         <tr>
           <td>{{ log.shift.start_date|date:"M d, Y" }}</td>
-          <td>{{ log.shift.caregiver.get_full_name|default:log.shift.caregiver.username }}</td>
+          <td>
+            {{
+            log.shift.caregiver.get_full_name|default:log.shift.caregiver.username
+            }}
+          </td>
           <td>{{ log.hours_worked|default:"—" }} hrs</td>
           <td>${{ log.shift.hourly_rate }}/hr</td>
-          <td>{% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{% endif %}</td>
           <td>
-            <span class="badge
-              {% if log.payment_status == 'paid' %}badge-green
-              {% elif log.payment_status == 'disputed' %}badge-red
-              {% else %}badge-orange{% endif %}">
-              {{ log.get_payment_status_display }}
-            </span>
+            {% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{%
+            endif %}
+          </td>
+          <td>
+            <span
+              class="badge {% if log.payment_status == 'paid' %}badge-green{% elif log.payment_status == 'disputed' %}badge-red{% else %}badge-orange{% endif %}"
+              >{{ log.get_payment_status_display }}</span
+            >
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" style="text-align:center;color:#999;">No payment records yet.</td></tr>
+        <tr>
+          <td
+            colspan="6"
+            style="text-align: center; padding: 28px 0; color: #bbb"
+          >
+            <i
+              class="fas fa-receipt"
+              style="font-size: 1.6rem; display: block; margin-bottom: 8px"
+            ></i
+            >No payment records yet.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

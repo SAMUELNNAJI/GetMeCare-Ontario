@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+﻿{% load static %}<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -674,16 +674,13 @@
             <div class="ep-logo-name">
               GetMe<span style="color: #f0a040">Care</span>
             </div>
-            <div class="ep-logo-sub">Employer</div>
+            <div class="ep-logo-sub">Ontario</div>
           </div></a
         >
       </div>
       <div class="ep-profile">
         <div class="ep-profile-row">
-          <div class="ep-av">
-            {{ request.user.first_name|first|upper }}{{
-            request.user.last_name|first|upper }}
-          </div>
+          <div class="ep-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
           <div>
             <div class="ep-profile-name">
               {{ request.user.get_full_name|default:request.user.username }}
@@ -777,10 +774,7 @@
       <div class="ep-bell">
         <i class="fas fa-bell"></i><span class="ep-bell-dot"></span>
       </div>
-      <div class="ep-topbar-av">
-        {{ request.user.first_name|first|upper }}{{
-        request.user.last_name|first|upper }}
-      </div>
+      <div class="ep-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
     </div>
     <main class="ep-main">
       <div class="ep-content">{% block content %}{% endblock %}</div>

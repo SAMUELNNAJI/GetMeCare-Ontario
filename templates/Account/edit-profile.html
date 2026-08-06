@@ -19,42 +19,73 @@ GetMeCare{% endblock %} {% block extra_head %}
     top: 76px;
   }
   .ep-big-av {
-    width: 86px;
-    height: 86px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1b3a2d, #2d5a42);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 2.1rem;
     font-weight: 700;
-    margin: 0 auto 4px;
+    margin: 0 auto 12px;
     overflow: hidden;
     position: relative;
+    cursor: pointer;
   }
   .ep-big-av img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: absolute;
+    inset: 0;
+  }
+  /* Camera icon overlay on avatar hover */
+  .ep-big-av::after {
+    content: "\f030"; /* fa-camera */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .ep-big-av:hover::after {
+    opacity: 1;
+  }
+  /* Upload badge anchored to bottom-right of avatar */
+  .ep-av-upload-wrap {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto 4px;
+  }
+  .ep-av-upload-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #1b7d4f;
+    border: 2.5px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
   }
   .ep-av-upload-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 8px;
-    font-size: 0.74rem;
-    font-weight: 600;
-    color: #1b7d4f;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  .ep-av-upload-btn:hover {
-    color: #145e3a;
+    display: none; /* removed — avatar itself is the click target */
   }
   .ep-av-name {
     font-size: 1rem;
@@ -339,38 +370,28 @@ GetMeCare{% endblock %} {% block extra_head %}
     <form method="post" enctype="multipart/form-data" id="avatar-form">
       {% csrf_token %}
       <input type="hidden" name="action" value="image" />
-      {% if image_form %}{{ image_form.profile_image }}{% endif %}
       <input
         type="file"
         id="avatar-file-input"
         name="profile_image"
         accept="image/*"
+        style="display:none"
       />
     </form>
 
-    <div class="ep-big-av" id="ep-av-preview">
-      {% if profile and profile.profile_image %}
-      <img
-        src="{{ profile.profile_image.url }}"
-        alt="Profile photo"
-        id="ep-av-img"
-      />
-      {% else %}
-      <span id="ep-av-initials"
-        >{{ request.user.first_name|first|upper }}{{
-        request.user.last_name|first|upper }}</span
-      >
-      <img src="" alt="" id="ep-av-img" style="display: none" />
-      {% endif %}
+    <div class="ep-av-upload-wrap" onclick="document.getElementById('avatar-file-input').click()" title="Change photo">
+      <div class="ep-big-av" id="ep-av-preview">
+        <span id="ep-av-initials">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</span>
+        {% if profile and profile.profile_image %}
+        <img src="{{ profile.profile_image.url }}" alt="Profile photo" id="ep-av-img" />
+        {% else %}
+        <img src="" alt="" id="ep-av-img" style="display:none" />
+        {% endif %}
+      </div>
+      <div class="ep-av-upload-badge">
+        <i class="fas fa-camera"></i>
+      </div>
     </div>
-
-    <button
-      type="button"
-      class="ep-av-upload-btn"
-      onclick="document.getElementById('avatar-file-input').click()"
-    >
-      <i class="fas fa-camera"></i> Change photo
-    </button>
 
     <div class="ep-av-name">
       {{ request.user.get_full_name|default:request.user.username }}
@@ -487,8 +508,7 @@ GetMeCare{% endblock %} {% block extra_head %}
             <label for="{{ profile_form.hourly_rate.id_for_label }}"
               >Hourly Rate (CAD/hr)</label
             >
-            {{ profile_form.hourly_rate }} {% if profile_form.hourly_rate.errors
-            %}
+            {{ profile_form.hourly_rate }} {% if profile_form.hourly_rate.errors %}
             <div class="field-error">
               {{ profile_form.hourly_rate.errors|join:", " }}
             </div>
