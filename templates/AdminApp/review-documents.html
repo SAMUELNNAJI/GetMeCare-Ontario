@@ -1,0 +1,347 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Review Documents —
+Admin{% endblock %} {% block extra_head %}
+<style>
+  .rd-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .rd-section-head {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .rd-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #fff3e0;
+    color: #c96000;
+    border-radius: 20px;
+    padding: 3px 10px;
+  }
+  .rd-count.green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+
+  /* Inline action form */
+  .doc-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .note-input {
+    border: 1.5px solid #dde2d8;
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    color: #333;
+    outline: none;
+    width: 160px;
+    transition: border-color 0.15s;
+  }
+  .note-input:focus {
+    border-color: #1b7d4f;
+  }
+
+  /* Caregiver info cell */
+  .doc-caregiver {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .doc-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2d5a42;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .doc-name {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .doc-email {
+    font-size: 0.72rem;
+    color: #aaa;
+  }
+  .note-cell {
+    font-size: 0.75rem;
+    color: #888;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .note-cell:hover {
+    white-space: normal;
+    overflow: visible;
+  }
+
+  @media (max-width: 900px) {
+    .adm-table th:nth-child(4),
+    .adm-table td:nth-child(4) {
+      display: none;
+    }
+  }
+  @media (max-width: 600px) {
+    .note-input {
+      width: 110px;
+    }
+    .adm-table th:nth-child(3),
+    .adm-table td:nth-child(3) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i
+    class="fas fa-file-circle-check"
+    style="color: #1b7d4f; margin-right: 8px"
+  ></i
+  >Review Documents
+</div>
+
+{% for msg in messages %}
+<div
+  class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
+>
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<!-- ── Pending ── -->
+<div class="adm-card" style="margin-bottom: 20px">
+  <div class="adm-card-pad">
+    <div class="rd-section-head">
+      <i class="fas fa-clock" style="color: #c96000"></i>
+      Pending Review
+      <span class="rd-count">{{ pending|length }}</span>
+    </div>
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Caregiver</th>
+          <th>Document Type</th>
+          <th>File</th>
+          <th>Uploaded</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in pending %}
+        <tr>
+          <td>
+            <div class="doc-caregiver">
+              <div class="doc-av">
+                {{ doc.user.first_name|first|upper }}{{
+                doc.user.last_name|first|upper }}
+              </div>
+              <div>
+                <div class="doc-name">
+                  {{ doc.user.get_full_name|default:doc.user.username }}
+                </div>
+                <div class="doc-email">{{ doc.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ doc.get_doc_type_display }}</td>
+          <td>
+            <a
+              href="{{ doc.file.url }}"
+              class="adm-btn adm-btn-view"
+              target="_blank"
+            >
+              <i class="fas fa-eye"></i> View
+            </a>
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {{ doc.uploaded_at|date:"M d, Y" }}
+          </td>
+          <td>
+            <div class="doc-actions">
+              <!-- Approve -->
+              <form
+                method="post"
+                action="{% url 'AdminApp:approve_document' doc.pk %}"
+                style="display: inline-flex; align-items: center; gap: 5px"
+              >
+                {% csrf_token %}
+                <input
+                  type="text"
+                  name="note"
+                  class="note-input"
+                  placeholder="Note (optional)"
+                />
+                <button type="submit" class="adm-btn adm-btn-green">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+              </form>
+              <!-- Reject -->
+              <form
+                method="post"
+                action="{% url 'AdminApp:reject_document' doc.pk %}"
+                style="display: inline-flex; align-items: center; gap: 5px"
+              >
+                {% csrf_token %}
+                <input
+                  type="text"
+                  name="note"
+                  class="note-input"
+                  placeholder="Reason (optional)"
+                />
+                <button type="submit" class="adm-btn adm-btn-red">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            <div class="adm-empty">
+              <i class="fas fa-check-double"></i>No documents pending review.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Reviewed ── -->
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div class="rd-section-head">
+      <i class="fas fa-history" style="color: #1b7d4f"></i>
+      Recently Reviewed
+      <span class="rd-count green">{{ reviewed|length }}</span>
+    </div>
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Caregiver</th>
+          <th>Document Type</th>
+          <th>File</th>
+          <th>Reviewed</th>
+          <th>Status</th>
+          <th>Admin Note</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in reviewed %}
+        <tr>
+          <td>
+            <div class="doc-caregiver">
+              <div class="doc-av">
+                {{ doc.user.first_name|first|upper }}{{
+                doc.user.last_name|first|upper }}
+              </div>
+              <div>
+                <div class="doc-name">
+                  {{ doc.user.get_full_name|default:doc.user.username }}
+                </div>
+                <div class="doc-email">{{ doc.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ doc.get_doc_type_display }}</td>
+          <td>
+            <a
+              href="{{ doc.file.url }}"
+              class="adm-btn adm-btn-view"
+              target="_blank"
+            >
+              <i class="fas fa-eye"></i> View
+            </a>
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {{ doc.reviewed_at|date:"M d, Y"|default:"—" }}
+          </td>
+          <td>
+            <span
+              class="badge {% if doc.status == 'approved' %}badge-green{% else %}badge-red{% endif %}"
+            >
+              {{ doc.get_status_display }}
+            </span>
+          </td>
+          <td>
+            <span class="note-cell" title="{{ doc.note }}"
+              >{{ doc.note|default:"—" }}</span
+            >
+          </td>
+          <td>
+            {% if doc.status == 'approved' %}
+            <!-- Revoke approved doc -->
+            <form
+              method="post"
+              action="{% url 'AdminApp:revoke_document' doc.pk %}"
+              style="display: inline-flex; align-items: center; gap: 5px"
+            >
+              {% csrf_token %}
+              <input
+                type="text"
+                name="note"
+                class="note-input"
+                placeholder="Reason"
+              />
+              <button
+                type="submit"
+                class="adm-btn adm-btn-orange"
+                onclick="return confirm('Revoke approval for this document?');"
+              >
+                <i class="fas fa-ban"></i> Revoke
+              </button>
+            </form>
+            {% elif doc.status == 'rejected' %}
+            <!-- Re-approve a rejected doc -->
+            <form
+              method="post"
+              action="{% url 'AdminApp:approve_document' doc.pk %}"
+              style="display: inline"
+            >
+              {% csrf_token %}
+              <button type="submit" class="adm-btn adm-btn-green">
+                <i class="fas fa-redo"></i> Re-approve
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="adm-empty">
+              <i class="fas fa-inbox"></i>No reviewed documents yet.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

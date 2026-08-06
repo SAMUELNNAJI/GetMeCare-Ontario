@@ -1,0 +1,200 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}My Jobs — Employer{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ep-jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+  }
+  .ep-job-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    border: 1px solid #f2f4f0;
+    transition: box-shadow .15s, transform .15s;
+  }
+  .ep-job-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    transform: translateY(-2px);
+  }
+  .ep-job-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .ep-job-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .ep-job-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .ep-job-action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid #e0e4dc;
+    background: #fff;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: all .15s;
+  }
+  .ep-job-action-btn:hover {
+    background: #f8f9f7;
+    color: #1b3060;
+    border-color: #1b3060;
+  }
+  .ep-job-action-btn.danger:hover {
+    background: #fdecea;
+    color: #c62828;
+    border-color: #c62828;
+  }
+  .ep-job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .ep-job-tag {
+    background: #f0f2ee;
+    color: #555;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.73rem;
+    font-weight: 600;
+  }
+  .ep-job-tag.care-type {
+    background: #e8f0fe;
+    color: #1b3060;
+  }
+  .ep-job-tag.schedule {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .ep-job-desc {
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ep-job-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px solid #f2f4f0;
+  }
+  .ep-job-rate {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1b3060;
+  }
+  .ep-job-date {
+    font-size: 0.72rem;
+    color: #999;
+  }
+  .ep-empty-jobs {
+    text-align: center;
+    padding: 60px 20px;
+    color: #bbb;
+  }
+  .ep-empty-jobs i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 16px;
+    color: #ddd;
+  }
+  .ep-empty-jobs h3 {
+    font-size: 1.1rem;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .ep-empty-jobs p {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 768px) {
+    .ep-jobs-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ep-page-title">
+  <i class="fas fa-list-ul" style="color: #1b3060; margin-right: 8px"></i>My Jobs
+</div>
+
+{% for msg in messages %}
+<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+{% if jobs %}
+<div class="ep-jobs-grid">
+  {% for job in jobs %}
+  <div class="ep-job-card">
+    <div class="ep-job-header">
+      <div class="ep-job-title">{{ job.title }}</div>
+      <div class="ep-job-actions">
+        {% if job.status == 'open' %}
+        <form method="post" action="{% url 'EmployerApp:close_job' job.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="ep-job-action-btn danger" title="Close job">
+            <i class="fas fa-times"></i>
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    <div class="ep-job-meta">
+      <span class="ep-job-tag care-type">{{ job.get_care_type_display }}</span>
+      <span class="ep-job-tag schedule">{{ job.get_schedule_display }}</span>
+      <span class="ep-job-tag"><i class="fas fa-map-marker-alt"></i> {{ job.city }}</span>
+    </div>
+    <div class="ep-job-desc">{{ job.description|default:"No description provided." }}</div>
+    <div class="ep-job-footer">
+      <div class="ep-job-rate">
+        {% if job.hourly_rate %}${{ job.hourly_rate }}/hr{% else %}Rate not set{% endif %}
+      </div>
+      <div class="ep-job-date">
+        Posted {{ job.created_at|date:"M d, Y" }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="ep-empty-jobs">
+  <i class="fas fa-briefcase"></i>
+  <h3>No job postings yet</h3>
+  <p>Post your first job to start connecting with caregivers.</p>
+  {% if is_activated %}
+  <a href="{% url 'EmployerApp:post_job' %}" class="ep-btn ep-btn-primary">
+    <i class="fas fa-plus-circle"></i> Post a Job
+  </a>
+  {% else %}
+  <a href="{% url 'EmployerApp:activate_account' %}" class="ep-btn ep-btn-primary">
+    <i class="fas fa-bolt"></i> Activate to Post Jobs
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

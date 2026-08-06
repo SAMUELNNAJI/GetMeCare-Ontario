@@ -1,0 +1,678 @@
+{% extends "CareGiverAcc/base_caregiver.html" %} {% block title %}Edit Profile —
+GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  .ep-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  /* ── Avatar card (left) ── */
+  .ep-avatar-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    text-align: center;
+    position: sticky;
+    top: 76px;
+  }
+  .ep-big-av {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b3a2d, #2d5a42);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 auto 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ep-big-av img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ep-av-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .ep-av-upload-btn:hover {
+    color: #145e3a;
+  }
+  .ep-av-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-top: 10px;
+  }
+  .ep-av-email {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 3px;
+    word-break: break-all;
+  }
+  .ep-av-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+  .ep-status-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f2f4f0;
+  }
+  .ep-status-label {
+    font-size: 0.68rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+  .ep-status-val {
+    display: inline-block;
+    padding: 3px 11px;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+  .ep-stat-active {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .ep-stat-pending {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .ep-stat-inactive {
+    background: #f0f0f0;
+    color: #666;
+  }
+  .ep-stat-rejected {
+    background: #fdecea;
+    color: #c62828;
+  }
+
+  /* ── Sections (right) ── */
+  .ep-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    margin-bottom: 18px;
+  }
+  .ep-section-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .ep-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .ep-row.single {
+    grid-template-columns: 1fr;
+  }
+  .ep-row.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 5px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size: 0.855rem;
+    font-family: inherit;
+    color: #333;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: #1b7d4f;
+    background: #fff;
+  }
+  .form-group .help {
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  .field-error {
+    color: #c62828;
+    font-size: 0.75rem;
+    margin-top: 3px;
+  }
+  .form-group input[disabled] {
+    background: #f5f5f5;
+    color: #888;
+    cursor: not-allowed;
+  }
+
+  /* Skills pills */
+  .skills-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .skill-pill {
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.73rem;
+    font-weight: 600;
+  }
+
+  /* Bank info note */
+  .bank-note {
+    background: #fffbf0;
+    border: 1px solid #f5d78a;
+    border-radius: 9px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: #6b4800;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .bank-note i {
+    color: #c87d00;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .ep-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #1b3a2d;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 26px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-save:hover {
+    background: #142e21;
+  }
+  .btn-cancel {
+    font-size: 0.84rem;
+    color: #888;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 9px;
+    border: 1.5px solid #dde2d8;
+    background: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-cancel:hover {
+    background: #f4f5f0;
+    color: #555;
+  }
+
+  /* Alerts */
+  .msg-ok {
+    background: #e6f5ee;
+    color: #1b5e35;
+    border: 1px solid #b2dfca;
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+  }
+  .msg-err {
+    background: #fdecea;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+  }
+
+  /* Hidden file input for avatar */
+  #avatar-file-input {
+    display: none;
+  }
+
+  @media (max-width: 860px) {
+    .ep-grid {
+      grid-template-columns: 1fr;
+    }
+    .ep-avatar-card {
+      position: static;
+    }
+  }
+  @media (max-width: 520px) {
+    .ep-row {
+      grid-template-columns: 1fr;
+    }
+    .ep-row.three {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div
+  style="
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+  "
+>
+  <i class="fas fa-user-edit" style="color: #1b7d4f; margin-right: 8px"></i>Edit
+  Profile
+</div>
+
+{% for msg in messages %}
+<div class="{% if msg.tags == 'success' %}msg-ok{% else %}msg-err{% endif %}">
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="ep-grid">
+  <!-- ── LEFT: avatar + status card ── -->
+  <div class="ep-avatar-card">
+    <!-- Profile image form -->
+    <form method="post" enctype="multipart/form-data" id="avatar-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="image" />
+      {% if image_form %}{{ image_form.profile_image }}{% endif %}
+      <input
+        type="file"
+        id="avatar-file-input"
+        name="profile_image"
+        accept="image/*"
+      />
+    </form>
+
+    <div class="ep-big-av" id="ep-av-preview">
+      {% if profile and profile.profile_image %}
+      <img
+        src="{{ profile.profile_image.url }}"
+        alt="Profile photo"
+        id="ep-av-img"
+      />
+      {% else %}
+      <span id="ep-av-initials"
+        >{{ request.user.first_name|first|upper }}{{
+        request.user.last_name|first|upper }}</span
+      >
+      <img src="" alt="" id="ep-av-img" style="display: none" />
+      {% endif %}
+    </div>
+
+    <button
+      type="button"
+      class="ep-av-upload-btn"
+      onclick="document.getElementById('avatar-file-input').click()"
+    >
+      <i class="fas fa-camera"></i> Change photo
+    </button>
+
+    <div class="ep-av-name">
+      {{ request.user.get_full_name|default:request.user.username }}
+    </div>
+    <div class="ep-av-email">{{ request.user.email }}</div>
+    <div class="ep-av-role">
+      <i class="fas fa-user-nurse" style="font-size: 0.6rem"></i> Caregiver /
+      PSW
+    </div>
+
+    {% if profile %}
+    <div class="ep-status-row">
+      <div class="ep-status-label">Account Status</div>
+      <span
+        class="ep-status-val {% if profile.status == 'active' %}ep-stat-active{% elif profile.status == 'pending_admin_review' %}ep-stat-pending{% elif profile.status == 'rejected' %}ep-stat-rejected{% else %}ep-stat-inactive{% endif %}"
+      >
+        {{ profile.get_status_display }}
+      </span>
+    </div>
+    {% if profile.hourly_rate %}
+    <div class="ep-status-row">
+      <div class="ep-status-label">Current Rate</div>
+      <div style="font-size: 1.05rem; font-weight: 700; color: #1a1a1a">
+        ${{ profile.hourly_rate }}<span style="font-size: 0.72rem; color: #888">
+          CAD/hr</span
+        >
+      </div>
+    </div>
+    {% endif %} {% if profile.city %}
+    <div class="ep-status-row">
+      <div class="ep-status-label">Location</div>
+      <div style="font-size: 0.84rem; color: #333">
+        <i
+          class="fas fa-location-dot"
+          style="color: #1b7d4f; margin-right: 4px"
+        ></i
+        >{{ profile.city }}
+      </div>
+    </div>
+    {% endif %} {% endif %}
+  </div>
+
+  <!-- ── RIGHT: forms ── -->
+  <div>
+    <!-- Personal info -->
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="profile" />
+
+      <div class="ep-section">
+        <div class="ep-section-title">
+          <i class="fas fa-id-card" style="color: #1b7d4f"></i> Personal
+          Information
+        </div>
+        <div class="ep-row">
+          <div class="form-group">
+            <label for="{{ user_form.first_name.id_for_label }}"
+              >First Name</label
+            >
+            {{ user_form.first_name }} {% if user_form.first_name.errors %}
+            <div class="field-error">
+              {{ user_form.first_name.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ user_form.last_name.id_for_label }}"
+              >Last Name</label
+            >
+            {{ user_form.last_name }} {% if user_form.last_name.errors %}
+            <div class="field-error">
+              {{ user_form.last_name.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ep-row single">
+          <div class="form-group">
+            <label for="{{ user_form.phone.id_for_label }}">Phone Number</label>
+            {{ user_form.phone }} {% if user_form.phone.errors %}
+            <div class="field-error">
+              {{ user_form.phone.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="text" value="{{ request.user.email }}" disabled />
+          <div class="help">
+            Email cannot be changed. Contact support if needed.
+          </div>
+        </div>
+      </div>
+
+      {% if profile_form %}
+      <div class="ep-section">
+        <div class="ep-section-title">
+          <i class="fas fa-briefcase-medical" style="color: #1b7d4f"></i>
+          Caregiver Profile
+        </div>
+        <div class="ep-row">
+          <div class="form-group">
+            <label for="{{ profile_form.city.id_for_label }}"
+              >City / Municipality</label
+            >
+            {{ profile_form.city }} {% if profile_form.city.errors %}
+            <div class="field-error">
+              {{ profile_form.city.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ profile_form.hourly_rate.id_for_label }}"
+              >Hourly Rate (CAD/hr)</label
+            >
+            {{ profile_form.hourly_rate }} {% if profile_form.hourly_rate.errors
+            %}
+            <div class="field-error">
+              {{ profile_form.hourly_rate.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ep-row single">
+          <div class="form-group">
+            <label for="{{ profile_form.skills.id_for_label }}">Skills</label>
+            {{ profile_form.skills }}
+            <div class="help">{{ profile_form.skills.help_text }}</div>
+            {% if profile_form.skills.errors %}
+            <div class="field-error">
+              {{ profile_form.skills.errors|join:", " }}
+            </div>
+            {% endif %}
+            {% if profile.skills_list %}
+            <div class="skills-preview">
+              {% for skill in profile.skills_list %}<span class="skill-pill"
+                >{{ skill }}</span
+              >{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="ep-actions" style="margin-bottom: 22px">
+        <button type="submit" class="btn-save">
+          <i class="fas fa-check"></i> Save Changes
+        </button>
+        <a href="{% url 'CareGiverAcc:dashboard' %}" class="btn-cancel"
+          >Cancel</a
+        >
+      </div>
+    </form>
+
+    <!-- Bank / Direct Deposit details -->
+    {% if bank_form %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="bank" />
+
+      <div class="ep-section">
+        <div class="ep-section-title">
+          <i class="fas fa-building-columns" style="color: #1b7d4f"></i> Bank
+          &amp; Direct Deposit Details
+        </div>
+
+        <div class="bank-note">
+          <i class="fas fa-lock"></i>
+          Your banking information is used for direct deposit of your earnings.
+          Keep it accurate and up to date.
+        </div>
+
+        <div class="ep-row single">
+          <div class="form-group">
+            <label for="{{ bank_form.bank_name.id_for_label }}"
+              >Bank Name</label
+            >
+            {{ bank_form.bank_name }} {% if bank_form.bank_name.errors %}
+            <div class="field-error">
+              {{ bank_form.bank_name.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ep-row single">
+          <div class="form-group">
+            <label for="{{ bank_form.bank_account_name.id_for_label }}"
+              >Account Holder Name</label
+            >
+            {{ bank_form.bank_account_name }}
+            <div class="help">
+              Must match exactly as it appears on your bank account.
+            </div>
+            {% if bank_form.bank_account_name.errors %}
+            <div class="field-error">
+              {{ bank_form.bank_account_name.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ep-row three">
+          <div class="form-group">
+            <label for="{{ bank_form.bank_transit_number.id_for_label }}"
+              >Transit No.</label
+            >
+            {{ bank_form.bank_transit_number }}
+            <div class="help">5 digits</div>
+            {% if bank_form.bank_transit_number.errors %}
+            <div class="field-error">
+              {{ bank_form.bank_transit_number.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ bank_form.bank_institution_number.id_for_label }}"
+              >Institution No.</label
+            >
+            {{ bank_form.bank_institution_number }}
+            <div class="help">3 digits</div>
+            {% if bank_form.bank_institution_number.errors %}
+            <div class="field-error">
+              {{ bank_form.bank_institution_number.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ bank_form.bank_account_number.id_for_label }}"
+              >Account No.</label
+            >
+            {{ bank_form.bank_account_number }}
+            <div class="help">7–12 digits</div>
+            {% if bank_form.bank_account_number.errors %}
+            <div class="field-error">
+              {{ bank_form.bank_account_number.errors|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if profile and profile.bank_name %}
+        <div
+          style="
+            background: #f6f8f5;
+            border-radius: 9px;
+            padding: 12px 14px;
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 14px;
+          "
+        >
+          <i
+            class="fas fa-check-circle"
+            style="color: #1b7d4f; margin-right: 5px"
+          ></i>
+          Current: <strong>{{ profile.bank_name }}</strong> · Transit
+          <strong>{{ profile.bank_transit_number|default:"—" }}</strong> ·
+          Institution
+          <strong>{{ profile.bank_institution_number|default:"—" }}</strong> ·
+          Account ending in
+          <strong>{{ profile.bank_account_number|slice:"-4:" }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="ep-actions">
+          <button type="submit" class="btn-save">
+            <i class="fas fa-building-columns"></i> Save Bank Details
+          </button>
+        </div>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+  <!-- end right col -->
+</div>
+<!-- end ep-grid -->
+{% endblock %} {% block extra_scripts %}
+<script>
+  (function () {
+    var fileInput = document.getElementById("avatar-file-input");
+    var imgEl = document.getElementById("ep-av-img");
+    var initials = document.getElementById("ep-av-initials");
+    var form = document.getElementById("avatar-form");
+
+    if (!fileInput) return;
+
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files && fileInput.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          if (imgEl) {
+            imgEl.src = e.target.result;
+            imgEl.style.display = "block";
+            if (initials) initials.style.display = "none";
+          }
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+        // Auto-submit the image form
+        if (form) form.submit();
+      }
+    });
+  })();
+</script>
+{% endblock %}

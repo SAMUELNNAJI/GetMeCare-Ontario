@@ -1,0 +1,788 @@
+{% extends "CareGiverAcc/base_caregiver.html" %} {% block title %}Dashboard —
+GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  /* ── Page header ── */
+  .dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .dash-greeting h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.15;
+  }
+  .dash-greeting p {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 4px;
+  }
+  .dash-date {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: #555;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #dde2d8;
+    border-radius: 20px;
+    padding: 6px 13px;
+  }
+
+  /* ── Alert ── */
+  .dash-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fffbf0;
+    border: 1px solid #f5d78a;
+    border-radius: 12px;
+    padding: 13px 16px;
+    margin-bottom: 20px;
+  }
+  .dash-alert-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #fff3cd;
+    border: 1px solid #f5d78a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c87d00;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .dash-alert-body {
+    flex: 1;
+    font-size: 0.83rem;
+    color: #4a3800;
+    line-height: 1.45;
+  }
+  .dash-alert-body strong {
+    color: #1a1a1a;
+  }
+  .dash-alert-btn {
+    background: #e07b00;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: inherit;
+  }
+  .dash-alert-btn:hover {
+    background: #c96e00;
+    color: #fff;
+  }
+
+  /* ── Stat cards ── */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .dash-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 18px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .dash-stat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .si-green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .si-orange {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .si-blue {
+    background: #e8f0fe;
+    color: #1a56c4;
+  }
+  .si-gold {
+    background: #fef9e7;
+    color: #b8860b;
+  }
+  .dash-stat-val {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .dash-stat-lbl {
+    font-size: 0.76rem;
+    color: #888;
+  }
+  .dash-stat-sub {
+    font-size: 0.7rem;
+    color: #27ae60;
+    margin-top: 3px;
+  }
+  .dash-stat-sub.muted {
+    color: #aaa;
+  }
+
+  /* ── Mid row ── */
+  .dash-mid {
+    display: grid;
+    grid-template-columns: 1fr 290px;
+    gap: 18px;
+    margin-bottom: 22px;
+    align-items: start;
+  }
+
+  /* Shift tracker card */
+  .tracker-card {
+    background: #1b3a2d;
+    border-radius: 14px;
+    padding: 22px 24px 20px;
+    color: #fff;
+  }
+  .tracker-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8fbfaa;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .tracker-time {
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tracker-status {
+    font-size: 0.78rem;
+    color: #8fbfaa;
+    margin-bottom: 16px;
+  }
+  .tracker-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .tracker-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+
+  /* Earnings chart */
+  .chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px 14px;
+    margin-top: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .chart-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .chart-badge {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    background: #e6f5ee;
+    border-radius: 20px;
+    padding: 3px 9px;
+  }
+  .chart-svg {
+    width: 100%;
+    height: 100px;
+    display: block;
+  }
+  .chart-days {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.66rem;
+    color: #bbb;
+    margin-top: 6px;
+  }
+
+  /* Compliance card */
+  .comply-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .comply-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+  }
+  .comply-sub {
+    font-size: 0.73rem;
+    color: #d06500;
+    margin-bottom: 14px;
+  }
+  .comply-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .comply-list li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.82rem;
+    color: #333;
+    padding: 5px 0;
+  }
+  .ci {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.58rem;
+  }
+  .ci.done {
+    background: #1b7d4f;
+    color: #fff;
+  }
+  .ci.pending {
+    background: #fff;
+    border: 2px solid #ccc;
+  }
+  .comply-btn {
+    display: block;
+    width: 100%;
+    background: #1b3a2d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .comply-btn:hover {
+    background: #142e21;
+    color: #fff;
+  }
+
+  /* ── Bottom row ── */
+  .dash-bottom {
+    display: grid;
+    grid-template-columns: 1fr 290px;
+    gap: 18px;
+  }
+  .section-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 20px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-head h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+  }
+  .view-all {
+    font-size: 0.76rem;
+    color: #1b7d4f;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .view-all:hover {
+    text-decoration: underline;
+  }
+
+  /* Shift rows */
+  .shift-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .shift-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .shift-av {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .av-1 {
+    background: #f0a040;
+  }
+  .av-2 {
+    background: #3dada8;
+  }
+  .av-3 {
+    background: #9b7bc8;
+  }
+  .av-4 {
+    background: #4caf7d;
+  }
+  .av-5 {
+    background: #e05252;
+  }
+  .shift-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .shift-name {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .shift-type {
+    font-size: 0.73rem;
+    color: #888;
+    margin: 1px 0;
+  }
+  .shift-meta {
+    font-size: 0.69rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    flex-wrap: wrap;
+  }
+  .shift-meta i {
+    font-size: 0.65rem;
+  }
+  .shift-pay {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    white-space: nowrap;
+  }
+
+  /* Open jobs */
+  .job-row {
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .job-row:last-of-type {
+    border-bottom: none;
+  }
+  .job-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .job-name {
+    font-size: 0.855rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .job-rate {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .job-meta {
+    font-size: 0.7rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .browse-btn {
+    display: block;
+    width: 100%;
+    border: 1.5px solid #dde2d8;
+    background: #fff;
+    border-radius: 10px;
+    padding: 9px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 12px;
+    transition: background 0.15s;
+  }
+  .browse-btn:hover {
+    background: #f2f4f0;
+    color: #1a1a1a;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 960px) {
+    .dash-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .dash-mid {
+      grid-template-columns: 1fr;
+    }
+    .dash-bottom {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .dash-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .dash-greeting h1 {
+      font-size: 1.3rem;
+    }
+    .tracker-time {
+      font-size: 2rem;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+
+<!-- Page header -->
+<div class="dash-header">
+  <div class="dash-greeting">
+    <h1>
+      {{ greeting }}, {{ request.user.first_name|default:request.user.username
+      }}
+    </h1>
+    <p>
+      {% if upcoming %}{{ upcoming|length }} shift{{ upcoming|length|pluralize
+      }} lined up this week{% else %}No upcoming shifts scheduled{% endif %}
+      &nbsp;·&nbsp; {{ profile.city|default:"Ontario" }}
+    </p>
+  </div>
+  <div class="dash-date">
+    <i class="fas fa-calendar-day"></i> {{ today|date:"l, F j" }}
+  </div>
+</div>
+
+<!-- Alert banner -->
+{% if profile.status == 'pending_admin_review' %}
+<div class="dash-alert">
+  <div class="dash-alert-icon"><i class="fas fa-clock"></i></div>
+  <div class="dash-alert-body">
+    <strong>Your profile is under review.</strong>
+    Compliance is verifying your documents — shift controls unlock once
+    approved. You can still browse open jobs below.
+  </div>
+  <a href="{% url 'CareGiverAcc:documents' %}" class="dash-alert-btn"
+    >View checklist</a
+  >
+</div>
+{% endif %}
+
+<!-- Stat cards -->
+<div class="dash-stats">
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-green">
+      <i class="fas fa-calendar-check"></i>
+    </div>
+    <div class="dash-stat-val">{{ upcoming|length }}</div>
+    <div class="dash-stat-lbl">Upcoming shifts</div>
+    {% if upcoming %}
+    <div class="dash-stat-sub muted">next in 14h</div>
+    {% endif %}
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-orange">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+    <div class="dash-stat-val">${{ earned_this_month }}</div>
+    <div class="dash-stat-lbl">Earned this month</div>
+    <div class="dash-stat-sub">+18% vs last month</div>
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-blue">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="dash-stat-val">{{ completed_count }}</div>
+    <div class="dash-stat-lbl">Completed shifts</div>
+    <div class="dash-stat-sub muted">98% on time</div>
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-gold"><i class="fas fa-star"></i></div>
+    <div class="dash-stat-val">
+      {% if profile.hourly_rate %}${{ profile.hourly_rate }}{% else %}—{% endif %}
+    </div>
+    <div class="dash-stat-lbl">Your rate</div>
+    <div class="dash-stat-sub muted">CAD / hour</div>
+  </div>
+</div>
+
+<!-- Mid row -->
+<div class="dash-mid">
+  <div>
+    <!-- Shift tracker -->
+    <div class="tracker-card">
+      <div class="tracker-label">Shift Tracker</div>
+      <div class="tracker-time" id="cg-timer">00:00:00</div>
+      <div class="tracker-status">No active shift · next starts in 14h</div>
+      <a href="{% url 'Account:clock_in' %}" class="tracker-btn">
+        <i class="fas fa-play"></i> Start shift
+      </a>
+    </div>
+    <!-- Earnings chart -->
+    <div class="chart-card">
+      <div class="chart-head">
+        <span class="chart-title">Earnings this week</span>
+        {% if week_change_pct is not None %} {% if week_change_pct >= 0 %}
+        <span class="chart-badge" style="color: #1b7d4f; background: #e6f5ee"
+          >+{{ week_change_pct }}% vs last week</span
+        >
+        {% else %}
+        <span class="chart-badge" style="color: #c62828; background: #fdecea"
+          >{{ week_change_pct }}% vs last week</span
+        >
+        {% endif %} {% else %}
+        <span class="chart-badge">${{ weekly_total }} this week</span>
+        {% endif %}
+      </div>
+      <div style="position: relative; height: 110px">
+        <canvas id="weeklyEarningsChart"></canvas>
+      </div>
+      <div class="chart-days" id="chart-day-labels"></div>
+    </div>
+  </div>
+
+  <!-- Compliance -->
+  <div class="comply-card">
+    <div class="comply-title">Compliance checklist</div>
+    <div class="comply-sub">{{ onboarding_pct }}% complete</div>
+    <ul class="comply-list">
+      {% for item in checklist %}
+      <li>
+        <span class="ci {% if item.done %}done{% else %}pending{% endif %}">
+          {% if item.done %}<i class="fas fa-check"></i>{% endif %}
+        </span>
+        {{ item.label }}
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'CareGiverAcc:documents' %}" class="comply-btn"
+      >Finish onboarding</a
+    >
+  </div>
+</div>
+
+<!-- Bottom row -->
+<div class="dash-bottom">
+  <!-- Upcoming shifts -->
+  <div class="section-card">
+    <div class="section-head">
+      <h3>Upcoming shifts</h3>
+      <a href="{% url 'CareGiverAcc:my_schedule' %}" class="view-all"
+        >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
+      ></a>
+    </div>
+    {% for shift in upcoming %}
+    <div class="shift-row">
+      <div class="shift-av av-{{ forloop.counter }}">
+        {{ shift.employer.first_name|first|upper }}{{ shift.employer.last_name|first|upper }}
+      </div>
+      <div class="shift-info">
+        <div class="shift-name">{{ shift.employer.get_full_name }}</div>
+        <div class="shift-type">
+          {% if shift.city %}{{ shift.city }}{% else %}Care shift{% endif %}
+        </div>
+        <div class="shift-meta">
+          <span
+            ><i class="fas fa-clock"></i>
+            {% if shift.start_date == today %}Today{% else %}{{
+            shift.start_date|date:"D, M j" }}{% endif %} · {{
+            shift.start_time|time:"g:i A" }} – {{ shift.end_time|time:"g:i A" }}
+          </span>
+          {% if shift.city %}<span
+            ><i class="fas fa-location-dot"></i> {{ shift.city }}</span
+          >{% endif %}
+        </div>
+      </div>
+      <div class="shift-pay">${{ shift.hourly_rate }}/hr</div>
+    </div>
+    {% empty %}
+    <div
+      style="
+        text-align: center;
+        padding: 28px 0;
+        color: #ccc;
+        font-size: 0.85rem;
+      "
+    >
+      <i
+        class="fas fa-calendar-xmark"
+        style="font-size: 1.6rem; display: block; margin-bottom: 8px"
+      ></i>
+      No upcoming shifts scheduled
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Open jobs -->
+  <div class="section-card">
+    <div class="section-head"><h3>Open jobs near you</h3></div>
+    <div class="job-row">
+      <div class="job-top">
+        <div class="job-name">Weekend respite care</div>
+        <span class="job-rate">$36/hr</span>
+      </div>
+      <div class="job-meta">
+        <i class="fas fa-location-dot"></i> Nepean &nbsp;·&nbsp; 12 hrs
+      </div>
+    </div>
+    <div class="job-row">
+      <div class="job-top">
+        <div class="job-name">Dementia day support</div>
+        <span class="job-rate">$38/hr</span>
+      </div>
+      <div class="job-meta">
+        <i class="fas fa-location-dot"></i> Orléans &nbsp;·&nbsp; 6 hrs
+      </div>
+    </div>
+    <div class="job-row">
+      <div class="job-top">
+        <div class="job-name">Palliative night shift</div>
+        <span class="job-rate">$41/hr</span>
+      </div>
+      <div class="job-meta">
+        <i class="fas fa-location-dot"></i> Vanier &nbsp;·&nbsp; 10 hrs
+      </div>
+    </div>
+    <a href="{% url 'browse' %}" class="browse-btn">Browse all jobs</a>
+  </div>
+</div>
+<!-- end dash-bottom -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    var labels = {{ weekly_labels|safe }};
+    var data   = {{ weekly_data|safe }};
+
+    // Fill day labels row
+    var labelRow = document.getElementById('chart-day-labels');
+    if(labelRow){
+      labelRow.innerHTML = labels.map(function(l){ return '<span>'+l+'</span>'; }).join('');
+    }
+
+    var canvas = document.getElementById('weeklyEarningsChart');
+    if(!canvas) return;
+
+    var ctx = canvas.getContext('2d');
+    var gradient = ctx.createLinearGradient(0, 0, 0, 110);
+    gradient.addColorStop(0,   'rgba(27,125,79,0.2)');
+    gradient.addColorStop(1,   'rgba(27,125,79,0.0)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: '#1b7d4f',
+          borderWidth: 2.5,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: function(ctx){
+            var idx = ctx.dataIndex;
+            var max = Math.max.apply(null, data);
+            return data[idx] === max ? '#f0a040' : '#fff';
+          },
+          pointBorderColor: '#1b7d4f',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx){ return ' $' + ctx.parsed.y.toFixed(2); }
+            }
+          }
+        },
+        scales: {
+          x: { display: false },
+          y: {
+            display: false,
+            beginAtZero: true,
+          }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

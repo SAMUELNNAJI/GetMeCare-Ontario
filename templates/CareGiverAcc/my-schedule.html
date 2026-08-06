@@ -1,0 +1,534 @@
+{% extends "CareGiverAcc/base_caregiver.html" %} {% block title %}Shift Tracker
+— GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+  }
+
+  /* ── Layout ── */
+  .tracker-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  /* ── Shift Tracker card (left column, full height) ── */
+  .tracker-panel {
+    background: #1b3a2d;
+    border-radius: 16px;
+    padding: 26px 22px 22px;
+    color: #fff;
+    position: sticky;
+    top: 76px;
+  }
+  .tracker-panel-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8fbfaa;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .tracker-clock {
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tracker-clock-status {
+    font-size: 0.8rem;
+    color: #8fbfaa;
+    margin-bottom: 20px;
+  }
+
+  .tracker-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn-start {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #4caf7d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-start:hover {
+    background: #3d9e6c;
+    color: #fff;
+  }
+  .btn-stop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffb3b3;
+    border: 1.5px solid rgba(255, 100, 100, 0.3);
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-stop:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffb3b3;
+  }
+
+  /* Divider inside tracker */
+  .tracker-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+  }
+
+  /* Active shift info box inside tracker */
+  .tracker-shift-box {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.82rem;
+  }
+  .tracker-shift-box .tsb-label {
+    color: #8fbfaa;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .tracker-shift-box .tsb-name {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .tracker-shift-box .tsb-meta {
+    color: #8fbfaa;
+    font-size: 0.76rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .tracker-shift-box .tsb-meta i {
+    width: 13px;
+  }
+
+  /* Stats row inside tracker */
+  .tracker-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .tracker-stat {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .tracker-stat .ts-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .tracker-stat .ts-lbl {
+    font-size: 0.68rem;
+    color: #8fbfaa;
+    margin-top: 3px;
+  }
+
+  /* ── Right column ── */
+  .schedule-right {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* Shared section card */
+  .sched-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .sched-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .sched-card-head h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sched-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 3px 10px;
+  }
+
+  /* Shift item row */
+  .sched-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .sched-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .sched-date-bubble {
+    width: 46px;
+    height: 50px;
+    border-radius: 10px;
+    background: #e6f5ee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .sched-date-bubble .day-num {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1b7d4f;
+    line-height: 1;
+  }
+  .sched-date-bubble .day-mon {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+  .sched-date-bubble.is-today {
+    background: #1b3a2d;
+  }
+  .sched-date-bubble.is-today .day-num,
+  .sched-date-bubble.is-today .day-mon {
+    color: #fff;
+  }
+  .sched-date-bubble.is-past {
+    background: #f2f4f0;
+  }
+  .sched-date-bubble.is-past .day-num,
+  .sched-date-bubble.is-past .day-mon {
+    color: #aaa;
+  }
+
+  .sched-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .sched-dow {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+  }
+  .sched-employer {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .sched-time {
+    font-size: 0.82rem;
+    color: #555;
+    margin-top: 2px;
+  }
+  .sched-meta {
+    font-size: 0.73rem;
+    color: #aaa;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .sched-meta i {
+    font-size: 0.67rem;
+  }
+  .sched-right {
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .sched-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a56c4, #2d6aa8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .sched-pay {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  /* History-specific */
+  .hist-earned {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    margin-top: 3px;
+  }
+  .hist-hours {
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-top: 1px;
+  }
+
+  /* Empty state */
+  .sched-empty {
+    text-align: center;
+    padding: 32px 0;
+    color: #ccc;
+    font-size: 0.85rem;
+  }
+  .sched-empty i {
+    font-size: 1.8rem;
+    display: block;
+    margin-bottom: 8px;
+    color: #ddd;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .tracker-layout {
+      grid-template-columns: 1fr;
+    }
+    .tracker-panel {
+      position: static;
+    }
+    .tracker-clock {
+      font-size: 2.2rem;
+    }
+  }
+  @media (max-width: 480px) {
+    .sched-item {
+      gap: 10px;
+    }
+    .sched-date-bubble {
+      width: 40px;
+      height: 44px;
+    }
+    .sched-date-bubble .day-num {
+      font-size: 1rem;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="page-title">
+  <i class="fas fa-clock" style="color: #1b7d4f; margin-right: 8px"></i>Shift
+  Tracker
+</div>
+
+<div class="tracker-layout">
+  <!-- ── LEFT: Tracker panel ── -->
+  <div class="tracker-panel">
+    <div class="tracker-panel-label">Live Timer</div>
+    <div class="tracker-clock" id="cg-sched-timer">00:00:00</div>
+    <div class="tracker-clock-status">
+      {% if shifts %}Next shift: {{ shifts.0.start_date|date:"D, M j" }} at {{
+      shifts.0.start_time|time:"g:i A" }}{% else %}No active shift{% endif %}
+    </div>
+
+    <div class="tracker-actions">
+      <a href="{% url 'Account:clock_in' %}" class="btn-start"
+        ><i class="fas fa-play"></i> Clock In</a
+      >
+      <a href="{% url 'Account:clock_out' %}" class="btn-stop"
+        ><i class="fas fa-stop"></i> Clock Out</a
+      >
+    </div>
+
+    <hr class="tracker-divider" />
+
+    <!-- Stats -->
+    <div class="tracker-stats">
+      <div class="tracker-stat">
+        <div class="ts-val">{{ shifts|length }}</div>
+        <div class="ts-lbl">Upcoming</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="ts-val">{{ completed_count }}</div>
+        <div class="ts-lbl">Completed</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="ts-val">${{ total_earned }}</div>
+        <div class="ts-lbl">Total earned</div>
+      </div>
+      <div class="tracker-stat">
+        <div class="ts-val">
+          {% if profile.hourly_rate %}${{ profile.hourly_rate }}{% else %}—{% endif %}
+        </div>
+        <div class="ts-lbl">Rate / hr</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Upcoming + History ── -->
+  <div class="schedule-right">
+    <!-- Upcoming shifts -->
+    <div class="sched-card">
+      <div class="sched-card-head">
+        <h3>
+          <i class="fas fa-calendar-check" style="color: #1b7d4f"></i> Upcoming
+          Shifts
+        </h3>
+        {% if shifts %}<span class="sched-count"
+          >{{ shifts|length }} scheduled</span
+        >{% endif %}
+      </div>
+
+      {% for s in shifts %}
+      <div class="sched-item">
+        <div
+          class="sched-date-bubble {% if s.start_date == today %}is-today{% endif %}"
+        >
+          <span class="day-num">{{ s.start_date|date:"j" }}</span>
+          <span class="day-mon">{{ s.start_date|date:"M" }}</span>
+        </div>
+        <div class="sched-body">
+          <div class="sched-dow">{{ s.start_date|date:"l" }}</div>
+          <div style="display:flex;align-items:center;">
+            <div class="sched-avatar">
+              {{ s.employer.first_name|first|upper }}{{ s.employer.last_name|first|upper }}
+            </div>
+            <div class="sched-employer">{{ s.employer.get_full_name }}</div>
+          </div>
+          <div class="sched-time">
+            {{ s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}
+          </div>
+          <div class="sched-meta">
+            <span
+              ><i class="fas fa-location-dot"></i> {{ s.city|default:"Ontario"
+              }}</span
+            >
+          </div>
+        </div>
+        <div class="sched-right">
+          <div class="sched-pay">${{ s.hourly_rate }}/hr</div>
+          <span
+            class="badge {% if s.status == 'in_progress' %}badge-orange{% else %}badge-blue{% endif %}"
+            style="margin-top: 5px; display: inline-block"
+          >
+            {{ s.get_status_display }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="sched-empty">
+        <i class="fas fa-calendar-xmark"></i>
+        No upcoming shifts scheduled.
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Shift history -->
+    <div class="sched-card">
+      <div class="sched-card-head">
+        <h3>
+          <i class="fas fa-history" style="color: #1b7d4f"></i> Shift History
+        </h3>
+        {% if shift_history %}<span class="sched-count"
+          >{{ shift_history|length }} completed</span
+        >{% endif %}
+      </div>
+
+      {% for log in shift_history %}
+      <div class="sched-item">
+        <div class="sched-date-bubble is-past">
+          <span class="day-num">{{ log.shift.start_date|date:"j" }}</span>
+          <span class="day-mon">{{ log.shift.start_date|date:"M" }}</span>
+        </div>
+        <div class="sched-body">
+          <div class="sched-dow">{{ log.shift.start_date|date:"l, Y" }}</div>
+          <div style="display:flex;align-items:center;">
+            <div class="sched-avatar">
+              {{ log.shift.employer.first_name|first|upper }}{{ log.shift.employer.last_name|first|upper }}
+            </div>
+            <div class="sched-employer">
+              {{ log.shift.employer.get_full_name }}
+            </div>
+          </div>
+          <div class="sched-time">
+            {{ log.shift.start_time|time:"g:i A" }} – {{
+            log.shift.end_time|time:"g:i A" }}
+          </div>
+          <div class="sched-meta">
+            <span
+              ><i class="fas fa-location-dot"></i> {{
+              log.shift.city|default:"Ontario" }}</span
+            >
+            {% if log.hours_worked %}<span
+              ><i class="fas fa-clock"></i> {{ log.hours_worked }} hrs</span
+            >{% endif %}
+          </div>
+        </div>
+        <div class="sched-right">
+          {% if log.amount_earned %}
+          <div class="hist-earned">${{ log.amount_earned }}</div>
+          {% endif %} {% if log.hours_worked %}
+          <div class="hist-hours">{{ log.hours_worked }} hrs</div>
+          {% endif %}
+          <span
+            class="badge {% if log.payment_status == 'paid' %}badge-green{% elif log.payment_status == 'disputed' %}badge-red{% else %}badge-orange{% endif %}"
+            style="margin-top: 5px; display: inline-block"
+          >
+            {{ log.get_payment_status_display }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="sched-empty">
+        <i class="fas fa-receipt"></i>
+        No completed shifts yet.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <!-- end schedule-right -->
+</div>
+<!-- end tracker-layout -->
+{% endblock %}

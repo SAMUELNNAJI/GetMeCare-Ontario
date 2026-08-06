@@ -1,0 +1,524 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Admin Dashboard —
+GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  /* Stats */
+  .adm-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .adm-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .adm-stat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .si-green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .si-orange {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .si-blue {
+    background: #e8f0fe;
+    color: #1a56c4;
+  }
+  .si-red {
+    background: #fdecea;
+    color: #c62828;
+  }
+  .si-purple {
+    background: #f3e8ff;
+    color: #7c3aed;
+  }
+  .adm-stat-val {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .adm-stat-lbl {
+    font-size: 0.76rem;
+    color: #888;
+  }
+
+  /* Quick cards */
+  .adm-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .adm-quick-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    transition: box-shadow 0.15s;
+  }
+  .adm-quick-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  .adm-quick-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+  .adm-quick-label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .adm-quick-sub {
+    font-size: 0.72rem;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  /* Charts row */
+  .adm-charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .adm-chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .adm-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .adm-chart-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+  .adm-chart-sub {
+    font-size: 0.72rem;
+    color: #aaa;
+  }
+  .adm-chart-canvas {
+    position: relative;
+    height: 160px;
+  }
+
+  /* Bottom row: table + activity */
+  .adm-bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 18px;
+  }
+
+  /* Activity feed */
+  .activity-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 20px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .activity-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .activity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf7d;
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.3);
+    }
+  }
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .activity-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .activity-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .activity-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .activity-text {
+    font-size: 0.8rem;
+    color: #333;
+    line-height: 1.4;
+  }
+  .activity-text strong {
+    color: #1a1a1a;
+  }
+  .activity-sub {
+    font-size: 0.71rem;
+    color: #aaa;
+    margin-top: 2px;
+  }
+  .activity-time {
+    font-size: 0.68rem;
+    color: #bbb;
+    white-space: nowrap;
+    margin-top: 3px;
+  }
+  .activity-empty {
+    text-align: center;
+    padding: 28px 0;
+    color: #ccc;
+    font-size: 0.84rem;
+  }
+
+  .adm-section-head {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @media (max-width: 1100px) {
+    .adm-bottom-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 900px) {
+    .adm-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .adm-quick-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .adm-charts-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .adm-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .adm-quick-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-shield-alt" style="color: #1b7d4f; margin-right: 8px"></i
+  >Admin Dashboard
+</div>
+
+<!-- Quick nav cards -->
+<div class="adm-quick-grid">
+  <a href="{% url 'AdminApp:manage_caregivers' %}" class="adm-quick-card">
+    <div class="adm-quick-icon si-green"><i class="fas fa-user-nurse"></i></div>
+    <div>
+      <div class="adm-quick-label">Caregivers</div>
+      <div class="adm-quick-sub">
+        {% if pending_profiles %}{{ pending_profiles }} pending{% else %}Manage
+        profiles{% endif %}
+      </div>
+    </div>
+  </a>
+  <a href="{% url 'AdminApp:review_documents' %}" class="adm-quick-card">
+    <div class="adm-quick-icon si-orange"><i class="fas fa-file-alt"></i></div>
+    <div>
+      <div class="adm-quick-label">Documents</div>
+      <div class="adm-quick-sub">
+        {% if pending_docs %}{{ pending_docs }} awaiting review{% else %}All
+        reviewed{% endif %}
+      </div>
+    </div>
+  </a>
+  <a href="{% url 'AdminApp:manage_shifts' %}" class="adm-quick-card">
+    <div class="adm-quick-icon si-blue">
+      <i class="fas fa-calendar-alt"></i>
+    </div>
+    <div>
+      <div class="adm-quick-label">Shifts</div>
+      <div class="adm-quick-sub">{{ active_shifts }} active now</div>
+    </div>
+  </a>
+  <a href="{% url 'AdminApp:manage_users' %}" class="adm-quick-card">
+    <div class="adm-quick-icon si-purple"><i class="fas fa-users"></i></div>
+    <div>
+      <div class="adm-quick-label">All Users</div>
+      <div class="adm-quick-sub">View &amp; manage</div>
+    </div>
+  </a>
+</div>
+
+<!-- KPI Stats -->
+<div class="adm-stats">
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-green"><i class="fas fa-user-nurse"></i></div>
+    <div class="adm-stat-val">{{ total_caregivers }}</div>
+    <div class="adm-stat-lbl">Total Caregivers</div>
+  </div>
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-blue"><i class="fas fa-people-group"></i></div>
+    <div class="adm-stat-val">{{ total_employers }}</div>
+    <div class="adm-stat-lbl">Total Employers</div>
+  </div>
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-orange">
+      <i class="fas fa-file-circle-exclamation"></i>
+    </div>
+    <div class="adm-stat-val">{{ pending_docs }}</div>
+    <div class="adm-stat-lbl">Pending Documents</div>
+  </div>
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-orange"><i class="fas fa-user-clock"></i></div>
+    <div class="adm-stat-val">{{ pending_profiles }}</div>
+    <div class="adm-stat-lbl">Pending Profiles</div>
+  </div>
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-green"><i class="fas fa-play-circle"></i></div>
+    <div class="adm-stat-val">{{ active_shifts }}</div>
+    <div class="adm-stat-lbl">Active Shifts</div>
+  </div>
+  <div class="adm-stat">
+    <div class="adm-stat-icon si-blue"><i class="fas fa-check-circle"></i></div>
+    <div class="adm-stat-val">{{ completed_shifts }}</div>
+    <div class="adm-stat-lbl">Completed Shifts</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="adm-charts-row">
+  <div class="adm-chart-card">
+    <div class="adm-chart-head">
+      <span class="adm-chart-title">Shifts — last 14 days</span>
+      <span class="adm-chart-sub">Daily count</span>
+    </div>
+    <div class="adm-chart-canvas"><canvas id="shiftsChart"></canvas></div>
+  </div>
+  <div class="adm-chart-card">
+    <div class="adm-chart-head">
+      <span class="adm-chart-title">New Registrations — last 30 days</span>
+      <span class="adm-chart-sub">Daily signups</span>
+    </div>
+    <div class="adm-chart-canvas"><canvas id="usersChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Bottom: recent users table + live activity -->
+<div class="adm-bottom-row">
+  <!-- Recent users -->
+  <div class="adm-card">
+    <div class="adm-card-pad">
+      <div class="adm-section-head">
+        <i class="fas fa-user-clock" style="color: #1b7d4f"></i> Recently Joined
+        Users
+      </div>
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td style="font-weight: 600">
+              {{ u.get_full_name|default:u.username }}
+            </td>
+            <td style="color: #888; font-size: 0.8rem">{{ u.email }}</td>
+            <td>
+              <span
+                class="badge {% if u.is_caregiver %}badge-green{% else %}badge-blue{% endif %}"
+                >{{ u.get_role_display }}</span
+              >
+            </td>
+            <td style="color: #888; font-size: 0.8rem">
+              {{ u.date_joined|date:"M d, Y" }}
+            </td>
+            <td>
+              <span
+                class="badge {% if u.is_active %}badge-green{% else %}badge-red{% endif %}"
+                >{% if u.is_active %}Active{% else %}Inactive{% endif %}</span
+              >
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              <div class="adm-empty">
+                <i class="fas fa-users-slash"></i>No users yet.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Live activity feed -->
+  <div class="activity-card">
+    <div class="activity-title">
+      <span class="activity-dot"></span> Live Activity
+    </div>
+    {% for act in activities %}
+    <div class="activity-item">
+      <div
+        class="activity-icon"
+        style="background:{{ act.bg }};color:{{ act.color }};"
+      >
+        <i class="{{ act.icon }}"></i>
+      </div>
+      <div class="activity-body">
+        <div class="activity-text">{{ act.text|safe }}</div>
+        <div class="activity-sub">{{ act.sub|safe }}</div>
+        <div class="activity-time">{{ act.time|timesince }} ago</div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="activity-empty">
+      <i
+        class="fas fa-satellite-dish"
+        style="
+          font-size: 1.6rem;
+          display: block;
+          margin-bottom: 8px;
+          color: #ddd;
+        "
+      ></i
+      >No activity yet.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<!-- end bottom row -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    var shiftsLabels = {{ shifts_chart_labels|safe }};
+    var shiftsData   = {{ shifts_chart_data|safe }};
+    var usersLabels  = {{ users_chart_labels|safe }};
+    var usersData    = {{ users_chart_data|safe }};
+
+    // Shifts bar chart
+    var sc = document.getElementById('shiftsChart');
+    if(sc){
+      new Chart(sc.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: shiftsLabels,
+          datasets:[{
+            data: shiftsData,
+            backgroundColor: 'rgba(27,125,79,0.75)',
+            borderRadius: 5,
+            borderSkipped: false,
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){return ' '+c.parsed.y+' shifts';}}} },
+          scales:{
+            x:{ grid:{display:false}, ticks:{font:{size:10}, maxRotation:0, maxTicksLimit:7} },
+            y:{ beginAtZero:true, grid:{color:'#f2f4f0'}, ticks:{font:{size:10}, stepSize:1, precision:0} }
+          }
+        }
+      });
+    }
+
+    // Users line chart
+    var uc = document.getElementById('usersChart');
+    if(uc){
+      var ctx2 = uc.getContext('2d');
+      var grad = ctx2.createLinearGradient(0,0,0,160);
+      grad.addColorStop(0,'rgba(27,125,79,0.18)');
+      grad.addColorStop(1,'rgba(27,125,79,0)');
+      new Chart(ctx2, {
+        type: 'line',
+        data:{
+          labels: usersLabels,
+          datasets:[{
+            data: usersData,
+            borderColor: '#1b7d4f',
+            borderWidth: 2,
+            backgroundColor: grad,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#1b7d4f',
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){return ' '+c.parsed.y+' signups';}}} },
+          scales:{
+            x:{ grid:{display:false}, ticks:{font:{size:10}, maxRotation:0, maxTicksLimit:6} },
+            y:{ beginAtZero:true, grid:{color:'#f2f4f0'}, ticks:{font:{size:10}, stepSize:1, precision:0} }
+          }
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

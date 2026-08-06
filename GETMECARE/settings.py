@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,7 +42,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Caregiver',
+    'Account.apps.AccountConfig',
+    'AdminApp.apps.AdminappConfig',
+    'EmployerApp.apps.EmployerappConfig',
+    'CareGiverAcc.apps.CaregiveraccConfig',
+    'Chatbot.apps.ChatbotConfig',
 ]
+
+AUTH_USER_MODEL = 'Account.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -124,3 +135,14 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Custom user model
+AUTH_USER_MODEL = 'Account.CustomUser'
+
+# Media files (user uploads)
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Groq API Configuration
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')

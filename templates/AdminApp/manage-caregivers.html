@@ -1,0 +1,223 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Caregivers —
+Admin{% endblock %} {% block extra_head %}
+<style>
+  .cg-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cg-av-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2d5a42;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .cg-nm {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .cg-em {
+    font-size: 0.72rem;
+    color: #aaa;
+  }
+  .doc-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .doc-pip {
+    font-size: 0.65rem;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  .pip-ok {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .pip-mis {
+    background: #f5f5f5;
+    color: #bbb;
+  }
+  .pip-rej {
+    background: #fdecea;
+    color: #c62828;
+  }
+  .act-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 900px) {
+    .adm-table th:nth-child(4),
+    .adm-table td:nth-child(4),
+    .adm-table th:nth-child(5),
+    .adm-table td:nth-child(5) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-user-nurse" style="color: #1b7d4f; margin-right: 8px"></i
+  >Manage Caregivers
+</div>
+
+{% for msg in messages %}
+<div
+  class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
+>
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div
+      style="
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <i class="fas fa-list" style="color: #1b7d4f"></i> All Caregiver Profiles
+      <span
+        style="
+          margin-left: auto;
+          font-size: 0.72rem;
+          font-weight: 600;
+          background: #e6f5ee;
+          color: #1b7d4f;
+          border-radius: 20px;
+          padding: 3px 10px;
+        "
+        >{{ profiles|length }} total</span
+      >
+    </div>
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Caregiver</th>
+          <th>City</th>
+          <th>Rate</th>
+          <th>Skills</th>
+          <th>Docs</th>
+          <th>Status</th>
+          <th>Since</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in profiles %}
+        <tr>
+          <td>
+            <div class="cg-info">
+              <div class="cg-av-sm">
+                {{ p.user.first_name|first|upper }}{{
+                p.user.last_name|first|upper }}
+              </div>
+              <div>
+                <div class="cg-nm">
+                  {{ p.user.get_full_name|default:p.user.username }}
+                </div>
+                <div class="cg-em">{{ p.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color: #555; font-size: 0.84rem">
+            {{ p.city|default:"—" }}
+          </td>
+          <td style="font-weight: 600">
+            {% if p.hourly_rate %}${{ p.hourly_rate }}/hr{% else %}—{% endif %}
+          </td>
+          <td
+            style="
+              color: #888;
+              font-size: 0.8rem;
+              max-width: 120px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            "
+            title="{{ p.skills }}"
+          >
+            {{ p.skills|default:"—" }}
+          </td>
+          <td>
+            {% with docs=p.user.documents.all %}{% for dtype in doc_types %}{% with matched=docs|dictsortreversed:"uploaded_at" %}{% for d in matched %}{% if d.doc_type == dtype %}
+            <span
+              class="doc-pip {% if d.status == 'approved' %}pip-ok{% elif d.status == 'rejected' %}pip-rej{% else %}pip-mis{% endif %}"
+            >
+              {% if dtype == "psw_certificate" %}PSW{% elif dtype == "vulnerable_sector_check" %}VSC{% elif dtype == "government_id" %}ID{% elif dtype == "first_aid" %}FA{% else %}CV{% endif %}
+            </span>
+            {% endif %}{% endfor %}{% endwith %}{% endfor %}{% endwith %}
+          </td>
+          <td>
+            <span
+              class="badge {% if p.status == 'active' %}badge-green {% elif p.status == 'pending_admin_review' %}badge-orange {% elif p.status == 'rejected' %}badge-red {% else %}badge-grey{% endif %}"
+            >
+              {{ p.get_status_display }}
+            </span>
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {{ p.created_at|date:"M d, Y" }}
+          </td>
+          <td>
+            <div class="act-cell">
+              {% if p.status == 'pending_admin_review' %}
+              <form
+                method="post"
+                action="{% url 'AdminApp:activate_caregiver' p.pk %}"
+              >
+                {% csrf_token %}
+                <button type="submit" class="adm-btn adm-btn-green">
+                  <i class="fas fa-check"></i> Activate
+                </button>
+              </form>
+              {% elif p.status == 'active' %}
+              <span style="font-size: 0.75rem; color: #1b7d4f"
+                ><i class="fas fa-check-circle"></i> Active</span
+              >
+              {% else %}
+              <span style="font-size: 0.75rem; color: #aaa">—</span>
+              {% endif %}
+              <a
+                href="{% url 'AdminApp:review_documents' %}"
+                class="adm-btn adm-btn-ghost"
+                style="font-size: 0.74rem"
+              >
+                <i class="fas fa-file-alt"></i> Docs
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8">
+            <div class="adm-empty">
+              <i class="fas fa-user-slash"></i>No caregiver profiles found.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

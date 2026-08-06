@@ -1,0 +1,200 @@
+{% extends "CareGiverAcc/base_caregiver.html" %} {% block title %}Earnings —
+GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+  }
+
+  /* Summary cards */
+  .earn-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .earn-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 20px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .earn-stat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .ei-green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .ei-blue {
+    background: #e8f0fe;
+    color: #1a56c4;
+  }
+  .ei-orange {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .earn-stat-val {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .earn-stat-lbl {
+    font-size: 0.76rem;
+    color: #888;
+  }
+
+  /* Logs table card */
+  .earn-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .earn-card h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .earn-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+  .earn-table th {
+    background: #f6f8f5;
+    padding: 9px 12px;
+    text-align: left;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .earn-table td {
+    padding: 11px 12px;
+    border-bottom: 1px solid #f2f4f0;
+    color: #333;
+    vertical-align: middle;
+  }
+  .earn-table tr:last-child td {
+    border-bottom: none;
+  }
+  .earn-table tr:hover td {
+    background: #fafcf9;
+  }
+  .earn-amount {
+    font-weight: 700;
+    color: #1b7d4f;
+  }
+  .empty-row {
+    text-align: center;
+    color: #bbb;
+    padding: 32px 0 !important;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 700px) {
+    .earn-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .earn-table th:nth-child(2),
+    .earn-table td:nth-child(2) {
+      display: none;
+    }
+  }
+  @media (max-width: 480px) {
+    .earn-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="page-title">
+  <i class="fas fa-wallet" style="color: #1b7d4f; margin-right: 8px"></i
+  >Earnings
+</div>
+
+<!-- Summary -->
+<div class="earn-stats">
+  <div class="earn-stat">
+    <div class="earn-stat-icon ei-green">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+    <div class="earn-stat-val">${{ total }}</div>
+    <div class="earn-stat-lbl">Total Earned</div>
+  </div>
+  <div class="earn-stat">
+    <div class="earn-stat-icon ei-blue">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="earn-stat-val">${{ paid }}</div>
+    <div class="earn-stat-lbl">Paid Out</div>
+  </div>
+  <div class="earn-stat">
+    <div class="earn-stat-icon ei-orange"><i class="fas fa-clock"></i></div>
+    <div class="earn-stat-val">${{ pending }}</div>
+    <div class="earn-stat-lbl">Pending Payout</div>
+  </div>
+</div>
+
+<!-- Log table -->
+<div class="earn-card">
+  <h3><i class="fas fa-list" style="color: #1b7d4f"></i> Payment History</h3>
+  <table class="earn-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Hours</th>
+        <th>Rate</th>
+        <th>Earned (85%)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.shift.start_date|date:"M d, Y" }}</td>
+        <td>{{ log.hours_worked|default:"—" }}</td>
+        <td>${{ log.shift.hourly_rate }}/hr</td>
+        <td class="earn-amount">
+          {% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{% endif %}
+        </td>
+        <td>
+          <span
+            class="badge {% if log.payment_status == 'paid' %}badge-green {% elif log.payment_status == 'disputed' %}badge-red {% else %}badge-orange{% endif %}"
+          >
+            {{ log.get_payment_status_display }}
+          </span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="empty-row">
+          <i
+            class="fas fa-receipt"
+            style="font-size: 1.4rem; display: block; margin-bottom: 6px"
+          ></i>
+          No earnings records yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

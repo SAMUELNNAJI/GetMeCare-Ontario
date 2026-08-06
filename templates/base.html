@@ -4,6 +4,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {% if user.is_authenticated %}
+    <meta name="user-id" content="{{ user.id }}">
+    {% endif %}
     <title>{% block title %}GetMeCare ONTARIO{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'Caregiver/css/styles.css' %}" />
     <link
@@ -14,7 +17,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link rel="stylesheet" href="{% static 'Chatbot/css/chatbot.css' %}" />
     <script src="{% static 'Caregiver/js/animations.js' %}" defer></script>
+    <script src="{% static 'Chatbot/js/chatbot.js' %}" defer></script>
     {% block extra_head %}{% endblock %}
   </head>
   <body>
@@ -51,12 +56,41 @@
           </div>
         </a>
         <nav class="nav-links">
-          <a href="{% url 'browse' %}" {% if request.resolver_match.url_name == "browse" %}class="nav-active"{% endif %}>Browse Caregivers</a>
-          <a href="{% url 'how_it_works' %}" {% if request.resolver_match.url_name == "how_it_works" %}class="nav-active"{% endif %}>How It Works</a>
-          <a href="{% url 'services' %}" {% if request.resolver_match.url_name == "services" %}class="nav-active"{% endif %}>Services</a>
+          <a
+            href="{% url 'browse' %}"
+            {% if request.resolver_match.url_name == "browse" %}class="nav-active"
+            {% endif %}
+            >Browse Caregivers</a
+          >
+          <a
+            href="{% url 'how_it_works' %}"
+            {% if request.resolver_match.url_name == "how_it_works" %}class="nav-active"
+            {% endif %}
+            >How It Works</a
+          >
+          <a
+            href="{% url 'services' %}"
+            {% if request.resolver_match.url_name == "services" %}class="nav-active"
+            {% endif %}
+            >Services</a
+          >
         </nav>
         <div class="nav-actions">
-          <a href="#" class="btn-signin">Sign In</a>
+          {% if user.is_authenticated %} {% if user.is_staff %}
+          <a href="{% url 'AdminApp:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% elif user.is_caregiver %}
+          <a href="{% url 'CareGiverAcc:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% else %}
+          <a href="{% url 'EmployerApp:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% endif %} {% else %}
+          <a href="{% url 'Account:login' %}" class="btn-signin">Sign In</a>
+          {% endif %}
           <a href="{% url 'contact' %}" class="btn-find-caregiver"
             >Contact Us</a
           >
@@ -78,7 +112,21 @@
           <a href="{% url 'services' %}">Services</a>
         </nav>
         <div class="mobile-nav-actions">
-          <a href="#" class="btn-signin">Sign In</a>
+          {% if user.is_authenticated %} {% if user.is_staff %}
+          <a href="{% url 'AdminApp:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% elif user.is_caregiver %}
+          <a href="{% url 'CareGiverAcc:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% else %}
+          <a href="{% url 'EmployerApp:dashboard' %}" class="btn-signin">
+            <i class="fas fa-house"></i> Dashboard
+          </a>
+          {% endif %} {% else %}
+          <a href="{% url 'Account:login' %}" class="btn-signin">Sign In</a>
+          {% endif %}
           <a href="{% url 'contact' %}" class="btn-find-caregiver"
             >Contact Us</a
           >

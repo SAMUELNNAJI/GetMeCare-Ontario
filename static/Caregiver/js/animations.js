@@ -343,8 +343,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ═══════════════════════════════════════════════════════
-     13. HIIT STEPS — fade-in as user scrolls (how-it-works)
-  ═══════════════════════════════════════════════════════ */
+      14. HIIT STEPS — fade-in as user scrolls (how-it-works)
+   ═══════════════════════════════════════════════════════ */
   const hiwSteps = document.querySelectorAll(".hiw-step");
   if (hiwSteps.length) {
     const stepObs = new IntersectionObserver(
@@ -359,5 +359,70 @@ document.addEventListener("DOMContentLoaded", function () {
       { threshold: 0.15 },
     );
     hiwSteps.forEach((s) => stepObs.observe(s));
+  }
+
+  /* ═══════════════════════════════════════════════════════
+      14b. AUTH PAGE — signup/login animations
+   ═══════════════════════════════════════════════════════ */
+  const authPage = document.querySelector(".auth-page");
+  if (authPage) {
+    // Panels are already animated via CSS keyframes;
+    // add a subtle parallax tilt on mouse move for the left panel
+    const authLeft = authPage.querySelector(".auth-left");
+    if (authLeft) {
+      authPage.addEventListener("mousemove", (e) => {
+        const r = authPage.getBoundingClientRect();
+        const x = ((e.clientX - r.left) / r.width - 0.5) * 6;
+        const y = ((e.clientY - r.top) / r.height - 0.5) * -4;
+        authLeft.style.transform = `perspective(800px) rotateY(${x}deg) rotateX(${y}deg)`;
+      });
+      authPage.addEventListener("mouseleave", () => {
+        authLeft.style.transform = "";
+        authLeft.style.transition = "transform 0.5s ease";
+      });
+      authLeft.style.transition = "transform 0.5s ease";
+    }
+
+    // Form field focus glow
+    const formInputs = authPage.querySelectorAll(
+      "input[type='text'], input[type='email'], input[type='tel'], input[type='password']",
+    );
+    formInputs.forEach((input) => {
+      input.addEventListener("focus", () => {
+        input.closest(".form-group")?.classList.add("focused");
+      });
+      input.addEventListener("blur", () => {
+        input.closest(".form-group")?.classList.remove("focused");
+      });
+    });
+
+    // Role toggle — scale animation on select
+    const roleBtns = authPage.querySelectorAll(".role-btn");
+    roleBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        roleBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        btn.style.transform = "scale(0.96)";
+        setTimeout(() => {
+          btn.style.transform = "";
+        }, 150);
+      });
+    });
+
+    // Submit button ripple for auth pages
+    const authSubmit = authPage.querySelector(".btn-auth-submit");
+    if (authSubmit) {
+      authSubmit.addEventListener("click", function (e) {
+        const ripple = document.createElement("span");
+        const r = this.getBoundingClientRect();
+        const size = Math.max(r.width, r.height);
+        ripple.className = "btn-ripple";
+        ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px;`;
+        this.style.position = "relative";
+        this.style.overflow = "hidden";
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    }
   }
 });

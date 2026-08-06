@@ -1,0 +1,719 @@
+{% extends "CareGiverAcc/base_caregiver.html" %} {% block title %}My Documents —
+GetMeCare{% endblock %} {% block extra_head %}
+<style>
+  .page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+  }
+
+  /* ── Verification progress banner ── */
+  .verify-banner {
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .verify-banner.incomplete {
+    background: #fffbf0;
+    border: 1px solid #f5d78a;
+  }
+  .verify-banner.ready {
+    background: #e6f5ee;
+    border: 1px solid #a8dfc0;
+  }
+  .verify-banner.approved {
+    background: #e8f0fe;
+    border: 1px solid #a8c4f5;
+  }
+  .verify-banner-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .verify-banner.incomplete .verify-banner-icon {
+    background: #fff3cd;
+    color: #c87d00;
+  }
+  .verify-banner.ready .verify-banner-icon {
+    background: #c6ecd6;
+    color: #1b7d4f;
+  }
+  .verify-banner.approved .verify-banner-icon {
+    background: #c6d8f5;
+    color: #1a56c4;
+  }
+  .verify-banner-body {
+    flex: 1;
+  }
+  .verify-banner-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+  }
+  .verify-banner-sub {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  /* Required docs checklist */
+  .req-checklist {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .req-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .req-chip.done {
+    background: #c6ecd6;
+    color: #1b7d4f;
+  }
+  .req-chip.pending {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .req-chip.missing {
+    background: #f5f5f5;
+    color: #999;
+  }
+
+  /* ── Main grid ── */
+  .doc-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Upload card */
+  .upload-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 76px;
+  }
+  .upload-card h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .upload-card .upload-sub {
+    font-size: 0.77rem;
+    color: #888;
+    margin-bottom: 18px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 5px;
+  }
+  .form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size: 0.84rem;
+    font-family: inherit;
+    color: #333;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group select:focus {
+    border-color: #1b7d4f;
+  }
+
+  /* Hidden real input */
+  .form-group input[type="file"] {
+    display: none;
+  }
+
+  /* Upload drop zone */
+  .upload-zone {
+    border: 2px dashed #c8d8c8;
+    border-radius: 12px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+    background: #fafcf9;
+    position: relative;
+  }
+  .upload-zone:hover,
+  .upload-zone.drag-over {
+    border-color: #1b7d4f;
+    background: #f0faf4;
+  }
+  .upload-zone-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e6f5ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 1.2rem;
+    color: #1b7d4f;
+    transition: transform 0.2s;
+  }
+  .upload-zone:hover .upload-zone-icon {
+    transform: translateY(-3px);
+  }
+  .upload-zone-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .upload-zone-sub {
+    font-size: 0.75rem;
+    color: #999;
+  }
+  .upload-zone-sub span {
+    color: #1b7d4f;
+    font-weight: 600;
+  }
+  .upload-zone-filename {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    display: none;
+  }
+  .upload-zone-filename i {
+    margin-right: 4px;
+  }
+  .field-error {
+    color: #c62828;
+    font-size: 0.75rem;
+    margin-top: 3px;
+  }
+  .btn-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #1b3a2d;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 20px;
+    width: 100%;
+    font-size: 0.85rem;
+    font-weight: 600;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn-upload:hover {
+    background: #142e21;
+  }
+  .btn-upload:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+  }
+
+  /* No-more-types note */
+  .no-types-note {
+    text-align: center;
+    padding: 16px 0;
+    color: #888;
+    font-size: 0.82rem;
+    border: 1.5px dashed #dde2d8;
+    border-radius: 9px;
+  }
+
+  /* Alerts */
+  .msg-ok {
+    background: #e6f5ee;
+    color: #1b5e35;
+    border: 1px solid #b2dfca;
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+  }
+  .msg-err {
+    background: #fdecea;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+  }
+
+  /* ── Required docs checklist card ── */
+  .req-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    margin-bottom: 18px;
+  }
+  .req-card h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .req-card .req-sub {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  .req-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .req-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .req-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+  .req-icon.done {
+    background: #1b7d4f;
+    color: #fff;
+  }
+  .req-icon.pending {
+    background: #fff3e0;
+    color: #c96000;
+    border: 2px solid #f5d78a;
+  }
+  .req-icon.missing {
+    background: #f5f5f5;
+    color: #bbb;
+    border: 2px solid #e5e5e5;
+  }
+  .req-item-body {
+    flex: 1;
+  }
+  .req-item-name {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .req-item-status {
+    font-size: 0.73rem;
+    margin-top: 2px;
+  }
+  .req-item-status.st-done {
+    color: #1b7d4f;
+  }
+  .req-item-status.st-pending {
+    color: #c96000;
+  }
+  .req-item-status.st-missing {
+    color: #bbb;
+  }
+
+  /* Docs uploaded table */
+  .docs-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .docs-card h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+  .doc-table th {
+    background: #f6f8f5;
+    padding: 9px 12px;
+    text-align: left;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .doc-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f2f4f0;
+    color: #333;
+    vertical-align: middle;
+  }
+  .doc-table tr:last-child td {
+    border-bottom: none;
+  }
+  .doc-table tr:hover td {
+    background: #fafcf9;
+  }
+  .btn-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-view:hover {
+    background: #d0eddf;
+  }
+  .empty-row {
+    text-align: center;
+    color: #bbb;
+    padding: 30px 0 !important;
+    font-size: 0.85rem;
+  }
+  .progress-bar-wrap {
+    background: #f0f2ee;
+    border-radius: 10px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b7d4f, #4caf7d);
+    border-radius: 10px;
+    transition: width 0.4s;
+  }
+
+  @media (max-width: 900px) {
+    .doc-grid {
+      grid-template-columns: 1fr;
+    }
+    .upload-card {
+      position: static;
+    }
+  }
+  @media (max-width: 480px) {
+    .doc-table th:nth-child(3),
+    .doc-table td:nth-child(3) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="page-title">
+  <i class="fas fa-file-alt" style="color: #1b7d4f; margin-right: 8px"></i>My
+  Documents
+</div>
+
+{% for msg in messages %}
+<div class="{% if msg.tags == 'success' %}msg-ok{% else %}msg-err{% endif %}">
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<!-- Verification progress banner -->
+{% if all_approved %}
+<div class="verify-banner approved">
+  <div class="verify-banner-icon"><i class="fas fa-shield-check"></i></div>
+  <div class="verify-banner-body">
+    <div class="verify-banner-title">
+      All documents approved — under admin review
+    </div>
+    <div class="verify-banner-sub">
+      Your documents have been approved. Admin will activate your account
+      shortly.
+    </div>
+  </div>
+</div>
+{% elif all_uploaded %}
+<div class="verify-banner ready">
+  <div class="verify-banner-icon"><i class="fas fa-check-circle"></i></div>
+  <div class="verify-banner-body">
+    <div class="verify-banner-title">All required documents uploaded!</div>
+    <div class="verify-banner-sub">
+      Your documents are now pending admin review. You'll be notified once
+      verified.
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="verify-banner incomplete">
+  <div class="verify-banner-icon"><i class="fas fa-clock"></i></div>
+  <div class="verify-banner-body">
+    <div class="verify-banner-title">
+      Upload all required documents to get verified
+    </div>
+    <div class="verify-banner-sub">
+      You must upload all 5 required documents before your profile can be
+      reviewed.
+    </div>
+    <div class="progress-bar-wrap" style="margin-top: 10px; max-width: 300px">
+      <div class="progress-bar-fill" style="width:{{ onboarding_pct }}%"></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="doc-grid">
+  <!-- Left: upload form -->
+  <div class="upload-card">
+    <h3>
+      <i class="fas fa-upload" style="color: #1b7d4f"></i> Upload Document
+    </h3>
+    <div class="upload-sub">
+      Upload each required document below. Already-uploaded types are hidden.
+    </div>
+    {% if has_remaining_types %}
+    <form method="post" enctype="multipart/form-data" id="doc-upload-form">
+      {% csrf_token %} {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.html_name == 'file' %} {# Hidden real input #} {{ field }}
+        {# Styled upload zone #}
+        <div
+          class="upload-zone"
+          id="upload-zone"
+          onclick="document.getElementById('{{ field.id_for_label }}').click()"
+        >
+          <div class="upload-zone-icon">
+            <i class="fas fa-cloud-arrow-up"></i>
+          </div>
+          <div class="upload-zone-title">Click to browse or drag & drop</div>
+          <div class="upload-zone-sub">
+            PDF, JPG, PNG &nbsp;·&nbsp; Max 10 MB &nbsp;·&nbsp;
+            <span>Browse files</span>
+          </div>
+          <div class="upload-zone-filename" id="upload-filename">
+            <i class="fas fa-file-check"></i><span id="fname-text"></span>
+          </div>
+        </div>
+        {% else %} {{ field }} {% endif %} {% if field.errors %}
+        <div class="field-error">{{ field.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn-upload">
+        <i class="fas fa-cloud-arrow-up"></i> Upload Document
+      </button>
+    </form>
+    {% else %}
+    <div class="no-types-note">
+      <i
+        class="fas fa-check-circle"
+        style="
+          color: #1b7d4f;
+          font-size: 1.4rem;
+          display: block;
+          margin-bottom: 6px;
+        "
+      ></i>
+      All required documents have been uploaded.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: checklist + table -->
+  <div>
+    <!-- Required docs checklist -->
+    <div class="req-card">
+      <h3>
+        <i class="fas fa-clipboard-list" style="color: #1b7d4f"></i> Required
+        Documents
+      </h3>
+      <div class="req-sub">
+        All 5 must be uploaded before your profile can be verified by admin.
+      </div>
+
+      {% for item in required_checklist %}
+      <div class="req-item">
+        <div
+          class="req-icon {% if item.uploaded and item.status == 'approved' %}done{% elif item.uploaded %}pending{% else %}missing{% endif %}"
+        >
+          {% if item.uploaded and item.status == 'approved' %}
+          <i class="fas fa-check"></i>
+          {% elif item.uploaded %}
+          <i class="fas fa-hourglass-half"></i>
+          {% else %}
+          <i class="fas fa-times"></i>
+          {% endif %}
+        </div>
+        <div class="req-item-body">
+          <div class="req-item-name">{{ item.label }}</div>
+          <div
+            class="req-item-status {% if item.uploaded and item.status == 'approved' %}st-done {% elif item.uploaded %}st-pending {% else %}st-missing{% endif %}"
+          >
+            {% if item.uploaded and item.status == 'approved' %} Approved {%
+            elif item.uploaded and item.status == 'rejected' %} Rejected —
+            please re-upload {% elif item.uploaded %} Uploaded · Pending review
+            {% else %} Not uploaded yet {% endif %}
+          </div>
+        </div>
+        {% if item.doc %}
+        <span
+          class="badge {% if item.status == 'approved' %}badge-green{% elif item.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}"
+        >
+          {{ item.doc.get_status_display }}
+        </span>
+        {% else %}
+        <span class="badge" style="background: #f5f5f5; color: #aaa"
+          >Required</span
+        >
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- All uploaded docs -->
+    <div class="docs-card">
+      <h3>
+        <i class="fas fa-folder-open" style="color: #1b7d4f"></i> All Uploaded
+        Documents
+      </h3>
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>File</th>
+            <th>Uploaded</th>
+            <th>Status</th>
+            <th>Admin Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in user_docs %}
+          <tr>
+            <td>{{ doc.get_doc_type_display }}</td>
+            <td>
+              <a href="{{ doc.file.url }}" class="btn-view" target="_blank"
+                ><i class="fas fa-eye"></i> View</a
+              >
+            </td>
+            <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
+            <td>
+              <span
+                class="badge {% if doc.status == 'approved' %}badge-green{% elif doc.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}"
+              >
+                {{ doc.get_status_display }}
+              </span>
+            </td>
+            <td style="color: #888; font-size: 0.8rem">
+              {{ doc.note|default:"—" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="empty-row">
+              <i
+                class="fas fa-inbox"
+                style="font-size: 1.4rem; display: block; margin-bottom: 6px"
+              ></i>
+              No documents uploaded yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- end right col -->
+</div>
+<!-- end doc-grid -->
+{% endblock %} {% block extra_scripts %}
+<script>
+  (function () {
+    var zone = document.getElementById("upload-zone");
+    var label = document.getElementById("upload-filename");
+    var fname = document.getElementById("fname-text");
+    var form = document.getElementById("doc-upload-form");
+    var input = form ? form.querySelector('input[type="file"]') : null;
+
+    if (!zone || !input) return;
+
+    input.addEventListener("change", function () {
+      if (input.files && input.files.length > 0) {
+        fname.textContent = input.files[0].name;
+        label.style.display = "block";
+        zone.style.borderColor = "#1b7d4f";
+        zone.style.background = "#f0faf4";
+      }
+    });
+
+    zone.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      zone.classList.add("drag-over");
+    });
+    zone.addEventListener("dragleave", function () {
+      zone.classList.remove("drag-over");
+    });
+    zone.addEventListener("drop", function (e) {
+      e.preventDefault();
+      zone.classList.remove("drag-over");
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(files[0]);
+          input.files = dt.files;
+        } catch (err) {
+          /* Safari fallback — user must use click */
+        }
+        fname.textContent = files[0].name;
+        label.style.display = "block";
+        zone.style.borderColor = "#1b7d4f";
+        zone.style.background = "#f0faf4";
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,816 @@
+{% load static %}<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}GetMeCare — Employer{% endblock %}</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f2f4f0;
+        color: #1a1a1a;
+      }
+      .ep-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 240px;
+        background: #1b3a2d;
+        display: flex;
+        flex-direction: column;
+        z-index: 200;
+        transition: transform 0.3s ease;
+        overflow-y: auto;
+      }
+      .ep-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 20px 18px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+      }
+      .ep-logo a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .ep-logo-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.1;
+      }
+      .ep-logo-sub {
+        font-size: 0.6rem;
+        letter-spacing: 0.12em;
+        color: #8fbfaa;
+        text-transform: uppercase;
+      }
+      .ep-profile {
+        margin: 14px 12px 6px;
+        background: #142e21;
+        border-radius: 12px;
+        padding: 14px;
+        flex-shrink: 0;
+      }
+      .ep-profile-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .ep-av {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #2d5a42;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .ep-profile-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        line-height: 1.25;
+      }
+      .ep-profile-role {
+        font-size: 0.7rem;
+        color: #8fbfaa;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+      }
+      .ep-act-badge {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+      .ep-act-badge.active {
+        background: rgba(76, 175, 61, 0.18);
+        color: #6ddb6d;
+        border: 1px solid rgba(76, 175, 61, 0.3);
+      }
+      .ep-act-badge.inactive {
+        background: rgba(240, 160, 0, 0.15);
+        color: #f5c540;
+        border: 1px solid rgba(240, 160, 0, 0.3);
+      }
+      .ep-act-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .ep-act-dot.active {
+        background: #6ddb6d;
+      }
+      .ep-act-dot.inactive {
+        background: #f5c540;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .ep-nav {
+        flex: 1;
+        padding: 8px 0;
+      }
+      .ep-nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 18px;
+        color: #a8ccb8;
+        text-decoration: none;
+        font-size: 0.855rem;
+        border-radius: 8px;
+        margin: 1px 8px;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .ep-nav a:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+      }
+      .ep-nav a.active {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-weight: 600;
+      }
+      .ep-nav a i {
+        width: 16px;
+        text-align: center;
+        font-size: 0.82rem;
+      }
+      .ep-nav-section {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #4a7a60;
+        padding: 12px 26px 4px;
+      }
+      .ep-nav-lock {
+        opacity: 0.45;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+      .ep-sb-stats {
+        margin: 0 12px 10px;
+        background: #142e21;
+        border-radius: 10px;
+        padding: 12px 14px;
+        display: flex;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .ep-sb-stats .s-item {
+        font-size: 0.7rem;
+        color: #8fbfaa;
+      }
+      .ep-sb-stats .s-val {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #fff;
+      }
+      .ep-signout {
+        padding: 12px 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+      }
+      .ep-signout a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #e57373;
+        font-size: 0.84rem;
+        text-decoration: none;
+      }
+      .ep-signout a:hover {
+        color: #ef9a9a;
+      }
+      .ep-topbar {
+        position: fixed;
+        top: 0;
+        left: 240px;
+        right: 0;
+        height: 56px;
+        background: #f2f4f0;
+        border-bottom: 1px solid #dde2d8;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 12px;
+        z-index: 100;
+      }
+      .ep-hamburger {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 5px;
+        padding: 4px;
+      }
+      .ep-hamburger span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: #444;
+        border-radius: 2px;
+      }
+      .ep-search {
+        flex: 1;
+        max-width: 320px;
+        display: flex;
+        align-items: center;
+        background: #fff;
+        border: 1px solid #dde2d8;
+        border-radius: 20px;
+        padding: 6px 14px;
+        gap: 8px;
+      }
+      .ep-search input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 0.84rem;
+        color: #333;
+        width: 100%;
+        font-family: inherit;
+      }
+      .ep-search input::placeholder {
+        color: #aaa;
+      }
+      .ep-search i {
+        color: #999;
+        font-size: 0.82rem;
+      }
+      .ep-topbar-space {
+        flex: 1;
+      }
+      .ep-back {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #1b7d4f;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .ep-back:hover {
+        text-decoration: underline;
+      }
+      .ep-bell {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #dde2d8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #555;
+        cursor: pointer;
+        font-size: 0.88rem;
+        position: relative;
+      }
+      .ep-bell-dot {
+        width: 7px;
+        height: 7px;
+        background: #e05252;
+        border-radius: 50%;
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        border: 1.5px solid #f2f4f0;
+      }
+      .ep-topbar-av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #2d5a42;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .ep-main {
+        margin-left: 240px;
+        padding-top: 56px;
+        min-height: 100vh;
+      }
+      .ep-content {
+        padding: 26px 26px 48px;
+      }
+      .ep-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 190;
+      }
+      .ep-overlay.open {
+        display: block;
+      }
+      .ep-page-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+      }
+      .ep-card {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      }
+      .ep-card-pad {
+        padding: 20px 22px;
+      }
+      .ep-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.845rem;
+      }
+      .ep-table th {
+        background: #f6f8f5;
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .ep-table td {
+        padding: 11px 14px;
+        border-bottom: 1px solid #f2f4f0;
+        color: #333;
+        vertical-align: middle;
+      }
+      .ep-table tr:last-child td {
+        border-bottom: none;
+      }
+      .ep-table tr:hover td {
+        background: #fafcf9;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.22rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+      .badge-green {
+        background: #e6f5ee;
+        color: #1b7d4f;
+      }
+      .badge-orange {
+        background: #fff3e0;
+        color: #c96000;
+      }
+      .badge-blue {
+        background: #e8f0fe;
+        color: #1a56c4;
+      }
+      .badge-red {
+        background: #fdecea;
+        color: #c62828;
+      }
+      .badge-grey {
+        background: #f0f0f0;
+        color: #666;
+      }
+      .ep-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 9px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+        text-decoration: none;
+        transition: opacity 0.15s;
+      }
+      .ep-btn:hover {
+        opacity: 0.85;
+      }
+      .ep-btn-primary {
+        background: #1b3a2d;
+        color: #fff;
+      }
+      .ep-btn-green {
+        background: #1b7d4f;
+        color: #fff;
+      }
+      .ep-btn-ghost {
+        background: #f0f2ee;
+        color: #333;
+        border: 1px solid #dde2d8;
+      }
+      .ep-empty {
+        text-align: center;
+        padding: 32px 0;
+        color: #bbb;
+        font-size: 0.85rem;
+      }
+      .ep-empty i {
+        font-size: 1.8rem;
+        display: block;
+        margin-bottom: 8px;
+        color: #ddd;
+      }
+      .msg-ok {
+        background: #e6f5ee;
+        color: #1b5e35;
+        border: 1px solid #b2dfca;
+        border-radius: 9px;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 0.84rem;
+      }
+      .msg-warn {
+        background: #fff8e1;
+        color: #b45309;
+        border: 1px solid #fde68a;
+        border-radius: 9px;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 0.84rem;
+      }
+      .msg-err {
+        background: #fdecea;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+        border-radius: 9px;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 0.84rem;
+      }
+      .ep-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .ep-modal {
+        background: #fff;
+        border-radius: 20px;
+        max-width: 460px;
+        width: 100%;
+        padding: 36px 32px 28px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        animation: modalIn 0.3s ease;
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .ep-modal-icon {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1b3a2d, #2d7a50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        font-size: 1.6rem;
+        color: #fff;
+      }
+      .ep-modal h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+      }
+      .ep-modal p {
+        font-size: 0.875rem;
+        color: #666;
+        line-height: 1.55;
+        margin-bottom: 20px;
+      }
+      .ep-modal-price {
+        background: #eef6f1;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 22px;
+      }
+      .ep-modal-price .price {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1b3a2d;
+        line-height: 1;
+      }
+      .ep-modal-price .price-note {
+        font-size: 0.76rem;
+        color: #888;
+        margin-top: 4px;
+      }
+      .ep-modal-perks {
+        text-align: left;
+        margin-bottom: 22px;
+      }
+      .ep-modal-perk {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.845rem;
+        color: #333;
+        padding: 5px 0;
+      }
+      .ep-modal-perk i {
+        color: #1b7d4f;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+      .ep-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .ep-modal-pay-btn {
+        display: block;
+        width: 100%;
+        background: #1b3a2d;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 13px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        text-decoration: none;
+        transition: background 0.15s;
+        text-align: center;
+      }
+      .ep-modal-pay-btn:hover {
+        background: #142e21;
+        color: #fff;
+      }
+      .ep-modal-later {
+        background: none;
+        border: none;
+        color: #aaa;
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+        padding: 4px;
+      }
+      .ep-modal-later:hover {
+        color: #666;
+      }
+      @media (max-width: 1024px) {
+        .ep-sidebar {
+          width: 210px;
+        }
+        .ep-topbar {
+          left: 210px;
+        }
+        .ep-main {
+          margin-left: 210px;
+        }
+      }
+      @media (max-width: 768px) {
+        .ep-sidebar {
+          transform: translateX(-100%);
+          width: 260px;
+        }
+        .ep-sidebar.open {
+          transform: translateX(0);
+        }
+        .ep-topbar {
+          left: 0;
+          padding: 0 16px;
+        }
+        .ep-main {
+          margin-left: 0;
+        }
+        .ep-hamburger {
+          display: flex;
+        }
+        .ep-search {
+          max-width: 180px;
+        }
+        .ep-content {
+          padding: 16px 14px 40px;
+        }
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="ep-overlay" id="ep-overlay"></div>
+    <aside class="ep-sidebar" id="ep-sidebar">
+      <div class="ep-logo">
+        <a href="{% url 'home' %}"
+          ><svg width="32" height="32" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="22" fill="#2d5a42" />
+            <path
+              d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
+              fill="#f0a040"
+              opacity=".95"
+            />
+            <path
+              d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z"
+              fill="#4caf7d"
+            />
+          </svg>
+          <div>
+            <div class="ep-logo-name">
+              GetMe<span style="color: #f0a040">Care</span>
+            </div>
+            <div class="ep-logo-sub">Employer</div>
+          </div></a
+        >
+      </div>
+      <div class="ep-profile">
+        <div class="ep-profile-row">
+          <div class="ep-av">
+            {{ request.user.first_name|first|upper }}{{
+            request.user.last_name|first|upper }}
+          </div>
+          <div>
+            <div class="ep-profile-name">
+              {{ request.user.get_full_name|default:request.user.username }}
+            </div>
+            <div class="ep-profile-role">
+              <i class="fas fa-building" style="font-size: 0.6rem"></i> Family /
+              Employer
+            </div>
+          </div>
+        </div>
+        {% if is_activated %}
+        <div class="ep-act-badge active">
+          <span class="ep-act-dot active"></span> Account Active
+        </div>
+        {% else %}
+        <div class="ep-act-badge inactive">
+          <span class="ep-act-dot inactive"></span> Not Activated
+        </div>
+        {% endif %}
+      </div>
+      <nav
+        class="ep-nav"
+        id="ep-nav"
+        data-url="{% url 'EmployerApp:dashboard' %}_{% url 'EmployerApp:find_caregiver' %}_{% url 'EmployerApp:my_jobs' %}_{% url 'EmployerApp:my_shifts' %}_{% url 'EmployerApp:payment_history' %}"
+      >
+        <div class="ep-nav-section">Overview</div>
+        <a href="{% url 'EmployerApp:dashboard' %}" data-nav="dashboard"
+          ><i class="fas fa-th-large"></i> Dashboard</a
+        >
+        <div class="ep-nav-section">Caregivers</div>
+        <a
+          href="{% url 'EmployerApp:find_caregiver' %}"
+          data-nav="find_caregiver"
+          ><i class="fas fa-search"></i> Find a Caregiver</a
+        >
+        <div class="ep-nav-section">Jobs</div>
+        {% if is_activated %}<a
+          href="{% url 'EmployerApp:post_job' %}"
+          data-nav="post_job"
+          ><i class="fas fa-plus-circle"></i> Post a Job</a
+        >
+        {% else %}<a class="ep-nav-lock" title="Activate account to post jobs"
+          ><i class="fas fa-lock"></i> Post a Job</a
+        >{% endif %}
+        <a href="{% url 'EmployerApp:my_jobs' %}" data-nav="my_jobs"
+          ><i class="fas fa-list-ul"></i> My Jobs</a
+        >
+        <div class="ep-nav-section">Shifts &amp; Payments</div>
+        <a href="{% url 'EmployerApp:my_shifts' %}" data-nav="my_shifts"
+          ><i class="fas fa-calendar-alt"></i> My Shifts</a
+        >
+        <a
+          href="{% url 'EmployerApp:payment_history' %}"
+          data-nav="payment_history"
+          ><i class="fas fa-receipt"></i> Payment History</a
+        >
+        {% if not is_activated %}<a
+          href="{% url 'EmployerApp:activate_account' %}"
+          data-nav="activate_account"
+          ><i class="fas fa-bolt"></i> Activate Account</a
+        >{% endif %}
+      </nav>
+      <div class="ep-sb-stats">
+        <div class="s-item">
+          <div class="s-val">{{ total_completed }}</div>
+          Shifts done
+        </div>
+        <div class="s-item">
+          <div class="s-val">{{ open_jobs_count }}</div>
+          Open jobs
+        </div>
+      </div>
+      <div class="ep-signout">
+        <a href="{% url 'Account:logout' %}"
+          ><i class="fas fa-sign-out-alt"></i> Sign out</a
+        >
+      </div>
+    </aside>
+    <div class="ep-topbar">
+      <button class="ep-hamburger" id="ep-hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="ep-search">
+        <i class="fas fa-search"></i
+        ><input type="text" placeholder="Search caregivers, shifts…" />
+      </div>
+      <a href="{% url 'home' %}" class="ep-back" style="margin-left: 10px"
+        ><i class="fas fa-arrow-left"></i> Back to site</a
+      >
+      <div class="ep-topbar-space"></div>
+      <div class="ep-bell">
+        <i class="fas fa-bell"></i><span class="ep-bell-dot"></span>
+      </div>
+      <div class="ep-topbar-av">
+        {{ request.user.first_name|first|upper }}{{
+        request.user.last_name|first|upper }}
+      </div>
+    </div>
+    <main class="ep-main">
+      <div class="ep-content">{% block content %}{% endblock %}</div>
+    </main>
+    <script>
+      (function () {
+        var btn = document.getElementById("ep-hamburger"),
+          sb = document.getElementById("ep-sidebar"),
+          ov = document.getElementById("ep-overlay");
+        function o() {
+          sb.classList.add("open");
+          ov.classList.add("open");
+          document.body.style.overflow = "hidden";
+        }
+        function c() {
+          sb.classList.remove("open");
+          ov.classList.remove("open");
+          document.body.style.overflow = "";
+        }
+        if (btn)
+          btn.addEventListener("click", function () {
+            sb.classList.contains("open") ? c() : o();
+          });
+        if (ov) ov.addEventListener("click", c);
+        var cur = window.location.pathname;
+        document.querySelectorAll(".ep-nav a[data-nav]").forEach(function (a) {
+          if (a.getAttribute("href") === cur) a.classList.add("active");
+        });
+      })();
+    </script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,153 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Users — Admin{% endblock %} {% block extra_head %}
+<style>
+  .u-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .u-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2d5a42;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .u-av.employer {
+    background: #1a56c4;
+  }
+  .u-name {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .u-email {
+    font-size: 0.72rem;
+    color: #aaa;
+  }
+  @media (max-width: 800px) {
+    .adm-table th:nth-child(3),
+    .adm-table td:nth-child(3),
+    .adm-table th:nth-child(5),
+    .adm-table td:nth-child(5) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-users" style="color: #1b7d4f; margin-right: 8px"></i>All
+  Users
+</div>
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div
+      style="
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <i class="fas fa-list" style="color: #1b7d4f"></i> User Registry
+      <span
+        style="
+          margin-left: auto;
+          font-size: 0.72rem;
+          font-weight: 600;
+          background: #e8f0fe;
+          color: #1a56c4;
+          border-radius: 20px;
+          padding: 3px 10px;
+        "
+        >{{ users|length }} total</span
+      >
+    </div>
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Phone</th>
+          <th>Joined</th>
+          <th>Staff</th>
+          <th>Active</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <div class="u-info">
+              <div class="u-av {% if u.is_employer %}employer{% endif %}">
+                {{ u.first_name|first|upper }}{{ u.last_name|first|upper }}
+              </div>
+              <div>
+                <div class="u-name">
+                  {{ u.get_full_name|default:u.username }}
+                </div>
+                <div class="u-email">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span
+              class="badge {% if u.is_caregiver %}badge-green{% elif u.is_staff %}badge-orange{% else %}badge-blue{% endif %}"
+              >{{ u.get_role_display }}</span
+            >
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {{ u.phone|default:"—" }}
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {{ u.date_joined|date:"M d, Y" }}
+          </td>
+          <td>
+            {% if u.is_staff or u.is_superuser %}<span
+              class="badge badge-orange"
+              >Admin</span
+            >{% else %}<span style="color: #ccc; font-size: 0.8rem">—</span>{% endif %}
+          </td>
+          <td>
+            <span
+              class="badge {% if u.is_active %}badge-green{% else %}badge-red{% endif %}"
+              >{% if u.is_active %}Active{% else %}Inactive{% endif %}</span
+            >
+          </td>
+          <td>
+            {% if u.id != request.user.id %}
+            <form method="post" action="{% url 'AdminApp:delete_user' u.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ u.get_full_name|default:u.username }}? This action cannot be undone.');">
+              {% csrf_token %}
+              <button type="submit" class="adm-btn adm-btn-danger" style="padding: 6px 12px; font-size: 0.75rem;">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </form>
+            {% else %}
+            <span style="color: #ccc; font-size: 0.75rem;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="adm-empty">
+              <i class="fas fa-users-slash"></i>No users found.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

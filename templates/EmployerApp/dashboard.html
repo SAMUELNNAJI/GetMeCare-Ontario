@@ -1,0 +1,922 @@
+{% extends "EmployerApp/base_employer.html" %} {% block title %}Dashboard —
+Employer{% endblock %} {% block extra_head %}
+<style>
+  /* ── Page header ── */
+  .dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .dash-greeting h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.15;
+  }
+  .dash-greeting p {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 4px;
+  }
+  .dash-date {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: #555;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #dde2d8;
+    border-radius: 20px;
+    padding: 6px 13px;
+  }
+
+  /* ── Alert ── */
+  .dash-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fffbf0;
+    border: 1px solid #f5d78a;
+    border-radius: 12px;
+    padding: 13px 16px;
+    margin-bottom: 20px;
+  }
+  .dash-alert-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #fff3cd;
+    border: 1px solid #f5d78a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c87d00;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .dash-alert-body {
+    flex: 1;
+    font-size: 0.83rem;
+    color: #4a3800;
+    line-height: 1.45;
+  }
+  .dash-alert-body strong {
+    color: #1a1a1a;
+  }
+  .dash-alert-btn {
+    background: #e07b00;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: inherit;
+  }
+  .dash-alert-btn:hover {
+    background: #c96e00;
+    color: #fff;
+  }
+
+  /* ── Stat cards ── */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .dash-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 18px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .dash-stat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .si-green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .si-orange {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .si-blue {
+    background: #e8f0fe;
+    color: #1a56c4;
+  }
+  .si-purple {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+  .dash-stat-val {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .dash-stat-lbl {
+    font-size: 0.76rem;
+    color: #888;
+  }
+  .dash-stat-sub {
+    font-size: 0.7rem;
+    color: #27ae60;
+    margin-top: 3px;
+  }
+  .dash-stat-sub.muted {
+    color: #aaa;
+  }
+
+  /* ── Mid row ── */
+  .dash-mid {
+    display: grid;
+    grid-template-columns: 1fr 290px;
+    gap: 18px;
+    margin-bottom: 22px;
+    align-items: start;
+  }
+
+  /* Dark action card */
+  .action-card {
+    background: #1b3a2d;
+    border-radius: 14px;
+    padding: 22px 24px 20px;
+    color: #fff;
+  }
+  .action-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8fbfaa;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .action-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .action-sub {
+    font-size: 0.78rem;
+    color: #8fbfaa;
+    margin-bottom: 18px;
+  }
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .action-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+  .action-btn.solid {
+    background: #f0a040;
+    border-color: #f0a040;
+  }
+  .action-btn.solid:hover {
+    background: #d88c2a;
+    border-color: #d88c2a;
+  }
+
+  /* Chart card */
+  .chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px 14px;
+    margin-top: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .chart-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .chart-badge {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #1b7d4f;
+    background: #e6f5ee;
+    border-radius: 20px;
+    padding: 3px 9px;
+  }
+  .chart-days {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.66rem;
+    color: #bbb;
+    margin-top: 6px;
+  }
+
+  /* Account checklist card */
+  .qa-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .qa-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+  }
+  .qa-sub {
+    font-size: 0.73rem;
+    color: #d06500;
+    margin-bottom: 14px;
+  }
+  .qa-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .qa-list li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.82rem;
+    color: #333;
+    padding: 5px 0;
+  }
+  .qi {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.58rem;
+  }
+  .qi.done {
+    background: #1b7d4f;
+    color: #fff;
+  }
+  .qi.pending {
+    background: #fff;
+    border: 2px solid #ccc;
+  }
+  .qa-btn {
+    display: block;
+    width: 100%;
+    background: #1b3a2d;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .qa-btn:hover {
+    background: #142e21;
+    color: #fff;
+  }
+
+  /* ── Bottom row ── */
+  .dash-bottom {
+    display: grid;
+    grid-template-columns: 1fr 290px;
+    gap: 18px;
+  }
+  .section-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 20px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-head h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+  }
+  .view-all {
+    font-size: 0.76rem;
+    color: #1b7d4f;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .view-all:hover {
+    text-decoration: underline;
+  }
+
+  /* Shift rows */
+  .shift-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .shift-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .shift-av {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .av-1 {
+    background: #f0a040;
+  }
+  .av-2 {
+    background: #3dada8;
+  }
+  .av-3 {
+    background: #9b7bc8;
+  }
+  .av-4 {
+    background: #4caf7d;
+  }
+  .av-5 {
+    background: #e05252;
+  }
+  .shift-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .shift-name {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .shift-type {
+    font-size: 0.73rem;
+    color: #888;
+    margin: 1px 0;
+  }
+  .shift-meta {
+    font-size: 0.69rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    flex-wrap: wrap;
+  }
+  .shift-meta i {
+    font-size: 0.65rem;
+  }
+  .shift-badge {
+    flex-shrink: 0;
+  }
+
+  /* Job rows */
+  .job-row {
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f4f0;
+  }
+  .job-row:last-of-type {
+    border-bottom: none;
+  }
+  .job-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .job-name {
+    font-size: 0.855rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .job-rate {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .job-meta {
+    font-size: 0.7rem;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .post-btn {
+    display: block;
+    width: 100%;
+    border: 1.5px solid #dde2d8;
+    background: #fff;
+    border-radius: 10px;
+    padding: 9px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 12px;
+    transition: background 0.15s;
+  }
+  .post-btn:hover {
+    background: #f2f4f0;
+    color: #1a1a1a;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 960px) {
+    .dash-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .dash-mid {
+      grid-template-columns: 1fr;
+    }
+    .dash-bottom {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .dash-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .dash-greeting h1 {
+      font-size: 1.3rem;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+
+<!-- Page header -->
+<div class="dash-header">
+  <div class="dash-greeting">
+    <h1>
+      {{ greeting }}, {{ request.user.first_name|default:request.user.username
+      }}
+    </h1>
+    <p>
+      {% if total_scheduled %}{{ total_scheduled }} shift{{
+      total_scheduled|pluralize }} scheduled this week{% else %}No upcoming
+      shifts scheduled{% endif %} &nbsp;·&nbsp; {{
+      employer_profile.city|default:"Ontario" }}
+    </p>
+  </div>
+  <div class="dash-date">
+    <i class="fas fa-calendar-day"></i> {{ today|date:"l, F j" }}
+  </div>
+</div>
+
+{% for msg in messages %}
+<div
+  class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
+>
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<!-- Alert: not activated -->
+{% if not is_activated %}
+<div class="dash-alert">
+  <div class="dash-alert-icon"><i class="fas fa-bolt"></i></div>
+  <div class="dash-alert-body">
+    <strong>Activate your account to post jobs.</strong>
+    Pay the one-time fee to unlock job posting and connect with verified
+    caregivers across Ontario.
+  </div>
+  <a href="{% url 'EmployerApp:activate_account' %}" class="dash-alert-btn"
+    >Activate now</a
+  >
+</div>
+{% endif %}
+
+<!-- Stat cards -->
+<div class="dash-stats">
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-blue">
+      <i class="fas fa-calendar-check"></i>
+    </div>
+    <div class="dash-stat-val">{{ total_scheduled }}</div>
+    <div class="dash-stat-lbl">Upcoming Shifts</div>
+    {% if total_scheduled %}
+    <div class="dash-stat-sub muted">this week</div>
+    {% endif %}
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-orange"><i class="fas fa-clock"></i></div>
+    <div class="dash-stat-val">{{ total_active }}</div>
+    <div class="dash-stat-lbl">Active Now</div>
+    {% if total_active %}
+    <div class="dash-stat-sub">in progress</div>
+    {% endif %}
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-green">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="dash-stat-val">{{ total_completed }}</div>
+    <div class="dash-stat-lbl">Completed</div>
+    <div class="dash-stat-sub muted">all time</div>
+  </div>
+  <div class="dash-stat">
+    <div class="dash-stat-icon si-purple"><i class="fas fa-briefcase"></i></div>
+    <div class="dash-stat-val">{{ open_jobs_count }}</div>
+    <div class="dash-stat-lbl">Open Jobs</div>
+    <div class="dash-stat-sub muted">live listings</div>
+  </div>
+</div>
+
+<!-- Mid row -->
+<div class="dash-mid">
+  <div>
+    <!-- Dark green action card -->
+    <div class="action-card">
+      <div class="action-label">Quick Actions</div>
+      <div class="action-heading">Find &amp; schedule<br />a caregiver</div>
+      <div class="action-sub">
+        Browse verified caregivers and book shifts in minutes
+      </div>
+      <div class="action-btns">
+        <a
+          href="{% url 'EmployerApp:find_caregiver' %}"
+          class="action-btn solid"
+        >
+          <i class="fas fa-search"></i> Find Caregiver
+        </a>
+        {% if is_activated %}
+        <a href="{% url 'EmployerApp:post_job' %}" class="action-btn">
+          <i class="fas fa-plus"></i> Post a Job
+        </a>
+        {% else %}
+        <a href="{% url 'EmployerApp:activate_account' %}" class="action-btn">
+          <i class="fas fa-bolt"></i> Activate Account
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Weekly chart -->
+    <div class="chart-card">
+      <div class="chart-head">
+        <span class="chart-title">Shifts this week</span>
+        <span class="chart-badge">{{ total_scheduled }} scheduled</span>
+      </div>
+      <div style="position: relative; height: 110px">
+        <canvas id="weeklyShiftsChart"></canvas>
+      </div>
+      <div class="chart-days" id="chart-day-labels"></div>
+    </div>
+  </div>
+
+  <!-- Account checklist -->
+  <div class="qa-card">
+    <div class="qa-title">Account checklist</div>
+    <div class="qa-sub">
+      {% if is_activated %}All set — account active{% else %}Complete to unlock
+      all features{% endif %}
+    </div>
+    <ul class="qa-list">
+      <li>
+        <span class="qi done"><i class="fas fa-check"></i></span>
+        Profile created
+      </li>
+      <li>
+        <span
+          class="qi {% if employer_profile.phone %}done{% else %}pending{% endif %}"
+        >
+          {% if employer_profile.phone %}<i class="fas fa-check"></i>{% endif %}
+        </span>
+        Phone number added
+      </li>
+      <li>
+        <span
+          class="qi {% if employer_profile.address %}done{% else %}pending{% endif %}"
+        >
+          {% if employer_profile.address %}<i class="fas fa-check"></i>{% endif
+          %}
+        </span>
+        Address on file
+      </li>
+      <li>
+        <span class="qi {% if is_activated %}done{% else %}pending{% endif %}">
+          {% if is_activated %}<i class="fas fa-check"></i>{% endif %}
+        </span>
+        Account activated
+      </li>
+      <li>
+        <span
+          class="qi {% if open_jobs_count %}done{% else %}pending{% endif %}"
+        >
+          {% if open_jobs_count %}<i class="fas fa-check"></i>{% endif %}
+        </span>
+        First job posted
+      </li>
+    </ul>
+    {% if not is_activated %}
+    <a href="{% url 'EmployerApp:activate_account' %}" class="qa-btn"
+      >Complete activation</a
+    >
+    {% else %}
+    <a href="{% url 'EmployerApp:post_job' %}" class="qa-btn">Post a new job</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Bottom row -->
+<div class="dash-bottom">
+  <!-- Shifts column -->
+  <div class="section-card">
+    <div class="section-head">
+      <h3>Upcoming Shifts</h3>
+      <a href="{% url 'EmployerApp:my_shifts' %}" class="view-all"
+        >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
+      ></a>
+    </div>
+
+    {% if active_shifts %} {% for s in active_shifts %}
+    <div class="shift-row">
+      <div class="shift-av av-{{ forloop.counter }}">
+        {{ s.caregiver.first_name|first|upper }}{{
+        s.caregiver.last_name|first|upper }}
+      </div>
+      <div class="shift-info">
+        <div class="shift-name">
+          {{ s.caregiver.get_full_name|default:s.caregiver.username }}
+        </div>
+        <div class="shift-type">Active shift</div>
+        <div class="shift-meta">
+          <span
+            ><i class="fas fa-location-dot"></i> {{ s.city|default:"Ontario"
+            }}</span
+          >
+        </div>
+      </div>
+      <div class="shift-badge">
+        <span class="badge badge-orange">In Progress</span>
+      </div>
+    </div>
+    {% endfor %} {% endif %} {% for s in scheduled_shifts %}
+    <div class="shift-row">
+      <div class="shift-av av-{{ forloop.counter }}">
+        {{ s.caregiver.first_name|first|upper }}{{
+        s.caregiver.last_name|first|upper }}
+      </div>
+      <div class="shift-info">
+        <div class="shift-name">
+          {{ s.caregiver.get_full_name|default:s.caregiver.username }}
+        </div>
+        <div class="shift-type">
+          {% if s.city %}{{ s.city }}{% else %}Care shift{% endif %}
+        </div>
+        <div class="shift-meta">
+          <span
+            ><i class="fas fa-clock"></i> {% if s.start_date == today %}Today{%
+            else %}{{ s.start_date|date:"D, M j" }}{% endif %} · {{
+            s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}</span
+          >
+          <span
+            ><i class="fas fa-dollar-sign"></i> ${{ s.hourly_rate }}/hr</span
+          >
+        </div>
+      </div>
+      <div class="shift-badge">
+        <span class="badge badge-blue">Scheduled</span>
+      </div>
+    </div>
+    {% empty %} {% if not active_shifts %}
+    <div
+      style="
+        text-align: center;
+        padding: 28px 0;
+        color: #ccc;
+        font-size: 0.85rem;
+      "
+    >
+      <i
+        class="fas fa-calendar-xmark"
+        style="font-size: 1.6rem; display: block; margin-bottom: 8px"
+      ></i>
+      No upcoming shifts scheduled
+    </div>
+    {% endif %} {% endfor %}
+  </div>
+
+  <!-- Open jobs column -->
+  <div class="section-card">
+    <div class="section-head">
+      <h3>My Open Jobs</h3>
+      <a href="{% url 'EmployerApp:my_jobs' %}" class="view-all"
+        >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
+      ></a>
+    </div>
+
+    {% for job in recent_jobs %}
+    <div class="job-row">
+      <div class="job-top">
+        <div class="job-name">{{ job.title }}</div>
+        <span class="job-rate">${{ job.hourly_rate }}/hr</span>
+      </div>
+      <div class="job-meta">
+        <i class="fas fa-location-dot"></i> {{ job.city|default:"Ontario" }}
+        &nbsp;·&nbsp; {{ job.hours_per_week|default:"—" }} hrs/wk
+      </div>
+    </div>
+    {% empty %}
+    <div
+      style="
+        text-align: center;
+        padding: 28px 0;
+        color: #ccc;
+        font-size: 0.85rem;
+      "
+    >
+      <i
+        class="fas fa-briefcase"
+        style="font-size: 1.6rem; display: block; margin-bottom: 8px"
+      ></i>
+      No open jobs yet
+    </div>
+    {% endfor %} {% if is_activated %}
+    <a href="{% url 'EmployerApp:post_job' %}" class="post-btn"
+      ><i class="fas fa-plus"></i> Post a new job</a
+    >
+    {% else %}
+    <a href="{% url 'EmployerApp:activate_account' %}" class="post-btn"
+      ><i class="fas fa-bolt"></i> Activate to post jobs</a
+    >
+    {% endif %}
+  </div>
+</div>
+
+<!-- Activation Modal -->
+{% if show_modal %}
+<div class="ep-modal-backdrop" id="activationModal">
+  <div class="ep-modal">
+    <div class="ep-modal-icon"><i class="fas fa-bolt"></i></div>
+    <h2>Activate Your Account</h2>
+    <p>
+      Pay the one-time activation fee to unlock job posting and connect with
+      verified caregivers across Ontario.
+    </p>
+    <div class="ep-modal-price">
+      <div class="price">$49.99</div>
+      <div class="price-note">One-time activation fee · CAD</div>
+    </div>
+    <div class="ep-modal-perks">
+      <div class="ep-modal-perk">
+        <i class="fas fa-check-circle"></i> Post unlimited job listings
+      </div>
+      <div class="ep-modal-perk">
+        <i class="fas fa-check-circle"></i> Access 142+ verified caregivers
+      </div>
+      <div class="ep-modal-perk">
+        <i class="fas fa-check-circle"></i> Direct messaging with caregivers
+      </div>
+      <div class="ep-modal-perk">
+        <i class="fas fa-check-circle"></i> Priority support from admin
+      </div>
+    </div>
+    <div class="ep-modal-actions">
+      <a
+        href="{% url 'EmployerApp:activate_account' %}"
+        class="ep-modal-pay-btn"
+      >
+        <i class="fas fa-lock"></i> Pay Now &amp; Activate
+      </a>
+      <button class="ep-modal-later" id="closeModalBtn">Pay Later</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function(){
+    var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    var todayIdx = new Date().getDay();
+    var labels = [];
+    for(var i = 6; i >= 0; i--){
+      var d = (todayIdx - i + 7) % 7;
+      labels.push(days[d === 0 ? 6 : d - 1]);
+    }
+    var labelRow = document.getElementById('chart-day-labels');
+    if(labelRow){ labelRow.innerHTML = labels.map(function(l){ return '<span>'+l+'</span>'; }).join(''); }
+
+    var canvas = document.getElementById('weeklyShiftsChart');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var gradient = ctx.createLinearGradient(0,0,0,110);
+    gradient.addColorStop(0,'rgba(27,125,79,0.2)');
+    gradient.addColorStop(1,'rgba(27,125,79,0.0)');
+
+    var data = [0,0,0,0,0,0,{{ total_scheduled|default:0 }}];
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: '#1b7d4f',
+          borderWidth: 2.5,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: function(c){
+            var max = Math.max.apply(null, data);
+            return data[c.dataIndex] === max ? '#f0a040' : '#fff';
+          },
+          pointBorderColor: '#1b7d4f',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { display: false, beginAtZero: true }
+        }
+      }
+    });
+  })();
+</script>
+
+{% endblock %} {% block extra_scripts %} {% if show_modal %}
+<script>
+  (function () {
+    var modal = document.getElementById("activationModal");
+    var closeBtn = document.getElementById("closeModalBtn");
+    if (closeBtn && modal) {
+      closeBtn.addEventListener("click", function () {
+        modal.style.display = "none";
+      });
+    }
+  })();
+</script>
+{% endif %} {% endblock %}

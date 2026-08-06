@@ -1,0 +1,226 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}Post a Job — Employer{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ep-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .ep-form-full {
+    grid-column: span 2;
+  }
+  .ep-form-group {
+    margin-bottom: 18px;
+  }
+  .ep-form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  .ep-form-label span {
+    color: #c62828;
+  }
+  .ep-form-input,
+  .ep-form-select,
+  .ep-form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dde2d8;
+    border-radius: 9px;
+    font-size: 0.855rem;
+    font-family: inherit;
+    color: #333;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ep-form-input:focus,
+  .ep-form-select:focus,
+  .ep-form-textarea:focus {
+    outline: none;
+    border-color: #1b3060;
+    box-shadow: 0 0 0 3px rgba(27,48,96,.1);
+  }
+  .ep-form-textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  .ep-form-hint {
+    font-size: 0.72rem;
+    color: #999;
+    margin-top: 4px;
+  }
+  .ep-form-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    margin-bottom: 18px;
+  }
+  .ep-form-section-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f2f4f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ep-form-section-title i {
+    color: #1b3060;
+  }
+  .ep-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .ep-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #f8f9f7;
+    border: 1px solid #e8eae6;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #333;
+    transition: background .15s, border-color .15s;
+  }
+  .ep-checkbox-item:hover {
+    background: #f0f2ee;
+    border-color: #d4d8d0;
+  }
+  .ep-checkbox-item input[type="checkbox"] {
+    accent-color: #1b3060;
+  }
+  .ep-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #1b3060;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 28px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s, opacity .15s;
+  }
+  .ep-submit-btn:hover {
+    background: #132448;
+    opacity: 0.95;
+  }
+  .ep-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  @media (max-width: 768px) {
+    .ep-form-grid { grid-template-columns: 1fr; }
+    .ep-form-full { grid-column: span 1; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ep-page-title">
+  <i class="fas fa-plus-circle" style="color: #1b3060; margin-right: 8px"></i>Post a Job
+</div>
+
+{% for msg in messages %}
+<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<form method="post" action="{% url 'EmployerApp:post_job' %}">
+  {% csrf_token %}
+
+  <!-- Basic Info -->
+  <div class="ep-form-section">
+    <div class="ep-form-section-title">
+      <i class="fas fa-info-circle"></i> Job Details
+    </div>
+    <div class="ep-form-grid">
+      <div class="ep-form-group ep-form-full">
+        <label class="ep-form-label" for="id_title">Job Title <span>*</span></label>
+        <input type="text" name="title" id="id_title" class="ep-form-input" required placeholder="e.g., Weekend Respite Care, Afternoon Companion Care">
+        <div class="ep-form-hint">A short, descriptive title for your job posting</div>
+      </div>
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_care_type">Care Type <span>*</span></label>
+        <select name="care_type" id="id_care_type" class="ep-form-select" required>
+          <option value="" disabled selected>Select care type</option>
+          <option value="senior_elder">Senior / Elder Care</option>
+          <option value="dementia">Dementia & Alzheimer</option>
+          <option value="palliative">Palliative Care</option>
+          <option value="post_surgery">Post-Surgery Recovery</option>
+          <option value="postpartum">Postpartum Care</option>
+          <option value="companion">Companion Care</option>
+          <option value="mobility">Mobility Assistance</option>
+          <option value="live_in">Live-In Care</option>
+          <option value="overnight">Overnight Care</option>
+          <option value="respite">Respite Care</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_city">City / Location <span>*</span></label>
+        <input type="text" name="city" id="id_city" class="ep-form-input" required placeholder="e.g., Toronto, Nepean, Ottawa">
+        <div class="ep-form-hint">Neighbourhood or city where care is needed</div>
+      </div>
+      <div class="ep-form-group ep-form-full">
+        <label class="ep-form-label" for="id_description">Description <span>*</span></label>
+        <textarea name="description" id="id_description" class="ep-form-textarea" required placeholder="Describe the care needs, patient condition, home environment, any special requirements..."></textarea>
+        <div class="ep-form-hint">Include details about the person needing care, specific tasks, schedule preferences, and any other relevant information</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule & Rate -->
+  <div class="ep-form-section">
+    <div class="ep-form-section-title">
+      <i class="fas fa-clock"></i> Schedule & Rate
+    </div>
+    <div class="ep-form-grid">
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_schedule">Schedule Preference</label>
+        <select name="schedule" id="id_schedule" class="ep-form-select">
+          <option value="flexible" selected>Flexible</option>
+          <option value="weekdays">Weekdays</option>
+          <option value="weekends">Weekends</option>
+          <option value="live_in">Live-In</option>
+          <option value="overnight">Overnight</option>
+        </select>
+      </div>
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_hours_per_week">Hours per Week (optional)</label>
+        <input type="number" name="hours_per_week" id="id_hours_per_week" class="ep-form-input" min="1" max="168" placeholder="e.g., 20">
+        <div class="ep-form-hint">Estimated weekly hours</div>
+      </div>
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_hourly_rate">Hourly Rate (CAD/hr) <span>*</span></label>
+        <input type="number" name="hourly_rate" id="id_hourly_rate" class="ep-form-input" step="0.01" min="15" max="100" required placeholder="e.g., 25.00">
+        <div class="ep-form-hint">Offered rate per hour in CAD</div>
+      </div>
+      <div class="ep-form-group">
+        <label class="ep-form-label" for="id_start_date">Preferred Start Date (optional)</label>
+        <input type="date" name="start_date" id="id_start_date" class="ep-form-input">
+        <div class="ep-form-hint">Leave blank if flexible</div>
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" class="ep-submit-btn">
+    <i class="fas fa-paper-plane"></i> Post Job
+  </button>
+</form>
+{% endblock %}

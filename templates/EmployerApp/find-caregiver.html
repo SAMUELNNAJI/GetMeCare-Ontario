@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Find a Caregiver — GetMeCare{% endblock %}
+
+{% block extra_head %}
+<style>
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+  .page-header { padding: 2rem 0 1rem; }
+  .page-header h1 { font-size: 1.8rem; color: #1e3a35; margin: 0; }
+  .page-header p { color: #666; margin: .4rem 0 0; }
+  .back-link { display: inline-flex; align-items: center; gap: .4rem; color: #00695c; text-decoration: none; margin-bottom: 1rem; font-size: .9rem; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+  .caregiver-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+  .caregiver-card .name { font-size: 1.1rem; font-weight: 700; color: #1e3a35; }
+  .caregiver-card .city { font-size: .85rem; color: #666; margin: .2rem 0 .8rem; }
+  .caregiver-card .rate { font-size: 1.05rem; font-weight: 600; color: #00695c; }
+  .cg-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b3a2d, #2d5a42);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .cg-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  .skills-wrap { margin-top: .8rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .skill-tag { background: #e8f5f3; color: #00695c; padding: .15rem .6rem; border-radius: 20px; font-size: .75rem; }
+  .btn-contact { display: inline-block; margin-top: 1rem; background: #00695c; color: #fff; padding: .5rem 1rem; border-radius: 8px; text-decoration: none; font-size: .85rem; }
+  .btn-contact:hover { background: #004d40; }
+  .empty-msg { text-align: center; color: #999; padding: 3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <a href="{% url 'EmployerApp:dashboard' %}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  <div class="page-header">
+    <h1><i class="fas fa-search"></i> Find a Caregiver</h1>
+    <p>Browse verified, active Personal Support Workers across Ontario.</p>
+  </div>
+
+  {% if profiles %}
+  <div class="cards-grid">
+    {% for p in profiles %}
+    <div class="caregiver-card">
+      <div class="cg-avatar">
+        {% if p.profile_image %}
+        <img src="{{ p.profile_image.url }}" alt="{{ p.user.get_full_name }}">
+        {% else %}
+        {{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div class="name">{{ p.user.get_full_name|default:p.user.username }}</div>
+      <div class="city"><i class="fas fa-map-marker-alt"></i> {{ p.city|default:"Ontario" }}</div>
+      <div class="rate">{% if p.hourly_rate %}${{ p.hourly_rate }}/hr{% else %}Rate not set{% endif %}</div>
+      {% if p.skills_list %}
+      <div class="skills-wrap">
+        {% for skill in p.skills_list|slice:":5" %}
+        <span class="skill-tag">{{ skill }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <a href="{% url 'contact' %}" class="btn-contact"><i class="fas fa-envelope"></i> Contact via Admin</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-msg">
+    <i class="fas fa-user-nurse" style="font-size:2.5rem;color:#ccc;"></i>
+    <p>No verified caregivers available right now. Check back soon.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,284 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Admin — GetMeCare{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f2f4f0; color: #1a1a1a; }
+
+  /* ═══ SIDEBAR ═══ */
+  .adm-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+    background: #1b3a2d; display: flex; flex-direction: column;
+    z-index: 200; transition: transform .3s ease; overflow-y: auto;
+  }
+  .adm-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08); flex-shrink: 0;
+  }
+  .adm-logo a { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .adm-logo-name { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.1; }
+  .adm-logo-sub  { font-size: .6rem; letter-spacing: .12em; color: #8fbfaa; text-transform: uppercase; }
+
+  /* Admin profile card */
+  .adm-profile {
+    margin: 14px 12px 6px; background: #142e21;
+    border-radius: 12px; padding: 14px; flex-shrink: 0;
+  }
+  .adm-profile-row { display: flex; align-items: center; gap: 10px; }
+  .adm-av {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #2d5a42; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700; flex-shrink: 0;
+  }
+  .adm-av-name { font-size: .85rem; font-weight: 600; color: #fff; line-height: 1.25; }
+  .adm-av-role {
+    font-size: .7rem; color: #8fbfaa;
+    display: flex; align-items: center; gap: 4px; margin-top: 2px;
+  }
+  .adm-badge {
+    margin-top: 10px; background: rgba(240,165,0,.18);
+    border: 1px solid rgba(240,165,0,.35); border-radius: 6px;
+    padding: 5px 10px; font-size: .72rem; font-weight: 600;
+    color: #f5c540; display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Nav */
+  .adm-nav { flex: 1; padding: 8px 0; }
+  .adm-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; color: #a8ccb8; text-decoration: none;
+    font-size: .855rem; border-radius: 8px; margin: 1px 8px;
+    transition: background .15s, color .15s;
+  }
+  .adm-nav a:hover  { background: rgba(255,255,255,.07); color: #fff; }
+  .adm-nav a.active { background: rgba(255,255,255,.12); color: #fff; font-weight: 600; }
+  .adm-nav a i { width: 16px; text-align: center; font-size: .82rem; }
+  .adm-nav-badge {
+    margin-left: auto; background: #e05252; color: #fff;
+    border-radius: 20px; font-size: .65rem; font-weight: 700;
+    padding: 1px 7px; min-width: 18px; text-align: center;
+  }
+  .adm-nav-section {
+    font-size: .62rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: #5a8a70;
+    padding: 12px 26px 4px;
+  }
+
+  /* Signout */
+  .adm-signout { padding: 12px 18px; border-top: 1px solid rgba(255,255,255,.08); flex-shrink: 0; }
+  .adm-signout a { display: flex; align-items: center; gap: 8px; color: #e57373; font-size: .84rem; text-decoration: none; }
+  .adm-signout a:hover { color: #ef9a9a; }
+
+  /* ═══ TOPBAR ═══ */
+  .adm-topbar {
+    position: fixed; top: 0; left: 240px; right: 0; height: 56px;
+    background: #f2f4f0; border-bottom: 1px solid #dde2d8;
+    display: flex; align-items: center; padding: 0 24px; gap: 12px;
+    z-index: 100;
+  }
+  .adm-hamburger {
+    display: none; background: none; border: none;
+    cursor: pointer; flex-direction: column; gap: 5px; padding: 4px;
+  }
+  .adm-hamburger span { display: block; width: 22px; height: 2px; background: #444; border-radius: 2px; }
+  .adm-search {
+    flex: 1; max-width: 320px; display: flex; align-items: center;
+    background: #fff; border: 1px solid #dde2d8;
+    border-radius: 20px; padding: 6px 14px; gap: 8px;
+  }
+  .adm-search input {
+    border: none; background: transparent; outline: none;
+    font-size: .84rem; color: #333; width: 100%; font-family: inherit;
+  }
+  .adm-search input::placeholder { color: #aaa; }
+  .adm-search i { color: #999; font-size: .82rem; }
+  .adm-topbar-space { flex: 1; }
+  .adm-topbar-av {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #2d5a42; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .82rem; font-weight: 700; cursor: pointer;
+  }
+  .adm-back {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .78rem; font-weight: 600; color: #1b7d4f;
+    text-decoration: none;
+  }
+  .adm-back:hover { text-decoration: underline; }
+
+  /* ═══ MAIN ═══ */
+  .adm-main { margin-left: 240px; padding-top: 56px; min-height: 100vh; }
+  .adm-content { padding: 26px 26px 48px; }
+
+  /* Overlay */
+  .adm-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 190;
+  }
+  .adm-overlay.open { display: block; }
+
+  /* ═══ SHARED COMPONENTS ═══ */
+  .adm-page-title { font-size: 1.35rem; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+  .adm-card {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .adm-card-pad { padding: 20px 22px; }
+  .adm-table { width: 100%; border-collapse: collapse; font-size: .845rem; }
+  .adm-table th {
+    background: #f6f8f5; padding: 10px 14px; text-align: left;
+    font-size: .73rem; font-weight: 700; color: #555;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .adm-table td { padding: 11px 14px; border-bottom: 1px solid #f2f4f0; color: #333; vertical-align: middle; }
+  .adm-table tr:last-child td { border-bottom: none; }
+  .adm-table tr:hover td { background: #fafcf9; }
+  .badge {
+    display: inline-block; padding: .22rem .65rem;
+    border-radius: 20px; font-size: .72rem; font-weight: 600;
+  }
+  .badge-green  { background: #e6f5ee; color: #1b7d4f; }
+  .badge-orange { background: #fff3e0; color: #c96000; }
+  .badge-blue   { background: #e8f0fe; color: #1a56c4; }
+  .badge-red    { background: #fdecea; color: #c62828; }
+  .badge-grey   { background: #f0f0f0; color: #666; }
+  .adm-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 7px; font-size: .78rem;
+    font-weight: 600; cursor: pointer; border: none;
+    font-family: inherit; text-decoration: none; transition: opacity .15s;
+  }
+  .adm-btn:hover { opacity: .85; }
+  .adm-btn-green  { background: #1b7d4f; color: #fff; }
+  .adm-btn-red    { background: #e05252; color: #fff; }
+  .adm-btn-orange { background: #e07b00; color: #fff; }
+  .adm-btn-ghost  { background: #f0f2ee; color: #333; border: 1px solid #dde2d8; }
+  .adm-btn-view   { background: #e6f5ee; color: #1b7d4f; }
+  .adm-empty { text-align: center; padding: 32px 0; color: #bbb; font-size: .85rem; }
+  .adm-empty i { font-size: 1.8rem; display: block; margin-bottom: 8px; color: #ddd; }
+  .msg-ok  { background: #e6f5ee; color: #1b5e35; border: 1px solid #b2dfca; border-radius: 9px; padding: 10px 14px; margin-bottom: 16px; font-size: .84rem; }
+  .msg-err { background: #fdecea; color: #c62828; border: 1px solid #ffcdd2; border-radius: 9px; padding: 10px 14px; margin-bottom: 16px; font-size: .84rem; }
+  .msg-warn{ background: #fff8e1; color: #b45309; border: 1px solid #fde68a; border-radius: 9px; padding: 10px 14px; margin-bottom: 16px; font-size: .84rem; }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 1024px) {
+    .adm-sidebar { width: 210px; }
+    .adm-topbar  { left: 210px; }
+    .adm-main    { margin-left: 210px; }
+  }
+  @media (max-width: 768px) {
+    .adm-sidebar { transform: translateX(-100%); width: 260px; }
+    .adm-sidebar.open { transform: translateX(0); }
+    .adm-topbar  { left: 0; padding: 0 16px; }
+    .adm-main    { margin-left: 0; }
+    .adm-hamburger { display: flex; }
+    .adm-search  { max-width: 180px; }
+    .adm-content { padding: 16px 14px 40px; }
+  }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="adm-overlay" id="adm-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="adm-sidebar" id="adm-sidebar">
+  <div class="adm-logo">
+    <a href="{% url 'home' %}">
+      <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
+        <circle cx="22" cy="22" r="22" fill="#2d5a42"/>
+        <path d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z" fill="#f0a040" opacity=".95"/>
+        <path d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z" fill="#4caf7d"/>
+      </svg>
+      <div>
+        <div class="adm-logo-name">GetMe<span style="color:#f0a040">Care</span></div>
+        <div class="adm-logo-sub">Admin Panel</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="adm-profile">
+    <div class="adm-profile-row">
+      <div class="adm-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+      <div>
+        <div class="adm-av-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="adm-av-role"><i class="fas fa-shield-alt" style="color:#4caf7d;font-size:.6rem;"></i> Administrator</div>
+      </div>
+    </div>
+    <div class="adm-badge"><i class="fas fa-circle" style="font-size:.45rem;"></i> Platform Admin</div>
+  </div>
+
+  <div class="adm-nav">
+    <div class="adm-nav-section">Overview</div>
+    <a href="{% url 'AdminApp:dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+      <i class="fas fa-th-large"></i> Dashboard
+    </a>
+
+    <div class="adm-nav-section">Management</div>
+    <a href="{% url 'AdminApp:manage_caregivers' %}" {% if request.resolver_match.url_name == 'manage_caregivers' %}class="active"{% endif %}>
+      <i class="fas fa-user-nurse"></i> Caregivers
+      {% if pending_profiles %}<span class="adm-nav-badge">{{ pending_profiles }}</span>{% endif %}
+    </a>
+    <a href="{% url 'AdminApp:review_documents' %}" {% if request.resolver_match.url_name == 'review_documents' %}class="active"{% endif %}>
+      <i class="fas fa-file-alt"></i> Documents
+      {% if pending_docs %}<span class="adm-nav-badge">{{ pending_docs }}</span>{% endif %}
+    </a>
+    <a href="{% url 'AdminApp:manage_shifts' %}" {% if request.resolver_match.url_name == 'manage_shifts' %}class="active"{% endif %}>
+      <i class="fas fa-calendar-alt"></i> Shifts
+    </a>
+    <a href="{% url 'AdminApp:manage_users' %}" {% if request.resolver_match.url_name == 'manage_users' %}class="active"{% endif %}>
+      <i class="fas fa-users"></i> All Users
+    </a>
+  </div>
+
+  <div class="adm-signout">
+    <a href="{% url 'Account:logout' %}"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+  </div>
+</aside>
+
+<!-- TOPBAR -->
+<div class="adm-topbar">
+  <button class="adm-hamburger" id="adm-hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="adm-search">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search caregivers, shifts…">
+  </div>
+  <a href="{% url 'home' %}" class="adm-back" style="margin-left:10px;">
+    <i class="fas fa-arrow-left"></i> Go back to site
+  </a>
+  <div class="adm-topbar-space"></div>
+  <div class="adm-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+</div>
+
+<!-- MAIN -->
+<main class="adm-main">
+  <div class="adm-content">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<script>
+(function(){
+  var btn = document.getElementById('adm-hamburger');
+  var sb  = document.getElementById('adm-sidebar');
+  var ov  = document.getElementById('adm-overlay');
+  function openSB()  { sb.classList.add('open'); ov.classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeSB() { sb.classList.remove('open'); ov.classList.remove('open'); document.body.style.overflow=''; }
+  if(btn) btn.addEventListener('click', function(){ sb.classList.contains('open') ? closeSB() : openSB(); });
+  if(ov)  ov.addEventListener('click', closeSB);
+})();
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

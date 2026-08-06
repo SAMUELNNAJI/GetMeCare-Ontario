@@ -1,0 +1,118 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Shifts —
+Admin{% endblock %} {% block extra_head %}
+<style>
+  .sh-names {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .sh-sub {
+    font-size: 0.72rem;
+    color: #aaa;
+    margin-top: 1px;
+  }
+  @media (max-width: 900px) {
+    .adm-table th:nth-child(4),
+    .adm-table td:nth-child(4),
+    .adm-table th:nth-child(6),
+    .adm-table td:nth-child(6) {
+      display: none;
+    }
+  }
+  @media (max-width: 600px) {
+    .adm-table th:nth-child(3),
+    .adm-table td:nth-child(3) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-calendar-alt" style="color: #1b7d4f; margin-right: 8px"></i
+  >Manage Shifts
+</div>
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div
+      style="
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <i class="fas fa-list" style="color: #1b7d4f"></i> All Shifts
+      <span
+        style="
+          margin-left: auto;
+          font-size: 0.72rem;
+          font-weight: 600;
+          background: #e6f5ee;
+          color: #1b7d4f;
+          border-radius: 20px;
+          padding: 3px 10px;
+        "
+        >{{ shifts|length }} total</span
+      >
+    </div>
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Caregiver</th>
+          <th>Employer</th>
+          <th>City</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Rate</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in shifts %}
+        <tr>
+          <td style="color: #aaa; font-size: 0.8rem">#{{ s.pk }}</td>
+          <td>
+            <div class="sh-names">{{ s.caregiver.get_full_name }}</div>
+            <div class="sh-sub">{{ s.caregiver.email }}</div>
+          </td>
+          <td>
+            <div class="sh-names">{{ s.employer.get_full_name }}</div>
+            <div class="sh-sub">{{ s.employer.email }}</div>
+          </td>
+          <td style="color: #555; font-size: 0.84rem">
+            {{ s.city|default:"Ontario" }}
+          </td>
+          <td style="font-size: 0.84rem; font-weight: 600">
+            {{ s.start_date|date:"M d, Y" }}
+          </td>
+          <td style="color: #555; font-size: 0.82rem">
+            {{ s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}
+          </td>
+          <td style="font-weight: 700">${{ s.hourly_rate }}/hr</td>
+          <td>
+            <span
+              class="badge {% if s.status == 'completed' %}badge-green {% elif s.status == 'in_progress' %}badge-orange {% elif s.status == 'cancelled' %}badge-red {% else %}badge-blue{% endif %}"
+            >
+              {{ s.get_status_display }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8">
+            <div class="adm-empty">
+              <i class="fas fa-calendar-xmark"></i>No shifts found.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

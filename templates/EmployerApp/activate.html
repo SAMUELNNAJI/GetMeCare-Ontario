@@ -1,0 +1,138 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}Activate Account — Employer{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ep-activate-container {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .ep-activate-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 36px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    text-align: center;
+  }
+  .ep-activate-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b3060, #3060c0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 2rem;
+    color: #fff;
+  }
+  .ep-activate-card h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+  }
+  .ep-activate-card p {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .ep-price-box {
+    background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 2px solid #dbeafe;
+  }
+  .ep-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1b3060;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .ep-price-note {
+    font-size: 0.8rem;
+    color: #666;
+  }
+  .ep-features {
+    text-align: left;
+    margin-bottom: 28px;
+  }
+  .ep-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 0.88rem;
+    color: #333;
+  }
+  .ep-feature i {
+    color: #1b7d4f;
+    font-size: 0.9rem;
+  }
+  .ep-activate-btn {
+    display: block;
+    width: 100%;
+    background: #1b3060;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s, opacity .15s;
+  }
+  .ep-activate-btn:hover {
+    background: #132448;
+    opacity: 0.95;
+  }
+  .ep-cancel-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 0.82rem;
+    color: #999;
+    text-decoration: none;
+  }
+  .ep-cancel-link:hover {
+    color: #666;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ep-activate-container">
+  <div class="ep-activate-card">
+    <div class="ep-activate-icon">
+      <i class="fas fa-bolt"></i>
+    </div>
+    <h2>Activate Your Account</h2>
+    <p>Pay the one-time activation fee to unlock job posting and connect with verified caregivers across Ontario.</p>
+
+    <div class="ep-price-box">
+      <div class="price">$49.99</div>
+      <div class="ep-price-note">One-time activation fee · CAD</div>
+    </div>
+
+    <div class="ep-features">
+      <div class="ep-feature"><i class="fas fa-check-circle"></i> Post unlimited job listings</div>
+      <div class="ep-feature"><i class="fas fa-check-circle"></i> Access 142+ verified caregivers</div>
+      <div class="ep-feature"><i class="fas fa-check-circle"></i> Direct messaging with caregivers</div>
+      <div class="ep-feature"><i class="fas fa-check-circle"></i> Priority support from admin</div>
+      <div class="ep-feature"><i class="fas fa-check-circle"></i> Full shift management tools</div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="ep-activate-btn">
+        <i class="fas fa-lock"></i> Pay Now & Activate
+      </button>
+    </form>
+
+    <a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
+  </div>
+</div>
+{% endblock %}
