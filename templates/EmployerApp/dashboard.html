@@ -1,4 +1,4 @@
-﻿{% extends "EmployerApp/base_employer.html" %}
+{% extends "EmployerApp/base_employer.html" %}
 {% block title %}Dashboard — Employer{% endblock %}
 {% block extra_head %}
 <style>
@@ -117,7 +117,7 @@
 </div>
 <div class="qa-card">
 <div class="qa-title">Account checklist</div>
-<div class="qa-sub">{% if is_activated %}All set — account active{% else %}Complete to unlock all features{% endif %}</div>
+<div class="qa-sub">{% if is_activated %}All set - account active{% else %}Complete to unlock all features{% endif %}</div>
 <ul class="qa-list">
 <li><span class="qi done"><i class="fas fa-check"></i></span> Profile created</li>
 <li><span class="qi {% if employer_profile.phone %}done{% else %}pending{% endif %}">{% if employer_profile.phone %}<i class="fas fa-check"></i>{% endif %}</span> Phone number added</li>

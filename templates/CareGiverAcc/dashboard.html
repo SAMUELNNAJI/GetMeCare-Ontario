@@ -689,34 +689,20 @@ GetMeCare{% endblock %} {% block extra_head %}
   <!-- Open jobs -->
   <div class="section-card">
     <div class="section-head"><h3>Open jobs near you</h3></div>
+    {% for job in latest_jobs %}
     <div class="job-row">
       <div class="job-top">
-        <div class="job-name">Weekend respite care</div>
-        <span class="job-rate">$36/hr</span>
+        <div class="job-name">{{ job.title }}</div>
+        {% if job.hourly_rate %}<span class="job-rate">${{ job.hourly_rate }}/hr</span>{% endif %}
       </div>
       <div class="job-meta">
-        <i class="fas fa-location-dot"></i> Nepean &nbsp;·&nbsp; 12 hrs
+        <i class="fas fa-location-dot"></i> {{ job.city|default:"Ontario" }} &nbsp;·&nbsp; {{ job.hours_per_week|default:"—" }} hrs
       </div>
     </div>
-    <div class="job-row">
-      <div class="job-top">
-        <div class="job-name">Dementia day support</div>
-        <span class="job-rate">$38/hr</span>
-      </div>
-      <div class="job-meta">
-        <i class="fas fa-location-dot"></i> Orléans &nbsp;·&nbsp; 6 hrs
-      </div>
-    </div>
-    <div class="job-row">
-      <div class="job-top">
-        <div class="job-name">Palliative night shift</div>
-        <span class="job-rate">$41/hr</span>
-      </div>
-      <div class="job-meta">
-        <i class="fas fa-location-dot"></i> Vanier &nbsp;·&nbsp; 10 hrs
-      </div>
-    </div>
-    <a href="{% url 'browse' %}" class="browse-btn">Browse all jobs</a>
+    {% empty %}
+    <div style="text-align:center;padding:20px 0;color:#bbb;font-size:.83rem"><i class="fas fa-briefcase" style="display:block;font-size:1.4rem;margin-bottom:8px;color:#ddd"></i>No open jobs yet</div>
+    {% endfor %}
+    <a href="{% url 'browse_jobs' %}" class="browse-btn">Browse all jobs</a>
   </div>
 </div>
 <!-- end dash-bottom -->

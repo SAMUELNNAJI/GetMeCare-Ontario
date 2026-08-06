@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from Account.models import CaregiverProfile, JobPosting
 
@@ -155,3 +155,15 @@ def privacy(request):
 
 def terms(request):
     return render(request, 'Caregiver/terms.html')
+
+
+def caregiver_profile(request, pk):
+    """Public profile page for a single active caregiver."""
+    profile = get_object_or_404(
+        CaregiverProfile.objects.select_related('user'),
+        pk=pk,
+        status=CaregiverProfile.STATUS_ACTIVE,
+    )
+    return render(request, 'Caregiver/caregiver-profile.html', {
+        'profile': profile,
+    })

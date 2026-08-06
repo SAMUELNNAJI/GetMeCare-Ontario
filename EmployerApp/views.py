@@ -95,6 +95,11 @@ def my_shifts(request):
 
 
 @employer_required
+def find_caregiver(request):
+    return redirect('browse')
+
+
+@employer_required
 def payment_history(request):
     logs = ShiftLog.objects.filter(
         shift__employer=request.user,

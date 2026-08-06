@@ -59,7 +59,8 @@ Admin{% endblock %} {% block extra_head %}
         >{{ shifts|length }} total</span
       >
     </div>
-    <table class="adm-table">
+    <div class="scroll-table-wrap">
+<table class="adm-table">
       <thead>
         <tr>
           <th>#</th>
@@ -113,6 +114,7 @@ Admin{% endblock %} {% block extra_head %}
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 {% endblock %}

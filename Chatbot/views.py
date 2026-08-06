@@ -471,3 +471,170 @@ def delete_conversation(request, conversation_id):
         return JsonResponse({'error': 'Conversation not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────────────────────
+# Direct messaging views (user-to-user chat)
+# ─────────────────────────────────────────────────────────────
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.db.models import Q
+from .models import DirectConversation, DirectMessage
+
+
+def _chat_base(user):
+    """Return the right base template for the current user's role."""
+    if not user.is_authenticated:
+        return 'base.html'
+    if user.role == 'caregiver':
+        return 'CareGiverAcc/base_caregiver.html'
+    if user.role == 'employer':
+        return 'EmployerApp/base_employer.html'
+    return 'base.html'
+
+
+@login_required
+def chat_list(request):
+    """Show all conversations the current user is part of."""
+    convs = DirectConversation.objects.filter(
+        Q(participant_1=request.user) | Q(participant_2=request.user)
+    ).select_related('participant_1', 'participant_2').order_by('-updated_at')
+
+    conversations = []
+    for conv in convs:
+        other = conv.other_participant(request.user)
+        last  = conv.last_message()
+        unread = conv.unread_count(request.user)
+        conversations.append({
+            'conv': conv,
+            'other': other,
+            'last': last,
+            'unread': unread,
+        })
+
+    return render(request, 'chat/chat-list.html', {
+        'conversations': conversations,
+        'base_template': _chat_base(request.user),
+    })
+
+
+@login_required
+def chat_room(request, conv_id):
+    """Open a conversation thread."""
+    conv = get_object_or_404(
+        DirectConversation,
+        Q(participant_1=request.user) | Q(participant_2=request.user),
+        pk=conv_id,
+    )
+    # Mark messages from the other person as read
+    conv.direct_messages.filter(is_read=False).exclude(
+        sender=request.user
+    ).update(is_read=True)
+
+    messages = conv.direct_messages.select_related('sender').all()
+    other = conv.other_participant(request.user)
+
+    return render(request, 'chat/chat-room.html', {
+        'conv': conv,
+        'messages': messages,
+        'other': other,
+        'base_template': _chat_base(request.user),
+    })
+
+
+@login_required
+def chat_start(request, user_id):
+    """Start or resume a conversation with any user (called from browse card)."""
+    other_user = get_object_or_404(User, pk=user_id)
+    if other_user == request.user:
+        return redirect('chat_list')
+    conv, _ = DirectConversation.get_or_create_for(request.user, other_user)
+    return redirect('chat_room', conv_id=conv.pk)
+
+
+@login_required
+@require_POST
+def chat_send(request, conv_id):
+    """HTMX endpoint — POST a message, return the new message bubble HTML."""
+    conv = get_object_or_404(
+        DirectConversation,
+        Q(participant_1=request.user) | Q(participant_2=request.user),
+        pk=conv_id,
+    )
+    body = request.POST.get('body', '').strip()
+    if not body:
+        return HttpResponse('')
+
+    msg = DirectMessage.objects.create(
+        conversation=conv,
+        sender=request.user,
+        body=body,
+    )
+    # bump updated_at so the list re-sorts
+    DirectConversation.objects.filter(pk=conv.pk).update(updated_at=timezone.now())
+
+    return render(request, 'chat/partials/message_bubble.html', {
+        'msg': msg,
+        'me': request.user,
+    })
+
+
+@login_required
+def chat_poll(request, conv_id):
+    """HTMX polling endpoint — return any messages after `after` (message pk)."""
+    conv = get_object_or_404(
+        DirectConversation,
+        Q(participant_1=request.user) | Q(participant_2=request.user),
+        pk=conv_id,
+    )
+    after_pk = request.GET.get('after', 0)
+    try:
+        after_pk = int(after_pk)
+    except (ValueError, TypeError):
+        after_pk = 0
+
+    new_msgs = conv.direct_messages.filter(
+        pk__gt=after_pk
+    ).exclude(sender=request.user).select_related('sender')
+
+    # Mark them read
+    new_msgs.filter(is_read=False).update(is_read=True)
+
+    return render(request, 'chat/partials/poll_messages.html', {
+        'messages': new_msgs,
+        'me': request.user,
+    })
+
+
+# ─── Admin monitor ────────────────────────────────────────────
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+def admin_chat_monitor(request):
+    """Admin view — see all conversations and messages on the platform."""
+    convs = DirectConversation.objects.all().select_related(
+        'participant_1', 'participant_2'
+    ).order_by('-updated_at')
+
+    # Optional: filter by conversation
+    selected_conv = None
+    messages = []
+    conv_id = request.GET.get('conv')
+    if conv_id:
+        selected_conv = get_object_or_404(DirectConversation, pk=conv_id)
+        messages = selected_conv.direct_messages.select_related('sender').all()
+
+    conversations = []
+    for conv in convs:
+        last = conv.last_message()
+        conversations.append({'conv': conv, 'last': last})
+
+    return render(request, 'chat/admin-chat-monitor.html', {
+        'conversations': conversations,
+        'selected_conv': selected_conv,
+        'messages': messages,
+    })

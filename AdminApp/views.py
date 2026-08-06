@@ -1,3 +1,6 @@
+import mimetypes
+import os
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -220,12 +223,12 @@ def approve_document(request, doc_id):
     if all_required_approved:
         profile, _ = CaregiverProfile.objects.get_or_create(user=caregiver)
         if profile.status not in (CaregiverProfile.STATUS_ACTIVE, CaregiverProfile.STATUS_REJECTED):
-            profile.status = CaregiverProfile.STATUS_PENDING
+            profile.status = CaregiverProfile.STATUS_ACTIVE
             profile.save()
         messages.success(
             request,
             f'{doc.get_doc_type_display()} approved. '
-            f'All required documents approved — {caregiver.get_full_name()} is now queued for activation.'
+            f'All required documents approved — {caregiver.get_full_name()} has been automatically activated.'
         )
     else:
         messages.success(request, f'{doc.get_doc_type_display()} approved.')
@@ -341,3 +344,20 @@ def delete_user(request, user_id):
     user.delete()
     messages.success(request, f'User "{user_name}" has been deleted.')
     return redirect('AdminApp:manage_users')
+
+
+@admin_required
+def serve_document(request, doc_id):
+    """Serve a caregiver document inline in the browser so it previews instead of downloading."""
+    doc = get_object_or_404(CaregiverDocument, pk=doc_id)
+    file_path = doc.file.path
+    if not os.path.exists(file_path):
+        raise Http404('Document file not found.')
+    mime_type, _ = mimetypes.guess_type(file_path)
+    if not mime_type:
+        mime_type = 'application/octet-stream'
+    with open(file_path, 'rb') as f:
+        response = HttpResponse(f.read(), content_type=mime_type)
+    filename = os.path.basename(file_path)
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response

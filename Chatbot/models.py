@@ -70,3 +70,65 @@ class CaregiverRecommendation(models.Model):
     
     def __str__(self):
         return f"Recommended {self.caregiver.user.get_full_name()} (Score: {self.match_score})"
+
+
+# ─────────────────────────────────────────────────────────────
+# Direct (user-to-user) messaging
+# ─────────────────────────────────────────────────────────────
+
+class DirectConversation(models.Model):
+    """A 1-to-1 conversation thread between two users."""
+    participant_1 = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='conversations_as_p1'
+    )
+    participant_2 = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='conversations_as_p2'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        # Enforce uniqueness so there is only one thread per pair
+        unique_together = [('participant_1', 'participant_2')]
+
+    def __str__(self):
+        return f"Chat: {self.participant_1} ↔ {self.participant_2}"
+
+    @classmethod
+    def get_or_create_for(cls, user_a, user_b):
+        """Return (conversation, created) ensuring the lower-pk user is p1."""
+        if user_a.pk > user_b.pk:
+            user_a, user_b = user_b, user_a
+        return cls.objects.get_or_create(
+            participant_1=user_a,
+            participant_2=user_b,
+        )
+
+    def other_participant(self, user):
+        return self.participant_2 if self.participant_1_id == user.pk else self.participant_1
+
+    def last_message(self):
+        return self.direct_messages.last()
+
+    def unread_count(self, user):
+        return self.direct_messages.filter(is_read=False).exclude(sender=user).count()
+
+
+class DirectMessage(models.Model):
+    """A single message inside a DirectConversation."""
+    conversation = models.ForeignKey(
+        DirectConversation, on_delete=models.CASCADE, related_name='direct_messages'
+    )
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='sent_direct_messages'
+    )
+    body = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.sender}: {self.body[:40]}"

@@ -1,0 +1,11 @@
+{% for msg in messages %}
+<div class="msg-row msg-theirs" id="msg-{{ msg.pk }}">
+  <div class="msg-av">
+    {% if msg.sender.first_name %}{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}{% else %}{{ msg.sender.username|slice:":2"|upper }}{% endif %}
+  </div>
+  <div class="msg-bubble msg-bubble-theirs">
+    <p>{{ msg.body }}</p>
+    <span class="msg-time">{{ msg.created_at|date:"g:i A" }}</span>
+  </div>
+</div>
+{% endfor %}

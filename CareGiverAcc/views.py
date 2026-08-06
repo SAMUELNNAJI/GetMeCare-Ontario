@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
 from decimal import Decimal
 from django.utils import timezone
 
-from Account.models import CaregiverProfile, CaregiverDocument, Shift, ShiftLog
+from Account.models import CaregiverProfile, CaregiverDocument, Shift, ShiftLog, JobPosting
 
 
 def caregiver_required(view_func):
@@ -132,6 +132,7 @@ def dashboard(request):
         'weekly_data':       json.dumps(weekly_data),
         'weekly_total':      f"{weekly_total:,.2f}",
         'week_change_pct':   week_change_pct,
+        'latest_jobs':       JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).order_by('-created_at')[:3],
     })
     return render(request, 'CareGiverAcc/dashboard.html', ctx)
 
@@ -242,3 +243,49 @@ def documents(request):
         'has_remaining_types': has_remaining_types,
     })
     return render(request, 'CareGiverAcc/documents.html', ctx)
+
+
+@caregiver_required
+def reupload_document(request, doc_id):
+    """Replace a rejected document with a new file and reset it to pending."""
+    doc = get_object_or_404(CaregiverDocument, pk=doc_id, user=request.user)
+
+    if doc.status != CaregiverDocument.STATUS_REJECTED:
+        messages.error(request, 'Only rejected documents can be re-uploaded.')
+        return redirect('CareGiverAcc:documents')
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        # Delete old file from storage
+        if doc.file:
+            doc.file.delete(save=False)
+        doc.file = request.FILES['file']
+        doc.status = CaregiverDocument.STATUS_PENDING
+        doc.note = ''
+        doc.reviewed_at = None
+        doc.save()
+        messages.success(
+            request,
+            f'{doc.get_doc_type_display()} re-uploaded successfully. It is now pending admin review.'
+        )
+    else:
+        messages.error(request, 'No file was selected.')
+
+    return redirect('CareGiverAcc:documents')
+
+
+@caregiver_required
+def serve_document(request, doc_id):
+    """Serve the caregiver's own document inline in the browser."""
+    import mimetypes, os
+    from django.http import HttpResponse, Http404
+    doc = get_object_or_404(CaregiverDocument, pk=doc_id, user=request.user)
+    file_path = doc.file.path
+    if not os.path.exists(file_path):
+        raise Http404('File not found.')
+    mime_type, _ = mimetypes.guess_type(file_path)
+    if not mime_type:
+        mime_type = 'application/octet-stream'
+    with open(file_path, 'rb') as f:
+        response = HttpResponse(f.read(), content_type=mime_type)
+    response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+    return response

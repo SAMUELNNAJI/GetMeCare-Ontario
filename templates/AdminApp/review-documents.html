@@ -138,7 +138,8 @@ Admin{% endblock %} {% block extra_head %}
       Pending Review
       <span class="rd-count">{{ pending|length }}</span>
     </div>
-    <table class="adm-table">
+    <div class="scroll-table-wrap">
+<table class="adm-table">
       <thead>
         <tr>
           <th>Caregiver</th>
@@ -166,13 +167,7 @@ Admin{% endblock %} {% block extra_head %}
           </td>
           <td>{{ doc.get_doc_type_display }}</td>
           <td>
-            <a
-              href="{{ doc.file.url }}"
-              class="adm-btn adm-btn-view"
-              target="_blank"
-            >
-              <i class="fas fa-eye"></i> View
-            </a>
+<a href="{% url 'AdminApp:serve_document' doc.pk %}" class="adm-btn adm-btn-view" target="_blank"><i class="fas fa-eye"></i> View</a>
           </td>
           <td style="color: #888; font-size: 0.82rem">
             {{ doc.uploaded_at|date:"M d, Y" }}
@@ -227,6 +222,7 @@ Admin{% endblock %} {% block extra_head %}
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 
@@ -235,10 +231,9 @@ Admin{% endblock %} {% block extra_head %}
   <div class="adm-card-pad">
     <div class="rd-section-head">
       <i class="fas fa-history" style="color: #1b7d4f"></i>
-      Recently Reviewed
-      <span class="rd-count green">{{ reviewed|length }}</span>
-    </div>
-    <table class="adm-table">
+    <div style="max-height:420px;overflow-y:auto;overflow-x:auto;border-radius:8px;border:1px solid #f0f0f0">
+    <div class="scroll-table-wrap">
+<table class="adm-table" style="min-width:800px">
       <thead>
         <tr>
           <th>Caregiver</th>
@@ -268,13 +263,7 @@ Admin{% endblock %} {% block extra_head %}
           </td>
           <td>{{ doc.get_doc_type_display }}</td>
           <td>
-            <a
-              href="{{ doc.file.url }}"
-              class="adm-btn adm-btn-view"
-              target="_blank"
-            >
-              <i class="fas fa-eye"></i> View
-            </a>
+<a href="{% url 'AdminApp:serve_document' doc.pk %}" class="adm-btn adm-btn-view" target="_blank"><i class="fas fa-eye"></i> View</a>
           </td>
           <td style="color: #888; font-size: 0.82rem">
             {{ doc.reviewed_at|date:"M d, Y"|default:"—" }}
@@ -340,6 +329,8 @@ Admin{% endblock %} {% block extra_head %}
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -31,7 +31,8 @@ Employer{% endblock %} {% block extra_head %}
 </div>
 <div class="ep-card">
   <div class="ep-card-pad">
-    <table class="ep-table">
+    <div class="scroll-table-wrap">
+<table class="ep-table">
       <thead>
         <tr>
           <th>Date</th>
@@ -52,8 +53,7 @@ Employer{% endblock %} {% block extra_head %}
           <td>
             <div style="display: flex; align-items: center">
               <div class="shift-avatar">
-                {{ s.caregiver.first_name|first|upper }}{{
-                s.caregiver.last_name|first|upper }}
+                {{ s.caregiver.first_name|first|upper }}{{ s.caregiver.last_name|first|upper }}
               </div>
               {{ s.caregiver.get_full_name|default:s.caregiver.username }}
             </div>
@@ -83,6 +83,7 @@ Employer{% endblock %} {% block extra_head %}
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 {% endblock %}

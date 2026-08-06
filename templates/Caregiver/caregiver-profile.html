@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ profile.user.get_full_name }} – Caregiver Profile | GetMeCare Ontario{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Hero ── */
+  .cp-hero {
+    margin-top: 64px;
+    background: linear-gradient(135deg, #1b3a2d 0%, #2d6e4e 100%);
+    padding: 48px 24px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .cp-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,60,30,.7) 0%, rgba(0,0,0,.35) 100%);
+    pointer-events: none;
+  }
+  .cp-hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 28px;
+    padding-bottom: 0;
+  }
+
+  /* Avatar */
+  .cp-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1b3a2d, #2d5a42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: -32px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.25);
+  }
+  .cp-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cp-hero-text {
+    padding-bottom: 18px;
+    color: #fff;
+  }
+  .cp-hero-text h1 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 6px;
+    line-height: 1.2;
+  }
+  .cp-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    font-size: .82rem;
+    color: rgba(255,255,255,.8);
+  }
+  .cp-hero-meta i { color: #7ddba8; margin-right: 4px; }
+  .cp-verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* ── Body layout ── */
+  .cp-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 52px 24px 60px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── Cards ── */
+  .cp-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .cp-card-title {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #aaa;
+    padding: 16px 20px 0;
+    margin-bottom: 12px;
+  }
+  .cp-card-body {
+    padding: 0 20px 20px;
+  }
+
+  /* Skills */
+  .cp-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cp-skill-tag {
+    background: #e6f5ee;
+    color: #1b5e35;
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  /* Stat row */
+  .cp-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f4f4f4;
+    font-size: .85rem;
+    color: #444;
+  }
+  .cp-stat-row:last-child { border-bottom: none; }
+  .cp-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    flex-shrink: 0;
+  }
+  .cp-stat-label { font-size: .72rem; color: #999; }
+  .cp-stat-val   { font-weight: 600; color: #1a1a1a; }
+
+  /* Sidebar */
+  .cp-sidebar {}
+  .cp-rate-card {
+    background: #1b3a2d;
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .cp-rate-label { font-size: .72rem; color: rgba(255,255,255,.6); margin-bottom: 6px; }
+  .cp-rate-val {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #7ddba8;
+    line-height: 1;
+  }
+  .cp-rate-unit { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: 4px; }
+  .cp-contact-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .cp-contact-btn:hover { background: #145e3a; color: #fff; }
+
+  .cp-avail-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .cp-avail-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #2ecc71;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .4; }
+  }
+
+  /* Back link */
+  .cp-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .82rem;
+    color: #1b7d4f;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .cp-back:hover { text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .cp-body { grid-template-columns: 1fr; }
+    .cp-hero-inner { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .cp-avatar { margin-bottom: -24px; }
+    .cp-sidebar { order: -1; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO BANNER -->
+<section class="cp-hero">
+  <div class="cp-hero-inner">
+    <div class="cp-avatar">
+      {% if profile.profile_image %}
+        <img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}">
+      {% else %}
+        {% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}{% else %}{{ profile.user.username|slice:":2"|upper }}{% endif %}
+      {% endif %}
+    </div>
+    <div class="cp-hero-text">
+      <h1>{{ profile.user.get_full_name }}</h1>
+      <div class="cp-hero-meta">
+        <span class="cp-verified-badge"><i class="fas fa-check-circle"></i> Verified &amp; Active</span>
+        {% if profile.city %}<span><i class="fas fa-map-marker-alt"></i>{{ profile.city }}, ON</span>{% endif %}
+        <span><i class="fas fa-id-badge"></i>Certified PSW</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BODY -->
+<div class="cp-body">
+
+  <!-- LEFT: main info -->
+  <div>
+    <a href="{% url 'browse' %}" class="cp-back"><i class="fas fa-arrow-left"></i> Back to Browse</a>
+
+    <!-- Skills -->
+    {% if profile.skills_list %}
+    <div class="cp-card">
+      <div class="cp-card-title">Skills &amp; Specializations</div>
+      <div class="cp-card-body">
+        <div class="cp-skills">
+          {% for skill in profile.skills_list %}
+          <span class="cp-skill-tag">{{ skill }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Details -->
+    <div class="cp-card">
+      <div class="cp-card-title">Details</div>
+      <div class="cp-card-body">
+        {% if profile.city %}
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div>
+            <div class="cp-stat-label">Location</div>
+            <div class="cp-stat-val">{{ profile.city }}, Ontario</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if profile.hourly_rate %}
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-dollar-sign"></i></div>
+          <div>
+            <div class="cp-stat-label">Hourly Rate</div>
+            <div class="cp-stat-val">${{ profile.hourly_rate }} CAD / hr</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-user-check"></i></div>
+          <div>
+            <div class="cp-stat-label">Status</div>
+            <div class="cp-stat-val">Active &amp; Verified</div>
+          </div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-certificate"></i></div>
+          <div>
+            <div class="cp-stat-label">Credential</div>
+            <div class="cp-stat-val">Certified Personal Support Worker (PSW)</div>
+          </div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-shield-alt"></i></div>
+          <div>
+            <div class="cp-stat-label">Background Check</div>
+            <div class="cp-stat-val">VSC Cleared</div>
+          </div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-calendar-alt"></i></div>
+          <div>
+            <div class="cp-stat-label">Member Since</div>
+            <div class="cp-stat-val">{{ profile.created_at|date:"F Y" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: sidebar -->
+  <div class="cp-sidebar">
+
+    <!-- Rate + CTA -->
+    <div class="cp-rate-card">
+      <div class="cp-rate-label">Hourly Rate</div>
+      {% if profile.hourly_rate %}
+      <div class="cp-rate-val">${{ profile.hourly_rate }}</div>
+      <div class="cp-rate-unit">CAD per hour</div>
+      {% else %}
+      <div class="cp-rate-val" style="font-size:1.2rem">On Request</div>
+      {% endif %}
+      <a href="{% url 'contact' %}" class="cp-contact-btn">
+        <i class="far fa-comment-dots"></i> Request Connection
+      </a>
+    </div>
+
+    <!-- Availability -->
+    <div class="cp-avail-card">
+      <div style="font-size:.82rem;font-weight:700;color:#1a1a1a;margin-bottom:8px">
+        <span class="cp-avail-dot"></span>Available for Work
+      </div>
+      <div style="font-size:.78rem;color:#666;line-height:1.5">
+        This caregiver is actively accepting new clients in Ontario.
+      </div>
+    </div>
+
+    <!-- Trust signals -->
+    <div class="cp-card">
+      <div class="cp-card-title">Verified By GetMeCare</div>
+      <div class="cp-card-body">
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-check"></i></div>
+          <div style="font-size:.8rem;color:#444">Identity verified</div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-check"></i></div>
+          <div style="font-size:.8rem;color:#444">Credentials reviewed</div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-check"></i></div>
+          <div style="font-size:.8rem;color:#444">VSC background check</div>
+        </div>
+        <div class="cp-stat-row">
+          <div class="cp-stat-icon"><i class="fas fa-check"></i></div>
+          <div style="font-size:.8rem;color:#444">Admin approved profile</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

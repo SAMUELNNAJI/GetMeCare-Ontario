@@ -11,7 +11,8 @@
 </div>
 <div class="ep-card">
   <div class="ep-card-pad">
-    <table class="ep-table">
+    <div class="scroll-table-wrap">
+<table class="ep-table">
       <thead>
         <tr>
           <th>Date</th>
@@ -27,15 +28,12 @@
         <tr>
           <td>{{ log.shift.start_date|date:"M d, Y" }}</td>
           <td>
-            {{
-            log.shift.caregiver.get_full_name|default:log.shift.caregiver.username
-            }}
+            {{ log.shift.caregiver.get_full_name|default:log.shift.caregiver.username }}
           </td>
           <td>{{ log.hours_worked|default:"—" }} hrs</td>
           <td>${{ log.shift.hourly_rate }}/hr</td>
           <td>
-            {% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{%
-            endif %}
+            {% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{% endif %}
           </td>
           <td>
             <span
@@ -60,6 +58,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 {% endblock %}

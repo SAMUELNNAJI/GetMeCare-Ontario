@@ -72,7 +72,8 @@
         >{{ users|length }} total</span
       >
     </div>
-    <table class="adm-table">
+    <div class="scroll-table-wrap">
+<table class="adm-table">
       <thead>
         <tr>
           <th>User</th>
@@ -148,6 +149,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 {% endblock %}

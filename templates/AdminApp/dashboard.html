@@ -145,6 +145,14 @@ GetMeCare{% endblock %} {% block extra_head %}
     padding: 20px 20px 16px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
+  .activity-card [style*="overflow-y"]::-webkit-scrollbar,
+  .adm-card [style*="overflow-y"]::-webkit-scrollbar { width: 4px; }
+  .activity-card [style*="overflow-y"]::-webkit-scrollbar-track,
+  .adm-card [style*="overflow-y"]::-webkit-scrollbar-track { background: #f2f4f0; border-radius: 4px; }
+  .activity-card [style*="overflow-y"]::-webkit-scrollbar-thumb,
+  .adm-card [style*="overflow-y"]::-webkit-scrollbar-thumb { background: #c8d8c8; border-radius: 4px; }
+  .activity-card [style*="overflow-y"]::-webkit-scrollbar-thumb:hover,
+  .adm-card [style*="overflow-y"]::-webkit-scrollbar-thumb:hover { background: #1b7d4f; }
   .activity-title {
     font-size: 0.9rem;
     font-weight: 700;
@@ -369,7 +377,9 @@ GetMeCare{% endblock %} {% block extra_head %}
         <i class="fas fa-user-clock" style="color: #1b7d4f"></i> Recently Joined
         Users
       </div>
-      <table class="adm-table">
+      <div style="max-height:380px;overflow-y:auto;overflow-x:auto">
+      <div class="scroll-table-wrap">
+<table class="adm-table" style="min-width:520px">
         <thead>
           <tr>
             <th>Name</th>
@@ -413,6 +423,8 @@ GetMeCare{% endblock %} {% block extra_head %}
           {% endfor %}
         </tbody>
       </table>
+</div><!-- /scroll-table-wrap -->
+      </div>
     </div>
   </div>
 
@@ -421,6 +433,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     <div class="activity-title">
       <span class="activity-dot"></span> Live Activity
     </div>
+    <div style="max-height:480px;overflow-y:auto;padding-right:4px">
     {% for act in activities %}
     <div class="activity-item">
       <div
@@ -449,6 +462,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       >No activity yet.
     </div>
     {% endfor %}
+    </div>
   </div>
 </div>
 <!-- end bottom row -->

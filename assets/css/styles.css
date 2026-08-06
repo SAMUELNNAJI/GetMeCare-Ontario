@@ -2949,6 +2949,50 @@ img {
   transition: all 0.3s ease;
 }
 
+/* Profile page link wrapper — makes top of card clickable */
+.bc-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.bc-card-link:hover { color: inherit; }
+
+/* Two-button action row at bottom of card */
+.bc-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+.btn-view-profile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-size: .78rem;
+  font-weight: 600;
+  background: #e6f5ee;
+  color: #1b5e35;
+  text-decoration: none;
+  transition: background .15s;
+}
+.btn-view-profile:hover {
+  background: #c8ebd8;
+  color: #1b5e35;
+}
+.bc-actions .btn-request {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0;
+  font-size: .78rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
 .load-more-wrap {
   text-align: center;
   margin-top: 28px;

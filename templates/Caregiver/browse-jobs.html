@@ -4,11 +4,7 @@
 {% block content %}
 
 <style>
-.jobs-hero{background:linear-gradient(135deg,#1b3a2d 0%,#2d6e4e 100%);padding:64px 24px 56px;text-align:center;color:#fff}
 .jobs-hero-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:600;letter-spacing:.04em;margin-bottom:18px}
-.jobs-hero h1{font-size:clamp(1.7rem,4vw,2.6rem);font-weight:800;line-height:1.15;margin-bottom:12px}
-.jobs-hero p{font-size:.95rem;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 28px}
-.jobs-hero-search{max-width:600px;margin:0 auto}
 .jhs-inner{display:flex;align-items:center;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.18)}
 .jhs-field{display:flex;align-items:center;gap:8px;padding:0 16px;flex:1}
 .jhs-field i{color:#999;font-size:.85rem;flex-shrink:0}
@@ -84,11 +80,14 @@
 </style>
 
 <!-- HERO -->
-<section class="jobs-hero">
-<div class="jobs-hero-eyebrow"><i class="fas fa-briefcase"></i> {{ total }} Open Job{% if total != 1 %}s{% endif %} in Ontario</div>
-<h1>Find Care Jobs<br>Across Ontario</h1>
-<p>Families and households across Ontario are looking for qualified caregivers. Browse open listings and apply today.</p>
-<div class="jobs-hero-search">
+<section class="browse-hero">
+<div class="browse-hero-inner" style="text-align:center">
+<div class="browse-hero-text">
+<span class="browse-eyebrow reveal"><i class="fas fa-briefcase"></i> {{ total }} Open Job{% if total != 1 %}s{% endif %} in Ontario</span>
+<h1 class="reveal reveal-d1">Find Care Jobs<br>Across Ontario</h1>
+<p class="reveal reveal-d2">Families and households across Ontario are looking for qualified caregivers. Browse open listings and apply today.</p>
+</div>
+<div class="jobs-hero-search browse-hero-search reveal reveal-d3">
 <form method="get" action="{% url 'browse_jobs' %}">
 <div class="jhs-inner">
 <span class="jhs-field"><i class="fas fa-map-marker-alt"></i><input type="text" name="city" placeholder="City or area" value="{{ city }}"></span>
@@ -102,6 +101,8 @@
 <button type="submit" class="jhs-btn"><i class="fas fa-search"></i> Search</button>
 </div>
 </form>
+</div>
+</div>
 </div>
 </section>
 

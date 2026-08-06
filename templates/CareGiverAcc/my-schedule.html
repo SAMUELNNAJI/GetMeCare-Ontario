@@ -369,8 +369,7 @@
     <div class="tracker-panel-label">Live Timer</div>
     <div class="tracker-clock" id="cg-sched-timer">00:00:00</div>
     <div class="tracker-clock-status">
-      {% if shifts %}Next shift: {{ shifts.0.start_date|date:"D, M j" }} at {{
-      shifts.0.start_time|time:"g:i A" }}{% else %}No active shift{% endif %}
+      {% if shifts %}Next shift: {{ shifts.0.start_date|date:"D, M j" }} at {{ shifts.0.start_time|time:"g:i A" }}{% else %}No active shift{% endif %}
     </div>
 
     <div class="tracker-actions">
@@ -442,8 +441,7 @@
           </div>
           <div class="sched-meta">
             <span
-              ><i class="fas fa-location-dot"></i> {{ s.city|default:"Ontario"
-              }}</span
+              ><i class="fas fa-location-dot"></i> {{ s.city|default:"Ontario" }}</span
             >
           </div>
         </div>
@@ -493,13 +491,11 @@
             </div>
           </div>
           <div class="sched-time">
-            {{ log.shift.start_time|time:"g:i A" }} – {{
-            log.shift.end_time|time:"g:i A" }}
+            {{ log.shift.start_time|time:"g:i A" }} – {{ log.shift.end_time|time:"g:i A" }}
           </div>
           <div class="sched-meta">
             <span
-              ><i class="fas fa-location-dot"></i> {{
-              log.shift.city|default:"Ontario" }}</span
+              ><i class="fas fa-location-dot"></i> {{ log.shift.city|default:"Ontario" }}</span
             >
             {% if log.hours_worked %}<span
               ><i class="fas fa-clock"></i> {{ log.hours_worked }} hrs</span

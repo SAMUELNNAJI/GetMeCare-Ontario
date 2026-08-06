@@ -110,7 +110,8 @@ Admin{% endblock %} {% block extra_head %}
         >{{ profiles|length }} total</span
       >
     </div>
-    <table class="adm-table">
+    <div class="scroll-table-wrap">
+<table class="adm-table">
       <thead>
         <tr>
           <th>Caregiver</th>
@@ -128,12 +129,14 @@ Admin{% endblock %} {% block extra_head %}
         <tr>
           <td>
             <div class="cg-info">
-              <div class="cg-av-sm">
-                {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
-              </div>
+              <a href="{% url 'caregiver_profile' p.pk %}" title="View public profile" style="text-decoration:none">
+                <div class="cg-av-sm" style="cursor:pointer">
+                  {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+                </div>
+              </a>
               <div>
                 <div class="cg-nm">
-                  {{ p.user.get_full_name|default:p.user.username }}
+                  <a href="{% url 'caregiver_profile' p.pk %}" style="color:inherit;text-decoration:none">{{ p.user.get_full_name|default:p.user.username }}</a>
                 </div>
                 <div class="cg-em">{{ p.user.email }}</div>
               </div>
@@ -180,15 +183,21 @@ Admin{% endblock %} {% block extra_head %}
           <td>
             <div class="act-cell">
               {% if p.status == 'pending_admin_review' %}
-              <form
-                method="post"
-                action="{% url 'AdminApp:activate_caregiver' p.pk %}"
-              >
-                {% csrf_token %}
-                <button type="submit" class="adm-btn adm-btn-green">
-                  <i class="fas fa-check"></i> Activate
-                </button>
-              </form>
+                {% if p.has_all_required_documents %}
+                <form
+                  method="post"
+                  action="{% url 'AdminApp:activate_caregiver' p.pk %}"
+                >
+                  {% csrf_token %}
+                  <button type="submit" class="adm-btn adm-btn-green">
+                    <i class="fas fa-check"></i> Activate
+                  </button>
+                </form>
+                {% else %}
+                <span style="font-size: 0.75rem; color: #ff9800; display: flex; align-items: center; gap: 4px;">
+                  <i class="fas fa-exclamation-triangle"></i> Incomplete Docs
+                </span>
+                {% endif %}
               {% elif p.status == 'active' %}
               <span style="font-size: 0.75rem; color: #1b7d4f"
                 ><i class="fas fa-check-circle"></i> Active</span
@@ -217,6 +226,7 @@ Admin{% endblock %} {% block extra_head %}
         {% endfor %}
       </tbody>
     </table>
+</div><!-- /scroll-table-wrap -->
   </div>
 </div>
 {% endblock %}

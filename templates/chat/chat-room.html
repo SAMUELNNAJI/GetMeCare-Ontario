@@ -1,0 +1,315 @@
+{% extends base_template %}
+{% load static %}
+{% block title %}Chat with {{ other.get_full_name|default:other.username }} – GetMeCare{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js" defer></script>
+<style>
+  /* ── Shell — fills available dashboard content area ── */
+  .cr-shell {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 56px - 32px); /* topbar + content padding */
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+
+  /* ── Header ── */
+  .cr-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .cr-back {
+    color: #1b7d4f;
+    font-size: 1.1rem;
+    text-decoration: none;
+    line-height: 1;
+    margin-right: 2px;
+  }
+  .cr-av {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#1b3a2d,#2d5a42);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .cr-av img { width: 100%; height: 100%; object-fit: cover; }
+  .cr-hinfo h2 { font-size: .95rem; font-weight: 700; color: #1a1a1a; margin: 0; }
+  .cr-hinfo span { font-size: .72rem; color: #1b7d4f; font-weight: 600; }
+  .cr-online-dot {
+    width: 8px; height: 8px;
+    background: #2ecc71;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    animation: blink 2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* ── Messages ── */
+  .cr-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f8faf7;
+  }
+
+  /* ── Bubbles ── */
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;  /* prevent flex items from collapsing */
+  }
+  .msg-mine   { justify-content: flex-end; }
+  .msg-theirs { justify-content: flex-start; }
+  .msg-av {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #1b3a2d; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .62rem; font-weight: 700; flex-shrink: 0;
+  }
+  .msg-bubble {
+    max-width: 66%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: .87rem;
+    line-height: 1.45;
+  }
+  .msg-bubble p { margin: 0; word-break: break-word; }
+  .msg-bubble-mine {
+    background: #1b7d4f; color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bubble-theirs {
+    background: #fff; color: #1a1a1a;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .msg-time {
+    display: block; font-size: .6rem;
+    margin-top: 4px; opacity: .6; text-align: right;
+  }
+
+  /* ── Input bar — inline row ── */
+  .cr-input-bar {
+    padding: 10px 14px;
+    border-top: 1px solid #eee;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .cr-input-bar form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f2f4f0;
+    border: 1.5px solid #dde2d8;
+    border-radius: 26px;
+    padding: 4px 4px 4px 16px;
+    transition: border-color .15s;
+  }
+  .cr-input-bar form:focus-within {
+    border-color: #1b7d4f;
+    background: #fff;
+  }
+  #chat-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: .88rem;
+    font-family: inherit;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+    padding: 6px 0;
+    color: #1a1a1a;
+  }
+  #chat-input::placeholder { color: #aaa; }
+  .cr-send-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: .88rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .cr-send-btn:hover { background: #145e3a; }
+  .cr-send-btn:disabled { background: #ccc; cursor: not-allowed; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cr-shell">
+
+  <!-- Header -->
+  <div class="cr-header">
+    <a href="{% url 'chat_list' %}" class="cr-back"><i class="fas fa-arrow-left"></i></a>
+    <div class="cr-av">
+      {% if other.role == 'caregiver' %}
+        {% with prof=other.caregiver_profile %}
+          {% if prof.profile_image %}
+            <img src="{{ prof.profile_image.url }}" alt="">
+          {% else %}
+            {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
+          {% endif %}
+        {% endwith %}
+      {% else %}
+        {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
+      {% endif %}
+    </div>
+    <div class="cr-hinfo">
+      <h2>{{ other.get_full_name|default:other.username }}</h2>
+      <span><span class="cr-online-dot"></span>{{ other.get_role_display }}</span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="cr-messages" id="msg-list">
+    {% for msg in messages %}
+      {% include "chat/partials/message_bubble.html" with msg=msg me=request.user %}
+    {% empty %}
+      <div id="empty-hint" style="text-align:center;color:#ccc;padding:40px 20px;font-size:.85rem">
+        <i class="fas fa-comment-dots" style="font-size:2rem;display:block;margin-bottom:10px"></i>
+        Send a message to start the conversation
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Input bar -->
+  <div class="cr-input-bar">
+    <form id="send-form">
+      {% csrf_token %}
+      <textarea
+        id="chat-input"
+        name="body"
+        placeholder="Type a message…"
+        rows="1"
+        autocomplete="off"
+      ></textarea>
+      <button type="submit" class="cr-send-btn" aria-label="Send">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<span id="last-msg-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+<span id="conv-id" style="display:none">{{ conv.pk }}</span>
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const input    = document.getElementById('chat-input');
+  const list     = document.getElementById('msg-list');
+  const form     = document.getElementById('send-form');
+  const convId   = parseInt(document.getElementById('conv-id').textContent.trim());
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+  let isSending  = false;
+
+  // Auto-resize
+  input.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+
+  function scrollToBottom() { list.scrollTop = list.scrollHeight; }
+  scrollToBottom();
+
+  function updateLastPk() {
+    const bubbles = list.querySelectorAll('[id^="msg-"]');
+    if (bubbles.length) {
+      const lastId = bubbles[bubbles.length - 1].id.replace('msg-', '');
+      document.getElementById('last-msg-pk').textContent = lastId;
+    }
+  }
+
+  // Send message
+  function sendMessage() {
+    const body = input.value.trim();
+    if (!body || isSending) return;
+
+    isSending = true;
+    const btn = form.querySelector('.cr-send-btn');
+    if (btn) btn.disabled = true;
+
+    const hint = document.getElementById('empty-hint');
+    if (hint) hint.remove();
+
+    const fd = new FormData();
+    fd.append('body', body);
+    fd.append('csrfmiddlewaretoken', csrfToken);
+
+    fetch(`/chatbot/messages/${convId}/send/`, {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest'},
+      body: fd,
+    })
+    .then(r => r.text())
+    .then(html => {
+      if (html.trim()) {
+        list.insertAdjacentHTML('beforeend', html);
+        updateLastPk();
+        scrollToBottom();
+      }
+      input.value = '';
+      input.style.height = 'auto';
+    })
+    .finally(() => {
+      isSending = false;
+      if (btn) btn.disabled = false;
+      input.focus();
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sendMessage();
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Poll every 2s
+  function poll() {
+    const after = document.getElementById('last-msg-pk').textContent.trim() || '0';
+    fetch(`/chatbot/messages/${convId}/poll/?after=${after}`, {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(r => r.text())
+    .then(html => {
+      if (!html.trim()) return;
+      list.insertAdjacentHTML('beforeend', html);
+      updateLastPk();
+      scrollToBottom();
+    });
+  }
+  setInterval(poll, 2000);
+})();
+</script>
+{% endblock %}

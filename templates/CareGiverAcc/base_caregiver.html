@@ -184,7 +184,14 @@
     .cg-search  { max-width: 200px; }
     .cg-content { padding: 16px 14px 40px; }
   }
-  </style>
+  
+  /* scroll-table-wrap */
+  .scroll-table-wrap{max-height:520px;overflow-y:auto;overflow-x:auto}
+  .scroll-table-wrap::-webkit-scrollbar{width:5px;height:5px}
+  .scroll-table-wrap::-webkit-scrollbar-track{background:#f2f4f0;border-radius:4px}
+  .scroll-table-wrap::-webkit-scrollbar-thumb{background:#c8d8c8;border-radius:4px}
+  .scroll-table-wrap::-webkit-scrollbar-thumb:hover{background:#1b7d4f}
+</style>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -210,7 +217,7 @@
 
   <div class="cg-profile">
     <div class="cg-profile-row">
-      <div class="cg-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+      <div class="cg-av">{% if request.user.caregiver_profile.profile_image %}<img src="{{ request.user.caregiver_profile.profile_image.url }}" alt="{{ request.user.get_full_name }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;display:block">{% elif request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
       <div>
         <div class="cg-profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
         <div class="cg-profile-role">
@@ -228,9 +235,8 @@
     <a href="{% url 'CareGiverAcc:documents' %}"  {% if request.resolver_match.url_name == 'documents'  %}class="active"{% endif %}><i class="fas fa-file-alt"></i> Documents</a>
     <a href="{% url 'Account:edit_profile' %}"><i class="fas fa-user-edit"></i> Edit profile</a>
     <a href="{% url 'CareGiverAcc:my_schedule' %}" {% if request.resolver_match.url_name == 'my_schedule' %}class="active"{% endif %}><i class="fas fa-clock"></i> Shift tracker</a>
-    <a href="{% url 'CareGiverAcc:my_schedule' %}"><i class="fas fa-calendar-alt"></i> Upcoming shifts</a>
-    <a href="{% url 'CareGiverAcc:my_schedule' %}"><i class="fas fa-history"></i> Shift history</a>
     <a href="{% url 'CareGiverAcc:earnings' %}"   {% if request.resolver_match.url_name == 'earnings'   %}class="active"{% endif %}><i class="fas fa-wallet"></i> Earnings</a>
+    <a href="{% url 'chat_list' %}" {% if request.resolver_match.url_name == 'chat_list' or request.resolver_match.url_name == 'chat_room' %}class="active"{% endif %}><i class="fas fa-comments"></i> Messages</a>
     <a href="{% url 'browse' %}"><i class="fas fa-briefcase"></i> Browse jobs</a>
   </nav>
 
@@ -257,7 +263,7 @@
   </a>
   <div class="cg-topbar-space"></div>
   <div class="cg-bell"><i class="fas fa-bell"></i><span class="cg-bell-dot"></span></div>
-  <div class="cg-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+  <div class="cg-topbar-av">{% if request.user.caregiver_profile.profile_image %}<img src="{{ request.user.caregiver_profile.profile_image.url }}" alt="{{ request.user.get_full_name }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;display:block">{% elif request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
 </div>
 
 <!-- ═══════════ MAIN ═══════════ -->

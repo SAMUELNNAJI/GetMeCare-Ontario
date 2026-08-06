@@ -590,14 +590,19 @@ GetMeCare{% endblock %} {% block extra_head %}
         </div>
         <div class="req-item-body">
           <div class="req-item-name">{{ item.label }}</div>
-          <div
-            class="req-item-status {% if item.uploaded and item.status == 'approved' %}st-done {% elif item.uploaded %}st-pending {% else %}st-missing{% endif %}"
-          >
-            {% if item.uploaded and item.status == 'approved' %} Approved {%
-            elif item.uploaded and item.status == 'rejected' %} Rejected —
-            please re-upload {% elif item.uploaded %} Uploaded · Pending review
-            {% else %} Not uploaded yet {% endif %}
+          <div class="req-item-status {% if item.uploaded and item.status == 'approved' %}st-done {% elif item.uploaded %}st-pending {% else %}st-missing{% endif %}">
+            {% if item.uploaded and item.status == 'approved' %}Approved
+            {% elif item.uploaded and item.status == 'rejected' %}Rejected — please re-upload
+            {% elif item.uploaded %}Uploaded · Pending review
+            {% else %}Not uploaded yet{% endif %}
           </div>
+          {% if item.doc and item.status == 'rejected' %}
+          <form method="post" action="{% url 'CareGiverAcc:reupload_document' item.doc.pk %}" enctype="multipart/form-data" style="display:inline;margin-top:6px">
+          {% csrf_token %}
+          <input type="file" name="file" id="reup-{{ item.doc.pk }}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="this.form.submit()">
+          <label for="reup-{{ item.doc.pk }}" style="display:inline-flex;align-items:center;gap:5px;background:#fdecea;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;padding:5px 11px;font-size:.76rem;font-weight:600;cursor:pointer;margin-top:6px"><i class="fas fa-redo"></i> Re-upload</label>
+          </form>
+          {% endif %}
         </div>
         {% if item.doc %}
         <span
@@ -620,7 +625,8 @@ GetMeCare{% endblock %} {% block extra_head %}
         <i class="fas fa-folder-open" style="color: #1b7d4f"></i> All Uploaded
         Documents
       </h3>
-      <table class="doc-table">
+      <div class="scroll-table-wrap">
+<table class="doc-table">
         <thead>
           <tr>
             <th>Type</th>
@@ -628,6 +634,7 @@ GetMeCare{% endblock %} {% block extra_head %}
             <th>Uploaded</th>
             <th>Status</th>
             <th>Admin Note</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -635,17 +642,22 @@ GetMeCare{% endblock %} {% block extra_head %}
           <tr>
             <td>{{ doc.get_doc_type_display }}</td>
             <td>
-              <a href="{{ doc.file.url }}" class="btn-view" target="_blank"
-                ><i class="fas fa-eye"></i> View</a
-              >
+<a href="{% url 'CareGiverAcc:serve_document' doc.pk %}" class="btn-view" target="_blank"><i class="fas fa-eye"></i> View</a>
             </td>
             <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
             <td>
               <span
                 class="badge {% if doc.status == 'approved' %}badge-green{% elif doc.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}"
-              >
-                {{ doc.get_status_display }}
-              </span>
+            <td style="color: #888; font-size: 0.8rem">{{ doc.note|default:"—" }}</td>
+            <td>
+              {% if doc.status == 'rejected' %}
+              <form method="post" action="{% url 'CareGiverAcc:reupload_document' doc.pk %}" enctype="multipart/form-data" style="display:inline">
+              {% csrf_token %}
+              <input type="file" name="file" id="reup-tbl-{{ doc.pk }}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="this.form.submit()">
+              <label for="reup-tbl-{{ doc.pk }}" style="display:inline-flex;align-items:center;gap:5px;background:#fdecea;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;padding:4px 10px;font-size:.76rem;font-weight:600;cursor:pointer"><i class="fas fa-redo"></i> Re-upload</label>
+              </form>
+              {% else %}—{% endif %}
+            </td>pan>
             </td>
             <td style="color: #888; font-size: 0.8rem">
               {{ doc.note|default:"—" }}
@@ -653,7 +665,7 @@ GetMeCare{% endblock %} {% block extra_head %}
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="empty-row">
+            <td colspan="6" class="empty-row">
               <i
                 class="fas fa-inbox"
                 style="font-size: 1.4rem; display: block; margin-bottom: 6px"
@@ -664,6 +676,7 @@ GetMeCare{% endblock %} {% block extra_head %}
           {% endfor %}
         </tbody>
       </table>
+</div><!-- /scroll-table-wrap -->
     </div>
   </div>
   <!-- end right col -->

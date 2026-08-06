@@ -124,12 +124,13 @@
 <div class="bc-grid stagger-children">
 {% for profile in page_obj %}
 <div class="bc-card animate-on-scroll hover-lift">
+<a href="{% url 'caregiver_profile' profile.pk %}" class="bc-card-link" aria-label="View {{ profile.user.first_name }}'s profile">
 <div class="bc-card-top">
 <div class="bc-avatar-wrap">
 {% if profile.profile_image %}
 <img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}">
 {% else %}
-<div style="width:64px;height:64px;border-radius:50%;background:#1b3a2d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700">{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}</div>
+<div style="width:64px;height:64px;border-radius:50%;background:#1b3a2d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700">{% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}{% else %}{{ profile.user.username|slice:":2"|upper }}{% endif %}</div>
 {% endif %}
 <span class="bc-dot available"></span>
 </div>
@@ -148,7 +149,15 @@
 <div class="bc-footer">
 <span class="bc-rate">{% if profile.hourly_rate %}${{ profile.hourly_rate }} CAD / hr{% else %}Rate on request{% endif %}</span>
 </div>
-<a href="{% url 'contact' %}" class="btn-request"><i class="far fa-comment-dots"></i> Request Connection</a>
+</a>
+<div class="bc-actions">
+<a href="{% url 'caregiver_profile' profile.pk %}" class="btn-view-profile"><i class="fas fa-user"></i> View Profile</a>
+{% if request.user.is_authenticated %}
+<a href="{% url 'chat_start' profile.user.pk %}" class="btn-request"><i class="fas fa-comment-dots"></i> Chat</a>
+{% else %}
+<a href="{% url 'Account:login' %}?next={% url 'chat_start' profile.user.pk %}" class="btn-request"><i class="fas fa-comment-dots"></i> Chat</a>
+{% endif %}
+</div>
 </div>
 {% empty %}
 <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#aaa">

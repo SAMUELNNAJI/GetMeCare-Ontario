@@ -156,7 +156,8 @@ GetMeCare{% endblock %} {% block extra_head %}
 <!-- Log table -->
 <div class="earn-card">
   <h3><i class="fas fa-list" style="color: #1b7d4f"></i> Payment History</h3>
-  <table class="earn-table">
+  <div class="scroll-table-wrap">
+<table class="earn-table">
     <thead>
       <tr>
         <th>Date</th>
@@ -196,5 +197,6 @@ GetMeCare{% endblock %} {% block extra_head %}
       {% endfor %}
     </tbody>
   </table>
+</div><!-- /scroll-table-wrap -->
 </div>
 {% endblock %}

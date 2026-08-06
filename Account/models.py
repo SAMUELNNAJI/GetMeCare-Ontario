@@ -57,6 +57,28 @@ class CaregiverProfile(models.Model):
         choices=STATUS_CHOICES,
         default=STATUS_PENDING,
     )
+
+    CARE_TYPE_CHOICES = [
+        ('senior_elder',  'Senior / Elder Care'),
+        ('dementia',      'Dementia & Alzheimer'),
+        ('palliative',    'Palliative Care'),
+        ('post_surgery',  'Post-Surgery Recovery'),
+        ('postpartum',    'Postpartum Care'),
+        ('companion',     'Companion Care'),
+        ('mobility',      'Mobility Assistance'),
+        ('live_in',       'Live-In Care'),
+        ('overnight',     'Overnight Care'),
+        ('respite',       'Respite Care'),
+        ('psw_general',   'General PSW'),
+        ('other',         'Other'),
+    ]
+    care_type   = models.CharField(
+        max_length=30,
+        choices=CARE_TYPE_CHOICES,
+        blank=True,
+        help_text='Primary type of care this caregiver provides',
+    )
+
     hourly_rate = models.DecimalField(
         max_digits=6, decimal_places=2,
         null=True, blank=True,
@@ -87,6 +109,16 @@ class CaregiverProfile(models.Model):
     @property
     def skills_list(self):
         return [s.strip() for s in self.skills.split(',') if s.strip()]
+
+    def has_all_required_documents(self):
+        """Check if all 5 required documents are uploaded (approved or pending)."""
+        from Account.forms import REQUIRED_DOC_TYPES
+        user_doc_types = set(
+            self.user.documents.filter(
+                doc_type__in=REQUIRED_DOC_TYPES
+            ).values_list('doc_type', flat=True).distinct()
+        )
+        return len(user_doc_types) == len(REQUIRED_DOC_TYPES)
 
 
 # ──────────────────────────────────────────────────────────────

@@ -1,0 +1,189 @@
+{% extends base_template %}
+{% load static %}
+{% block title %}Messages – GetMeCare{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cl-wrap {
+    max-width: 720px;
+    padding: 0 4px;
+  }
+  .cl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .cl-header h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1a1a1a;
+  }
+  .cl-header h1 i { color: #1b7d4f; margin-right: 8px; }
+  .cl-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+  }
+  .cl-empty i { font-size: 2.8rem; display: block; margin-bottom: 14px; color: #ddd; }
+  .cl-empty p { font-size: .9rem; }
+  /* Conversation row */
+  .cl-list { display: flex; flex-direction: column; gap: 10px; }
+  .cl-item {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 5px rgba(0,0,0,.07);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow .15s, transform .15s;
+    border: 1.5px solid transparent;
+  }
+  .cl-item:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
+    transform: translateY(-1px);
+    border-color: #1b7d4f22;
+  }
+  .cl-av {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#1b3a2d,#2d5a42);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 700;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .cl-av img {
+    width: 100%; height: 100%;
+    border-radius: 50%; object-fit: cover;
+  }
+  .cl-unread-dot {
+    position: absolute;
+    top: 1px; right: 1px;
+    width: 11px; height: 11px;
+    background: #1b7d4f;
+    border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .cl-info { flex: 1; min-width: 0; }
+  .cl-name {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cl-role-tag {
+    font-size: .65rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: #e6f5ee;
+    color: #1b5e35;
+  }
+  .cl-last {
+    font-size: .8rem;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 380px;
+  }
+  .cl-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .cl-time { font-size: .72rem; color: #bbb; }
+  .cl-badge {
+    background: #1b7d4f;
+    color: #fff;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: .68rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+  }
+  .cl-new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #1b7d4f;
+    color: #fff;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: .84rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .cl-new-btn:hover { background: #145e3a; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cl-wrap">
+  <div class="cl-header">
+    <h1><i class="fas fa-comments"></i> Messages</h1>
+    <a href="{% url 'browse' %}" class="cl-new-btn">
+      <i class="fas fa-plus"></i> New Conversation
+    </a>
+  </div>
+
+  {% if conversations %}
+  <div class="cl-list">
+    {% for item in conversations %}
+    <a href="{% url 'chat_room' item.conv.pk %}" class="cl-item">
+      <div class="cl-av">
+        {% with other=item.other %}
+          {% if other.role == 'caregiver' and other.caregiver_profile.profile_image %}
+            <img src="{{ other.caregiver_profile.profile_image.url }}" alt="">
+          {% else %}
+            {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
+          {% endif %}
+          {% if item.unread %}<span class="cl-unread-dot"></span>{% endif %}
+        {% endwith %}
+      </div>
+      <div class="cl-info">
+        <div class="cl-name">
+          {{ item.other.get_full_name|default:item.other.username }}
+          <span class="cl-role-tag">{{ item.other.get_role_display }}</span>
+        </div>
+        <div class="cl-last">
+          {% if item.last %}
+            {% if item.last.sender == request.user %}You: {% endif %}{{ item.last.body }}
+          {% else %}
+            No messages yet
+          {% endif %}
+        </div>
+      </div>
+      <div class="cl-meta">
+        {% if item.last %}
+        <span class="cl-time">{{ item.last.created_at|date:"M d" }}</span>
+        {% endif %}
+        {% if item.unread %}
+        <span class="cl-badge">{{ item.unread }}</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="cl-empty">
+    <i class="fas fa-comment-slash"></i>
+    <strong style="color:#555;font-size:1rem;display:block;margin-bottom:6px">No conversations yet</strong>
+    <p>Browse caregivers and click <strong>Chat</strong> to start a conversation.</p>
+    <a href="{% url 'browse' %}" style="display:inline-block;margin-top:16px;background:#1b7d4f;color:#fff;padding:10px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">Browse Caregivers</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
