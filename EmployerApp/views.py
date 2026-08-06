@@ -235,13 +235,12 @@ def book_caregiver(request, proposal_pk):
         if errors:
             for e in errors:
                 messages.error(request, e)
-            # Keep form values
-            ctx['form'] = {
-                'start_date': {'value': lambda: start_date_str},
-                'start_time': {'value': lambda: start_time_str},
-                'end_time':   {'value': lambda: end_time_str},
-                'city':       {'value': lambda: city},
-            }
+            ctx.update({
+                'form_start_date': start_date_str,
+                'form_start_time': start_time_str,
+                'form_end_time':   end_time_str,
+                'form_city':       city,
+            })
             return render(request, 'EmployerApp/book-caregiver.html', ctx)
 
         # Mark proposal accepted and create the Shift
@@ -265,12 +264,12 @@ def book_caregiver(request, proposal_pk):
         return redirect('EmployerApp:payment_checkout', shift_pk=shift.pk)
 
     # GET — render empty form
-    ctx['form'] = {
-        'start_date': {'value': lambda: ''},
-        'start_time': {'value': lambda: ''},
-        'end_time':   {'value': lambda: ''},
-        'city':       {'value': lambda: ''},
-    }
+    ctx.update({
+        'form_start_date': '',
+        'form_start_time': '',
+        'form_end_time':   '',
+        'form_city':       '',
+    })
     return render(request, 'EmployerApp/book-caregiver.html', ctx)
 
 

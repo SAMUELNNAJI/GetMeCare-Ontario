@@ -1,0 +1,282 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Payout Queue — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pq-card {
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+    margin-bottom:16px;
+    overflow:hidden;
+    border:1px solid #f0f0f0;
+  }
+  .pq-card-head {
+    display:flex; align-items:center; gap:14px;
+    padding:16px 20px;
+    border-bottom:1px solid #f5f5f5;
+    background:#fafcf9;
+  }
+  .pq-av {
+    width:46px; height:46px; border-radius:50%;
+    background:linear-gradient(135deg,#1b3a2d,#2d5a42);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:.9rem; font-weight:700; flex-shrink:0; overflow:hidden;
+  }
+  .pq-av img { width:100%; height:100%; object-fit:cover; }
+  .pq-cg-name { font-size:.92rem; font-weight:700; color:#1a1a1a; margin:0; }
+  .pq-cg-sub  { font-size:.72rem; color:#888; margin:2px 0 0; }
+  .pq-amount-badge {
+    margin-left:auto;
+    background:linear-gradient(135deg,#1b3a2d,#1b7d4f);
+    color:#fff; border-radius:10px;
+    padding:8px 14px; text-align:center;
+    flex-shrink:0;
+  }
+  .pq-amount-badge .amt { font-size:1.25rem; font-weight:800; line-height:1; }
+  .pq-amount-badge .amt-sub { font-size:.65rem; opacity:.8; margin-top:2px; }
+
+  .pq-body { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  @media(max-width:700px){ .pq-body { grid-template-columns:1fr; } }
+
+  .pq-section { padding:16px 20px; }
+  .pq-section + .pq-section { border-left:1px solid #f5f5f5; }
+  @media(max-width:700px){ .pq-section + .pq-section { border-left:none; border-top:1px solid #f5f5f5; } }
+
+  .pq-section-title {
+    font-size:.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; color:#aaa; margin-bottom:10px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .pq-row {
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:3px 0; font-size:.82rem; color:#555;
+  }
+  .pq-row strong { color:#1a1a1a; font-weight:600; }
+
+  .pq-bank-row {
+    background:#f6f8f5; border-radius:8px; padding:10px 12px;
+    margin-top:8px; font-size:.8rem; color:#333;
+  }
+  .pq-bank-row .bk-label {
+    font-size:.66rem; font-weight:700; color:#aaa;
+    text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px;
+  }
+  .pq-bank-val { font-weight:600; color:#1a1a1a; word-break:break-all; }
+
+  .pq-footer {
+    padding:14px 20px;
+    border-top:1px solid #f5f5f5;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+  }
+  .pq-shift-ref { font-size:.75rem; color:#aaa; }
+
+  .pq-mark-paid-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 18px;
+    background:#1b7d4f; color:#fff;
+    border:none; border-radius:9px;
+    font-size:.84rem; font-weight:700;
+    cursor:pointer; font-family:inherit;
+    transition:background .15s;
+  }
+  .pq-mark-paid-btn:hover { background:#145e3a; }
+
+  .pq-paid-label {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:.84rem; font-weight:700; color:#1b7d4f;
+  }
+
+  .pq-tabs { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .pq-tab {
+    padding:7px 16px; border-radius:20px;
+    font-size:.8rem; font-weight:600;
+    cursor:pointer; text-decoration:none;
+    border:1.5px solid transparent;
+    transition:all .15s;
+  }
+  .pq-tab.active { background:#1b7d4f; color:#fff; border-color:#1b7d4f; }
+  .pq-tab:not(.active) { background:#f6f8f5; color:#555; border-color:#dde2d8; }
+  .pq-tab:not(.active):hover { border-color:#1b7d4f; color:#1b7d4f; }
+
+  .pq-summary-strip {
+    display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .pq-stat {
+    background:#fff; border-radius:12px; padding:14px 18px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06); flex:1; min-width:120px;
+  }
+  .pq-stat .sv { font-size:1.4rem; font-weight:800; color:#1b3a2d; }
+  .pq-stat .sl { font-size:.72rem; color:#888; margin-top:2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-money-bill-wave" style="color:#1b7d4f;margin-right:8px"></i>
+  Payout Queue
+</div>
+
+<!-- Stats strip -->
+<div class="pq-summary-strip">
+  <div class="pq-stat">
+    <div class="sv">{{ pending_logs|length }}</div>
+    <div class="sl">Awaiting Payout</div>
+  </div>
+  <div class="pq-stat">
+    <div class="sv">${{ total_pending|floatformat:2 }}</div>
+    <div class="sl">Total Pending (CAD)</div>
+  </div>
+  <div class="pq-stat">
+    <div class="sv">{{ paid_logs|length }}</div>
+    <div class="sl">Paid Out</div>
+  </div>
+  <div class="pq-stat">
+    <div class="sv">${{ total_paid|floatformat:2 }}</div>
+    <div class="sl">Total Paid (CAD)</div>
+  </div>
+</div>
+
+<!-- Tab filters -->
+<div class="pq-tabs">
+  <a href="?tab=pending"
+     class="pq-tab {% if tab == 'pending' or not tab %}active{% endif %}">
+    Pending <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ pending_logs|length }}</span>
+  </a>
+  <a href="?tab=paid" class="pq-tab {% if tab == 'paid' %}active{% endif %}">
+    Paid Out <span style="background:rgba(0,0,0,.1);border-radius:20px;padding:1px 7px;margin-left:4px">{{ paid_logs|length }}</span>
+  </a>
+</div>
+
+{% if tab == 'paid' %}
+  {% with display_logs=paid_logs %}
+  {% for log in display_logs %}
+{% else %}
+  {% with display_logs=pending_logs %}
+  {% for log in display_logs %}
+{% endif %}
+<div class="pq-card">
+  <!-- Header -->
+  <div class="pq-card-head">
+    <div class="pq-av">
+      {% with cg=log.shift.caregiver %}
+        {% if cg.caregiver_profile.profile_image %}
+          <img src="{{ cg.caregiver_profile.profile_image.url }}" alt="">
+        {% else %}
+          {{ cg.first_name|first|upper }}{{ cg.last_name|first|upper }}
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div>
+      <p class="pq-cg-name">{{ log.shift.caregiver.get_full_name }}</p>
+      <p class="pq-cg-sub">
+        ID #{{ log.shift.caregiver.pk }} &bull; {{ log.shift.caregiver.email }}
+      </p>
+    </div>
+    <div class="pq-amount-badge">
+      <div class="amt">${{ log.amount_earned|floatformat:2 }}</div>
+      <div class="amt-sub">85% payout</div>
+    </div>
+  </div>
+
+  <!-- Body: shift info + bank details -->
+  <div class="pq-body">
+    <!-- Shift info -->
+    <div class="pq-section">
+      <div class="pq-section-title"><i class="fas fa-calendar-alt"></i> Shift Info</div>
+      <div class="pq-row">
+        <span>Shift #</span><strong>#{{ log.shift.pk }}</strong>
+      </div>
+      <div class="pq-row">
+        <span>Date</span><strong>{{ log.shift.start_date|date:"M d, Y" }}</strong>
+      </div>
+      <div class="pq-row">
+        <span>Time</span>
+        <strong>{{ log.shift.start_time|time:"g:i A" }} – {{ log.shift.end_time|time:"g:i A" }}</strong>
+      </div>
+      <div class="pq-row">
+        <span>Hours Worked</span><strong>{{ log.hours_worked }} hrs</strong>
+      </div>
+      <div class="pq-row">
+        <span>Hourly Rate</span><strong>${{ log.shift.hourly_rate }}/hr</strong>
+      </div>
+      <div class="pq-row">
+        <span>Employer</span><strong>{{ log.shift.employer.get_full_name }}</strong>
+      </div>
+      <div class="pq-row">
+        <span>Clocked In</span>
+        <strong>{{ log.clock_in_time|date:"M d, g:i A" }}</strong>
+      </div>
+      <div class="pq-row">
+        <span>Clocked Out</span>
+        <strong>{{ log.clock_out_time|date:"M d, g:i A" }}</strong>
+      </div>
+    </div>
+
+    <!-- Bank details -->
+    <div class="pq-section">
+      <div class="pq-section-title"><i class="fas fa-university"></i> Caregiver Bank Details</div>
+      {% with p=log.shift.caregiver.caregiver_profile %}
+        {% if p.bank_name or p.bank_account_number %}
+          <div class="pq-bank-row">
+            <div class="bk-label">Account Name</div>
+            <div class="pq-bank-val">{{ p.bank_account_name|default:"—" }}</div>
+          </div>
+          <div class="pq-bank-row">
+            <div class="bk-label">Bank Name</div>
+            <div class="pq-bank-val">{{ p.bank_name|default:"—" }}</div>
+          </div>
+          <div class="pq-bank-row">
+            <div class="bk-label">Account Number</div>
+            <div class="pq-bank-val">{{ p.bank_account_number|default:"—" }}</div>
+          </div>
+          <div class="pq-bank-row">
+            <div class="bk-label">Transit Number</div>
+            <div class="pq-bank-val">{{ p.bank_transit_number|default:"—" }}</div>
+          </div>
+          <div class="pq-bank-row">
+            <div class="bk-label">Institution Number</div>
+            <div class="pq-bank-val">{{ p.bank_institution_number|default:"—" }}</div>
+          </div>
+        {% else %}
+          <div style="background:#fff8e1;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#b45309">
+            <i class="fas fa-exclamation-triangle"></i>
+            Caregiver has not added bank details yet. Contact them before paying out.
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- Footer: action -->
+  <div class="pq-footer">
+    <span class="pq-shift-ref">
+      Shift #{{ log.shift.pk }} &bull;
+      Employer paid: ${{ log.shift.hourly_rate|floatformat:2 }}/hr &bull;
+      Caregiver receives 85%: <strong style="color:#1b3a2d">${{ log.amount_earned|floatformat:2 }}</strong>
+    </span>
+    {% if log.payment_status == 'pending' %}
+    <form method="post" action="{% url 'AdminApp:mark_paid' log.pk %}"
+          onsubmit="return confirm('Mark this payout as paid for {{ log.shift.caregiver.get_full_name }}?')">
+      {% csrf_token %}
+      <button type="submit" class="pq-mark-paid-btn">
+        <i class="fas fa-check"></i> Mark as Paid
+      </button>
+    </form>
+    {% else %}
+    <span class="pq-paid-label"><i class="fas fa-check-circle"></i> Paid Out</span>
+    {% endif %}
+  </div>
+</div>
+{% empty %}
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div class="adm-empty">
+      <i class="fas fa-inbox"></i>
+      No {% if tab == 'paid' %}paid{% else %}pending{% endif %} payouts at this time.
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
