@@ -111,6 +111,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     position: sticky;
     top: 76px;
+    overflow: hidden; /* Prevents card overflow */
   }
   .upload-card h3 {
     font-size: 0.92rem;
@@ -169,6 +170,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       background 0.2s;
     background: #fafcf9;
     position: relative;
+    overflow: hidden; /* Prevents overflow */
   }
   .upload-zone:hover,
   .upload-zone.drag-over {
@@ -282,6 +284,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     padding: 22px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     margin-bottom: 18px;
+    overflow: hidden; /* Prevents card overflow */
   }
   .req-card h3 {
     font-size: 0.92rem;
@@ -334,11 +337,15 @@ GetMeCare{% endblock %} {% block extra_head %}
   }
   .req-item-body {
     flex: 1;
+    min-width: 0; /* Allows text truncation */
   }
   .req-item-name {
     font-size: 0.855rem;
     font-weight: 600;
     color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .req-item-status {
     font-size: 0.73rem;
@@ -360,6 +367,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     border-radius: 14px;
     padding: 22px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden; /* Prevents card overflow */
   }
   .docs-card h3 {
     font-size: 0.92rem;
@@ -370,8 +378,15 @@ GetMeCare{% endblock %} {% block extra_head %}
     align-items: center;
     gap: 8px;
   }
+  .doc-table-wrapper {
+    overflow-x: auto; /* Enables horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    margin: 0 -22px; /* Negative margin to align with card padding */
+    padding: 0 22px; /* Re-add padding */
+  }
   .doc-table {
     width: 100%;
+    min-width: 600px; /* Ensures table doesn't get too narrow */
     border-collapse: collapse;
     font-size: 0.84rem;
   }
@@ -384,6 +399,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    white-space: nowrap; /* Prevents header text wrapping */
   }
   .doc-table td {
     padding: 10px 12px;
@@ -408,6 +424,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     font-size: 0.78rem;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap; /* Prevents button text wrapping */
   }
   .btn-view:hover {
     background: #d0eddf;
@@ -432,6 +449,87 @@ GetMeCare{% endblock %} {% block extra_head %}
     transition: width 0.4s;
   }
 
+  /* Badge styles */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-green {
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+  .badge-orange {
+    background: #fff3e0;
+    color: #c96000;
+  }
+  .badge-red {
+    background: #fdecea;
+    color: #c62828;
+  }
+
+  /* Additional mobile responsiveness */
+  @media (max-width: 600px) {
+    .verify-banner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .verify-banner-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 0.9rem;
+    }
+    .verify-banner-title {
+      font-size: 0.85rem;
+    }
+    .verify-banner-sub {
+      font-size: 0.75rem;
+    }
+    .req-item {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .req-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .req-item-name {
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .req-item-status {
+      font-size: 0.7rem;
+    }
+    .upload-zone {
+      padding: 20px 12px;
+    }
+    .upload-zone-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+    .upload-zone-title {
+      font-size: 0.8rem;
+    }
+    .upload-zone-sub {
+      font-size: 0.7rem;
+    }
+    .btn-upload {
+      padding: 10px 16px;
+      font-size: 0.8rem;
+    }
+    .form-group select {
+      font-size: 0.8rem;
+      padding: 7px 9px;
+    }
+  }
+
   @media (max-width: 900px) {
     .doc-grid {
       grid-template-columns: 1fr;
@@ -440,10 +538,49 @@ GetMeCare{% endblock %} {% block extra_head %}
       position: static;
     }
   }
+  @media (max-width: 768px) {
+    .docs-card {
+      padding: 18px;
+    }
+    .doc-table-wrapper {
+      margin: 0 -18px;
+      padding: 0 18px;
+    }
+    .doc-table {
+      font-size: 0.8rem;
+    }
+    .doc-table th,
+    .doc-table td {
+      padding: 8px 10px;
+    }
+    .page-title {
+      font-size: 1.2rem;
+    }
+    .verify-banner {
+      padding: 14px 16px;
+    }
+  }
   @media (max-width: 480px) {
+    .doc-table-wrapper {
+      margin: 0 -16px;
+      padding: 0 16px;
+    }
+    .doc-table {
+      min-width: 500px;
+      font-size: 0.78rem;
+    }
     .doc-table th:nth-child(3),
     .doc-table td:nth-child(3) {
       display: none;
+    }
+    .docs-card {
+      padding: 16px;
+    }
+    .req-card {
+      padding: 18px;
+    }
+    .upload-card {
+      padding: 18px;
     }
   }
 </style>
@@ -625,8 +762,8 @@ GetMeCare{% endblock %} {% block extra_head %}
         <i class="fas fa-folder-open" style="color: #1b7d4f"></i> All Uploaded
         Documents
       </h3>
-      <div class="scroll-table-wrap">
-<table class="doc-table">
+      <div class="doc-table-wrapper">
+        <table class="doc-table">
         <thead>
           <tr>
             <th>Type</th>
@@ -642,12 +779,15 @@ GetMeCare{% endblock %} {% block extra_head %}
           <tr>
             <td>{{ doc.get_doc_type_display }}</td>
             <td>
-<a href="{% url 'CareGiverAcc:serve_document' doc.pk %}" class="btn-view" target="_blank"><i class="fas fa-eye"></i> View</a>
+              <a href="{% url 'CareGiverAcc:serve_document' doc.pk %}" class="btn-view" target="_blank"><i class="fas fa-eye"></i> View</a>
             </td>
             <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
             <td>
               <span
-                class="badge {% if doc.status == 'approved' %}badge-green{% elif doc.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}"
+                class="badge {% if doc.status == 'approved' %}badge-green{% elif doc.status == 'rejected' %}badge-red{% else %}badge-orange{% endif %}">
+                {{ doc.get_status_display }}
+              </span>
+            </td>
             <td style="color: #888; font-size: 0.8rem">{{ doc.note|default:"—" }}</td>
             <td>
               {% if doc.status == 'rejected' %}
@@ -657,10 +797,6 @@ GetMeCare{% endblock %} {% block extra_head %}
               <label for="reup-tbl-{{ doc.pk }}" style="display:inline-flex;align-items:center;gap:5px;background:#fdecea;color:#c62828;border:1px solid #ffcdd2;border-radius:7px;padding:4px 10px;font-size:.76rem;font-weight:600;cursor:pointer"><i class="fas fa-redo"></i> Re-upload</label>
               </form>
               {% else %}—{% endif %}
-            </td>pan>
-            </td>
-            <td style="color: #888; font-size: 0.8rem">
-              {{ doc.note|default:"—" }}
             </td>
           </tr>
           {% empty %}
@@ -676,7 +812,7 @@ GetMeCare{% endblock %} {% block extra_head %}
           {% endfor %}
         </tbody>
       </table>
-</div><!-- /scroll-table-wrap -->
+      </div><!-- /doc-table-wrapper -->
     </div>
   </div>
   <!-- end right col -->
