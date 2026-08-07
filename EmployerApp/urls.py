@@ -16,4 +16,7 @@ urlpatterns = [
     path('employer/book/<int:proposal_pk>/',              views.book_caregiver,    name='book_caregiver'),
     path('employer/checkout/<int:shift_pk>/',             views.payment_checkout,  name='payment_checkout'),
     path('employer/checkout/<int:shift_pk>/confirm/',     views.confirm_payment,   name='confirm_payment'),
+    # Disputes
+    path('employer/disputes/',                            views.my_disputes,       name='my_disputes'),
+    path('employer/disputes/submit/',                     views.submit_dispute,    name='submit_dispute'),
 ]

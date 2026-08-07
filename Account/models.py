@@ -161,7 +161,12 @@ class Shift(models.Model):
     city        = models.CharField(max_length=100, blank=True)
     start_date  = models.DateField()
     start_time  = models.TimeField()
-    end_time    = models.TimeField()
+    end_time    = models.TimeField(null=True, blank=True)   # kept for legacy display; derived from start_time + duration_hours
+    duration_hours = models.DecimalField(
+        max_digits=4, decimal_places=1,
+        null=True, blank=True,
+        help_text='How many hours the caregiver is booked for (e.g. 4.0)',
+    )
     hourly_rate = models.DecimalField(max_digits=6, decimal_places=2)
     status      = models.CharField(
         max_length=20,
@@ -171,7 +176,7 @@ class Shift(models.Model):
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['start_date', 'start_time']
+        ordering = ['-start_date', '-start_time']
 
     def __str__(self):
         return f"Shift #{self.pk} — {self.caregiver.get_full_name()} on {self.start_date}"
@@ -180,6 +185,14 @@ class Shift(models.Model):
     def employer_city(self):
         """Masked — return only city, never full address."""
         return self.city or 'Ontario'
+
+    @property
+    def total_cost(self):
+        """Employer charge: hourly_rate × duration_hours."""
+        from decimal import Decimal
+        if self.duration_hours and self.hourly_rate:
+            return round(Decimal(str(self.duration_hours)) * self.hourly_rate, 2)
+        return None
 
 
 # ──────────────────────────────────────────────────────────────
@@ -294,6 +307,10 @@ class BookingProposal(models.Model):
         choices=STATUS_CHOICES,
         default=STATUS_PENDING,
     )
+    is_read = models.BooleanField(
+        default=False,
+        help_text='True once the recipient (employer) has opened the conversation',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -346,12 +363,21 @@ class ShiftLog(models.Model):
         return f"Log for Shift #{self.shift.pk}"
 
     def calculate_earnings(self):
-        """Compute hours worked and 85% caregiver share."""
+        """Compute hours worked (actual) and earnings based on booked duration_hours.
+
+        hours_worked reflects actual time clocked.
+        amount_earned uses the booked duration_hours so the caregiver always
+        receives the full agreed pay regardless of when they clock out.
+        """
         if self.clock_in_time and self.clock_out_time:
+            from decimal import Decimal
+            # Actual time on site (for records)
             delta = self.clock_out_time - self.clock_in_time
             self.hours_worked = round(delta.total_seconds() / 3600, 2)
-            gross = self.hours_worked * self.shift.hourly_rate
-            self.amount_earned = round(gross * 0.85, 2)
+            # Pay based on booked duration (what employer paid for)
+            booked = self.shift.duration_hours if self.shift.duration_hours else Decimal(str(self.hours_worked))
+            gross = Decimal(str(booked)) * self.shift.hourly_rate
+            self.amount_earned = round(gross * Decimal('0.85'), 2)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -440,3 +466,179 @@ class JobPosting(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.employer.get_full_name()} ({self.city})"
+
+
+# ──────────────────────────────────────────────────────────────
+# EmployerPayment — records every payment made by an employer
+# (activation fee + shift booking payments)
+# ──────────────────────────────────────────────────────────────
+class EmployerPayment(models.Model):
+    TYPE_ACTIVATION = 'activation'
+    TYPE_BOOKING    = 'booking'
+
+    PAYMENT_TYPE_CHOICES = [
+        (TYPE_ACTIVATION, 'Account Activation Fee'),
+        (TYPE_BOOKING,    'Shift Booking'),
+    ]
+
+    STATUS_COMPLETED = 'completed'
+    STATUS_FAILED    = 'failed'
+    STATUS_REFUNDED  = 'refunded'
+
+    STATUS_CHOICES = [
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_FAILED,    'Failed'),
+        (STATUS_REFUNDED,  'Refunded'),
+    ]
+
+    employer          = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='employer_payments',
+        limit_choices_to={'role': CustomUser.EMPLOYER},
+    )
+    payment_type      = models.CharField(
+        max_length=15,
+        choices=PAYMENT_TYPE_CHOICES,
+    )
+    amount            = models.DecimalField(
+        max_digits=8, decimal_places=2,
+        help_text='Amount charged in CAD',
+    )
+    status            = models.CharField(
+        max_length=12,
+        choices=STATUS_CHOICES,
+        default=STATUS_COMPLETED,
+    )
+    payment_reference = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Stripe / simulated payment reference',
+    )
+    # Optional link to the shift this payment covers (null for activation fee)
+    shift             = models.ForeignKey(
+        'Shift',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='employer_payments',
+    )
+    description       = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Human-readable summary, e.g. "Shift #4 — Jane Doe, 3 hrs"',
+    )
+    paid_at           = models.DateTimeField(auto_now_add=True)
+    is_seen           = models.BooleanField(
+        default=False,
+        help_text='True after the employer has viewed the payment history page',
+    )
+
+    class Meta:
+        ordering = ['-paid_at']
+        verbose_name        = 'Employer Payment'
+        verbose_name_plural = 'Employer Payments'
+
+    def __str__(self):
+        return (
+            f"{self.employer.get_full_name()} — "
+            f"{self.get_payment_type_display()} — "
+            f"${self.amount} [{self.get_status_display()}]"
+        )
+
+
+# ──────────────────────────────────────────────────────────────
+# Dispute — raised by an employer against a caregiver
+# ──────────────────────────────────────────────────────────────
+class Dispute(models.Model):
+    # Categories
+    CAT_SERVICE_QUALITY = 'service_quality'
+    CAT_NO_SHOW         = 'no_show'
+    CAT_LATE_ARRIVAL    = 'late_arrival'
+    CAT_MISCONDUCT      = 'misconduct'
+    CAT_BILLING         = 'billing'
+    CAT_SAFETY          = 'safety_concern'
+    CAT_OTHER           = 'other'
+
+    CATEGORY_CHOICES = [
+        (CAT_SERVICE_QUALITY, 'Poor Service Quality'),
+        (CAT_NO_SHOW,         'Caregiver No-Show'),
+        (CAT_LATE_ARRIVAL,    'Late Arrival'),
+        (CAT_MISCONDUCT,      'Unprofessional / Misconduct'),
+        (CAT_BILLING,         'Billing / Payment Issue'),
+        (CAT_SAFETY,          'Safety Concern'),
+        (CAT_OTHER,           'Other'),
+    ]
+
+    # Statuses
+    STATUS_OPEN          = 'open'
+    STATUS_UNDER_REVIEW  = 'under_review'
+    STATUS_RESOLVED      = 'resolved'
+    STATUS_DISMISSED     = 'dismissed'
+
+    STATUS_CHOICES = [
+        (STATUS_OPEN,         'Open'),
+        (STATUS_UNDER_REVIEW, 'Under Review'),
+        (STATUS_RESOLVED,     'Resolved'),
+        (STATUS_DISMISSED,    'Dismissed'),
+    ]
+
+    employer = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='raised_disputes',
+        limit_choices_to={'role': CustomUser.EMPLOYER},
+    )
+    caregiver = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='disputes_against',
+        limit_choices_to={'role': CustomUser.CAREGIVER},
+    )
+    # Optional links — dispute can be tied to a specific shift and/or payment
+    shift = models.ForeignKey(
+        'Shift',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='disputes',
+    )
+    payment = models.ForeignKey(
+        'EmployerPayment',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='disputes',
+    )
+    category    = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    description = models.TextField(
+        help_text='Describe the issue in detail',
+    )
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default=STATUS_OPEN,
+    )
+    admin_note = models.TextField(
+        blank=True,
+        help_text='Internal admin notes / resolution details',
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name        = 'Dispute'
+        verbose_name_plural = 'Disputes'
+
+    def __str__(self):
+        return (
+            f"Dispute #{self.pk} — {self.employer.get_full_name()} "
+            f"vs {self.caregiver.get_full_name()} [{self.get_status_display()}]"
+        )
+
+    @property
+    def is_open(self):
+        return self.status == self.STATUS_OPEN
+
+    @property
+    def is_resolved(self):
+        return self.status in (self.STATUS_RESOLVED, self.STATUS_DISMISSED)

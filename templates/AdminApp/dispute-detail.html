@@ -1,0 +1,155 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Dispute #{{ dispute.pk }} — Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <a href="{% url 'AdminApp:dispute_list' %}"
+     style="font-size:.8rem;font-weight:600;color:#1b7d4f;text-decoration:none">
+    <i class="fas fa-arrow-left"></i> All Disputes
+  </a>
+  <h1 class="adm-page-title" style="margin:0">
+    <i class="fas fa-flag" style="color:#c62828;margin-right:8px"></i>Dispute #{{ dispute.pk }}
+  </h1>
+  {% if dispute.status == 'open' %}<span class="badge badge-red" style="font-size:.8rem">Open</span>
+  {% elif dispute.status == 'under_review' %}<span class="badge badge-orange" style="font-size:.8rem">Under Review</span>
+  {% elif dispute.status == 'resolved' %}<span class="badge badge-green" style="font-size:.8rem">Resolved</span>
+  {% else %}<span class="badge badge-grey" style="font-size:.8rem">Dismissed</span>{% endif %}
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+
+  <!-- Employer card -->
+  <div class="adm-card">
+    <div class="adm-card-pad">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:10px">
+        <i class="fas fa-building" style="margin-right:4px"></i>Employer (Raised By)
+      </div>
+      <div style="font-weight:700;font-size:.95rem">{{ dispute.employer.get_full_name }}</div>
+      <div style="font-size:.78rem;color:#888;margin-top:2px">{{ dispute.employer.email }}</div>
+      <div style="font-size:.78rem;color:#888">User #{{ dispute.employer.pk }}</div>
+    </div>
+  </div>
+
+  <!-- Caregiver card -->
+  <div class="adm-card">
+    <div class="adm-card-pad">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:10px">
+        <i class="fas fa-user-nurse" style="margin-right:4px"></i>Caregiver (Disputed)
+      </div>
+      <div style="font-weight:700;font-size:.95rem">{{ dispute.caregiver.get_full_name }}</div>
+      <div style="font-size:.78rem;color:#888;margin-top:2px">{{ dispute.caregiver.email }}</div>
+      <div style="font-size:.78rem;color:#888">User #{{ dispute.caregiver.pk }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Shift + Payment -->
+{% if dispute.shift or dispute.payment %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:20px">
+  {% if dispute.shift %}
+  <div class="adm-card">
+    <div class="adm-card-pad">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:10px">
+        <i class="fas fa-calendar-alt" style="margin-right:4px"></i>Linked Shift
+      </div>
+      <div style="font-size:.85rem">
+        <div><strong>Shift #{{ dispute.shift.pk }}</strong></div>
+        <div style="color:#555;margin-top:4px">{{ dispute.shift.start_date|date:"D, M d, Y" }}</div>
+        <div style="color:#555">{{ dispute.shift.start_time|time:"g:i A" }} – {{ dispute.shift.end_time|time:"g:i A" }}</div>
+        <div style="color:#555">{{ dispute.shift.city|default:"Ontario" }}</div>
+        <div style="color:#555">${{ dispute.shift.hourly_rate }}/hr</div>
+        <div style="margin-top:6px">
+          {% if dispute.shift.status == 'completed' %}<span class="badge badge-green">Completed</span>
+          {% elif dispute.shift.status == 'in_progress' %}<span class="badge badge-orange">In Progress</span>
+          {% elif dispute.shift.status == 'scheduled' %}<span class="badge badge-blue">Scheduled</span>
+          {% else %}<span class="badge badge-red">{{ dispute.shift.get_status_display }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if dispute.payment %}
+  <div class="adm-card">
+    <div class="adm-card-pad">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:10px">
+        <i class="fas fa-credit-card" style="margin-right:4px"></i>Linked Payment
+      </div>
+      <div style="font-size:.85rem">
+        <div><strong>${{ dispute.payment.amount|floatformat:2 }} CAD</strong></div>
+        <div style="color:#555;margin-top:4px">{{ dispute.payment.paid_at|date:"M d, Y g:i A" }}</div>
+        <div style="color:#888;font-size:.72rem;word-break:break-all;margin-top:3px">{{ dispute.payment.payment_reference }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Dispute details -->
+<div class="adm-card" style="margin-bottom:20px">
+  <div class="adm-card-pad">
+    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:12px">
+      <i class="fas fa-comment-alt" style="margin-right:4px"></i>Dispute Details
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+      <div>
+        <div style="font-size:.7rem;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Category</div>
+        <span class="badge badge-grey" style="margin-top:4px;display:inline-block">{{ dispute.get_category_display }}</span>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Submitted</div>
+        <div style="font-size:.84rem;color:#333;margin-top:4px">{{ dispute.created_at|date:"M d, Y" }} at {{ dispute.created_at|time:"g:i A" }}</div>
+      </div>
+      {% if dispute.resolved_at %}
+      <div>
+        <div style="font-size:.7rem;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Resolved</div>
+        <div style="font-size:.84rem;color:#333;margin-top:4px">{{ dispute.resolved_at|date:"M d, Y" }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;font-size:.86rem;color:#1a1a1a;line-height:1.6;white-space:pre-line">{{ dispute.description }}</div>
+  </div>
+</div>
+
+<!-- Admin action panel -->
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:14px">
+      <i class="fas fa-shield-alt" style="margin-right:4px"></i>Admin Action
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <label style="display:block;font-size:.78rem;font-weight:700;color:#333;margin-bottom:5px">Update Status</label>
+          <select name="status"
+                  style="width:100%;padding:9px 12px;border:1.5px solid #dde2d8;border-radius:9px;
+                         font-size:.86rem;font-family:inherit;outline:none;color:#1a1a1a">
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if dispute.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:.78rem;font-weight:700;color:#333;margin-bottom:5px">
+          Admin Note <span style="font-weight:400;color:#aaa">(visible to employer)</span>
+        </label>
+        <textarea name="admin_note" rows="4"
+                  placeholder="Write your resolution notes, findings, or response to the employer…"
+                  style="width:100%;padding:9px 12px;border:1.5px solid #dde2d8;border-radius:9px;
+                         font-size:.86rem;font-family:inherit;outline:none;resize:vertical;
+                         box-sizing:border-box;line-height:1.5">{{ dispute.admin_note }}</textarea>
+      </div>
+      <button type="submit" class="adm-btn adm-btn-green" style="padding:10px 24px;font-size:.88rem">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

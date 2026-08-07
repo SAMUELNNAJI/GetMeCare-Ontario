@@ -192,13 +192,14 @@
           </div>
         </div>
 
-        <!-- End time + City -->
+        <!-- Duration + City -->
         <div class="form-row">
           <div class="form-group">
-            <label for="end_time">End Time *</label>
-            <input type="time" id="end_time" name="end_time" required
-                   value="{{ form_end_time }}">
-            <span class="form-hint">Duration: <strong id="duration-display">—</strong></span>
+            <label for="duration_hours">Duration (hours) *</label>
+            <input type="number" id="duration_hours" name="duration_hours" required
+                   min="0.5" max="24" step="0.5" placeholder="e.g. 4"
+                   value="{{ form_duration_hours }}">
+            <span class="form-hint">How long the caregiver will stay (e.g. 4 = 4 hours)</span>
           </div>
           <div class="form-group">
             <label for="city">City / Location *</label>
@@ -290,10 +291,6 @@
           <strong id="sum-start">—</strong>
         </div>
         <div class="sum-row">
-          <span>End time</span>
-          <strong id="sum-end">—</strong>
-        </div>
-        <div class="sum-row">
           <span>Duration</span>
           <strong id="sum-dur">—</strong>
         </div>
@@ -319,55 +316,47 @@
 {% block extra_scripts %}
 <script>
 (function () {
-  const dateEl  = document.getElementById('start_date');
-  const startEl = document.getElementById('start_time');
-  const endEl   = document.getElementById('end_time');
-  const cityEl  = document.getElementById('city');
-  const rate    = parseFloat('{{ proposal.negotiated_rate }}');
+  const dateEl     = document.getElementById('start_date');
+  const startEl    = document.getElementById('start_time');
+  const durationEl = document.getElementById('duration_hours');
+  const cityEl     = document.getElementById('city');
+  const rate       = parseFloat('{{ proposal.negotiated_rate }}');
 
-  function pad(n){ return String(n).padStart(2,'0'); }
+  function pad(n) { return String(n).padStart(2, '0'); }
 
   function fmtTime(t) {
     if (!t) return '—';
     const [h, m] = t.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
     const h12  = ((h % 12) || 12);
-    return `${h12}:${pad(m)} ${ampm}`;
+    return h12 + ':' + pad(m) + ' ' + ampm;
   }
 
-  function calcDuration() {
-    const s = startEl.value, e = endEl.value;
-    if (!s || !e) return null;
-    const [sh, sm] = s.split(':').map(Number);
-    const [eh, em] = e.split(':').map(Number);
-    const mins = (eh * 60 + em) - (sh * 60 + sm);
-    return mins > 0 ? mins : null;
+  function fmtDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function update() {
-    const mins  = calcDuration();
-    const hours = mins ? (mins / 60).toFixed(2) : null;
-    const total = hours ? (parseFloat(hours) * rate).toFixed(2) : null;
+    const hrs   = parseFloat(durationEl.value) || null;
+    const total = hrs ? (hrs * rate).toFixed(2) : null;
 
-    // Duration display
-    document.getElementById('duration-display').textContent = mins
-      ? `${Math.floor(mins/60)}h ${mins%60}m` : '—';
-
-    // Estimates
-    document.getElementById('est-hours').textContent  = hours || '—';
-    document.getElementById('est-total').textContent  = total || '—';
+    // Estimated total block
+    document.getElementById('est-hours').textContent = hrs !== null ? hrs : '—';
+    document.getElementById('est-total').textContent = total || '—';
 
     // Summary panel
-    document.getElementById('sum-date').textContent  = dateEl.value  || '—';
-    document.getElementById('sum-start').textContent = fmtTime(startEl.value);
-    document.getElementById('sum-end').textContent   = fmtTime(endEl.value);
-    document.getElementById('sum-dur').textContent   = mins
-      ? `${Math.floor(mins/60)}h ${mins%60}m` : '—';
+    document.getElementById('sum-date').textContent  = dateEl.value  ? fmtDate(dateEl.value)    : '—';
+    document.getElementById('sum-start').textContent = startEl.value ? fmtTime(startEl.value)   : '—';
+    document.getElementById('sum-dur').textContent   = hrs !== null  ? hrs + ' hr' + (hrs !== 1 ? 's' : '') : '—';
     document.getElementById('sum-city').textContent  = cityEl.value  || '—';
     document.getElementById('sum-total').textContent = total || '—';
   }
 
-  [dateEl, startEl, endEl, cityEl].forEach(el => el && el.addEventListener('input', update));
+  [dateEl, startEl, durationEl, cityEl].forEach(function (el) {
+    if (el) el.addEventListener('input', update);
+  });
   update();
 })();
 </script>

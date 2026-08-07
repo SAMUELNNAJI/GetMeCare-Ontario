@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
-from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog
+from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerPayment, EmployerProfile, Dispute
 from Account.forms import REQUIRED_DOC_TYPES
 
 
@@ -24,9 +24,14 @@ def admin_required(view_func):
 
 def _admin_sidebar():
     """Counts shown in the admin sidebar nav badges."""
+    from Account.models import EmployerPayment, Dispute
     return {
-        'pending_docs':     CaregiverDocument.objects.filter(status=CaregiverDocument.STATUS_PENDING).count(),
-        'pending_profiles': CaregiverProfile.objects.filter(status=CaregiverProfile.STATUS_PENDING).count(),
+        'pending_docs':            CaregiverDocument.objects.filter(status=CaregiverDocument.STATUS_PENDING).count(),
+        'pending_profiles':        CaregiverProfile.objects.filter(status=CaregiverProfile.STATUS_PENDING).count(),
+        'employer_payments_count': EmployerPayment.objects.count(),
+        'counts': {
+            'open': Dispute.objects.filter(status=Dispute.STATUS_OPEN).count(),
+        },
     }
 
 
@@ -215,6 +220,8 @@ def manage_shifts(request):
 def payout_queue(request):
     """Admin payout queue — completed shifts awaiting or already paid."""
     from decimal import Decimal as D
+    from django.core.paginator import Paginator
+
     tab = request.GET.get('tab', 'pending')
 
     pending_logs = list(
@@ -228,32 +235,46 @@ def payout_queue(request):
             'shift__caregiver__caregiver_profile',
         ).order_by('-clock_out_time')
     )
-    paid_logs = list(
-        ShiftLog.objects.filter(
-            shift__status=Shift.STATUS_COMPLETED,
-            payment_status=ShiftLog.PAY_PAID,
-            clock_out_time__isnull=False,
-        ).select_related(
-            'shift', 'shift__caregiver', 'shift__employer',
-            'shift__caregiver__caregiver_profile',
-        ).order_by('-clock_out_time')
-    )
+    paid_logs_qs = ShiftLog.objects.filter(
+        shift__status=Shift.STATUS_COMPLETED,
+        payment_status=ShiftLog.PAY_PAID,
+        clock_out_time__isnull=False,
+    ).select_related(
+        'shift', 'shift__caregiver', 'shift__employer',
+        'shift__caregiver__caregiver_profile',
+    ).order_by('-clock_out_time')
+
+    # Paginate the paid tab by 15; pending stays unpaginated (needs action buttons visible)
+    paginator    = Paginator(paid_logs_qs, 15)
+    page_number  = request.GET.get('page', 1)
+    paid_page    = paginator.get_page(page_number)
+
+    # Use the full queryset for totals/counts
+    paid_logs_all = list(paid_logs_qs)
 
     total_pending = sum(l.amount_earned or D('0') for l in pending_logs)
-    total_paid    = sum(l.amount_earned or D('0') for l in paid_logs)
+    total_paid    = sum(l.amount_earned or D('0') for l in paid_logs_all)
 
-    display_logs = paid_logs if tab == 'paid' else pending_logs
+    _ratio = D('15') / D('85')
+    admin_earned_pending = sum((l.amount_earned or D('0')) * _ratio for l in pending_logs)
+    admin_earned_paid    = sum((l.amount_earned or D('0')) * _ratio for l in paid_logs_all)
+    admin_earned_total   = admin_earned_pending + admin_earned_paid
+
+    display_logs = paid_page if tab == 'paid' else pending_logs
 
     ctx = _admin_sidebar()
     ctx.update({
-        'tab':           tab,
-        'display_logs':  display_logs,
-        'pending_logs':  pending_logs,
-        'paid_logs':     paid_logs,
-        'pending_count': len(pending_logs),
-        'paid_count':    len(paid_logs),
-        'total_pending': total_pending,
-        'total_paid':    total_paid,
+        'tab':                  tab,
+        'display_logs':         display_logs,
+        'pending_logs':         pending_logs,
+        'paid_page':            paid_page,           # page object for pagination controls
+        'pending_count':        len(pending_logs),
+        'paid_count':           paid_logs_qs.count(),
+        'total_pending':        total_pending,
+        'total_paid':           total_paid,
+        'admin_earned_pending': admin_earned_pending,
+        'admin_earned_paid':    admin_earned_paid,
+        'admin_earned_total':   admin_earned_total,
     })
     return render(request, 'AdminApp/payout-queue.html', ctx)
 
@@ -444,3 +465,112 @@ def serve_document(request, doc_id):
     filename = os.path.basename(file_path)
     response['Content-Disposition'] = f'inline; filename="{filename}"'
     return response
+
+
+@admin_required
+def employer_payments(request):
+    """Admin view — all employer payments (activation fees + shift bookings)."""
+    from decimal import Decimal as D
+
+    tab = request.GET.get('tab', 'all')
+
+    all_payments = EmployerPayment.objects.select_related(
+        'employer', 'shift', 'shift__caregiver'
+    ).order_by('-paid_at')
+
+    if tab == 'activation':
+        display_payments = all_payments.filter(payment_type=EmployerPayment.TYPE_ACTIVATION)
+    elif tab == 'booking':
+        display_payments = all_payments.filter(payment_type=EmployerPayment.TYPE_BOOKING)
+    else:
+        display_payments = all_payments
+
+    total_activation = all_payments.filter(
+        payment_type=EmployerPayment.TYPE_ACTIVATION,
+        status=EmployerPayment.STATUS_COMPLETED,
+    )
+    total_booking = all_payments.filter(
+        payment_type=EmployerPayment.TYPE_BOOKING,
+        status=EmployerPayment.STATUS_COMPLETED,
+    )
+
+    sum_activation = sum(p.amount for p in total_activation) or D('0')
+    sum_booking    = sum(p.amount for p in total_booking)    or D('0')
+    sum_total      = sum_activation + sum_booking
+
+    active_employers = EmployerProfile.objects.filter(is_active=True).count()
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'tab':              tab,
+        'display_payments': display_payments,
+        'sum_activation':   sum_activation,
+        'sum_booking':      sum_booking,
+        'sum_total':        sum_total,
+        'active_employers': active_employers,
+    })
+    return render(request, 'AdminApp/employer-payments.html', ctx)
+
+
+@admin_required
+def dispute_list(request):
+    """Admin — view and filter all disputes."""
+    status_filter = request.GET.get('status', 'all')
+
+    disputes_qs = Dispute.objects.select_related(
+        'employer', 'caregiver', 'shift', 'payment'
+    ).order_by('-created_at')
+
+    if status_filter != 'all':
+        disputes_qs = disputes_qs.filter(status=status_filter)
+
+    counts = {
+        'all':          Dispute.objects.count(),
+        'open':         Dispute.objects.filter(status=Dispute.STATUS_OPEN).count(),
+        'under_review': Dispute.objects.filter(status=Dispute.STATUS_UNDER_REVIEW).count(),
+        'resolved':     Dispute.objects.filter(status=Dispute.STATUS_RESOLVED).count(),
+        'dismissed':    Dispute.objects.filter(status=Dispute.STATUS_DISMISSED).count(),
+    }
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'disputes':      disputes_qs,
+        'status_filter': status_filter,
+        'counts':        counts,
+        'status_choices': Dispute.STATUS_CHOICES,
+    })
+    return render(request, 'AdminApp/disputes.html', ctx)
+
+
+@admin_required
+def dispute_detail(request, dispute_pk):
+    """Admin — view full dispute details and update status / add note."""
+    dispute = get_object_or_404(Dispute, pk=dispute_pk)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status', '').strip()
+        admin_note = request.POST.get('admin_note', '').strip()
+
+        valid_statuses = [s[0] for s in Dispute.STATUS_CHOICES]
+        if new_status not in valid_statuses:
+            messages.error(request, 'Invalid status selected.')
+        else:
+            dispute.status     = new_status
+            dispute.admin_note = admin_note
+            if new_status in (Dispute.STATUS_RESOLVED, Dispute.STATUS_DISMISSED):
+                dispute.resolved_at = timezone.now()
+            else:
+                dispute.resolved_at = None
+            dispute.save()
+            messages.success(
+                request,
+                f'Dispute #{dispute.pk} updated to "{dispute.get_status_display()}".'
+            )
+            return redirect('AdminApp:dispute_detail', dispute_pk=dispute.pk)
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'dispute':        dispute,
+        'status_choices': Dispute.STATUS_CHOICES,
+    })
+    return render(request, 'AdminApp/dispute-detail.html', ctx)

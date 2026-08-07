@@ -5,7 +5,7 @@ from django.utils import timezone
 import datetime
 from decimal import Decimal
 
-from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal
+from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute
 from Account.forms import JobPostingForm
 
 
@@ -30,11 +30,15 @@ def _employer_ctx(user):
     open_jobs = JobPosting.objects.filter(
         employer=user, status=JobPosting.STATUS_OPEN
     ).count()
+    unseen_payments = EmployerPayment.objects.filter(
+        employer=user, is_seen=False
+    ).count()
     return {
-        'emp_profile':      profile,
-        'is_activated':     profile.is_active,
-        'total_completed':  total_completed,
-        'open_jobs_count':  open_jobs,
+        'emp_profile':       profile,
+        'is_activated':      profile.is_active,
+        'total_completed':   total_completed,
+        'open_jobs_count':   open_jobs,
+        'unseen_payments':   unseen_payments,
     }
 
 
@@ -89,7 +93,7 @@ def dashboard(request):
 def my_shifts(request):
     shifts = Shift.objects.filter(
         employer=request.user
-    ).select_related('caregiver').order_by('-start_date')
+    ).select_related('caregiver').order_by('-start_date', '-created_at')
     ctx = _employer_ctx(request.user)
     ctx['shifts'] = shifts
     return render(request, 'EmployerApp/my-shifts.html', ctx)
@@ -102,12 +106,42 @@ def find_caregiver(request):
 
 @employer_required
 def payment_history(request):
+    emp_payments = EmployerPayment.objects.filter(
+        employer=request.user
+    ).select_related('shift', 'shift__caregiver').order_by('-paid_at')
+
+    # Mark all unseen payments as seen now that the employer is viewing this page
+    EmployerPayment.objects.filter(
+        employer=request.user, is_seen=False
+    ).update(is_seen=True)
+
+    # Keep the old shift-log data for the caregiver payout sub-table
     logs = ShiftLog.objects.filter(
         shift__employer=request.user,
         clock_out_time__isnull=False,
     ).select_related('shift', 'shift__caregiver').order_by('-clock_out_time')
+
+    # Pre-compute summary totals
+    total_paid       = sum(p.amount for p in emp_payments if p.status == EmployerPayment.STATUS_COMPLETED)
+    activation_fee   = next(
+        (p.amount for p in emp_payments if p.payment_type == EmployerPayment.TYPE_ACTIVATION),
+        None,
+    )
+    booking_count    = sum(1 for p in emp_payments if p.payment_type == EmployerPayment.TYPE_BOOKING)
+    booking_total    = sum(
+        p.amount for p in emp_payments
+        if p.payment_type == EmployerPayment.TYPE_BOOKING and p.status == EmployerPayment.STATUS_COMPLETED
+    )
+
     ctx = _employer_ctx(request.user)
-    ctx['logs'] = logs
+    ctx.update({
+        'emp_payments':   emp_payments,
+        'logs':           logs,
+        'total_paid':     total_paid,
+        'activation_fee': activation_fee,
+        'booking_count':  booking_count,
+        'booking_total':  booking_total,
+    })
     return render(request, 'EmployerApp/payment-history.html', ctx)
 
 
@@ -163,8 +197,20 @@ def activate_account(request):
         profile = ctx['emp_profile']
         profile.is_active          = True
         profile.activation_paid_at = timezone.now()
-        profile.payment_reference  = f'SIM-{request.user.pk}-{int(timezone.now().timestamp())}'
+        ref = f'SIM-{request.user.pk}-{int(timezone.now().timestamp())}'
+        profile.payment_reference  = ref
         profile.save()
+
+        # Record the activation payment
+        EmployerPayment.objects.create(
+            employer          = request.user,
+            payment_type      = EmployerPayment.TYPE_ACTIVATION,
+            amount            = EmployerProfile.ACTIVATION_FEE,
+            status            = EmployerPayment.STATUS_COMPLETED,
+            payment_reference = ref,
+            description       = 'One-time account activation fee',
+        )
+
         # Clear the modal-dismissed flag so the dashboard knows account is now active
         request.session.pop('modal_dismissed', None)
         messages.success(
@@ -203,59 +249,67 @@ def book_caregiver(request, proposal_pk):
     ctx['today'] = today
 
     if request.method == 'POST':
-        start_date_str = request.POST.get('start_date', '').strip()
-        start_time_str = request.POST.get('start_time', '').strip()
-        end_time_str   = request.POST.get('end_time', '').strip()
-        city           = request.POST.get('city', '').strip()
+        start_date_str   = request.POST.get('start_date', '').strip()
+        start_time_str   = request.POST.get('start_time', '').strip()
+        duration_hrs_str = request.POST.get('duration_hours', '').strip()
+        city             = request.POST.get('city', '').strip()
 
         errors = []
         if not start_date_str:
             errors.append('Shift date is required.')
         if not start_time_str:
             errors.append('Start time is required.')
-        if not end_time_str:
-            errors.append('End time is required.')
+        if not duration_hrs_str:
+            errors.append('Duration (hours) is required.')
         if not city:
             errors.append('City / location is required.')
 
+        duration_hours = None
         if not errors:
             try:
-                start_date = datetime.date.fromisoformat(start_date_str)
-                start_time = datetime.time.fromisoformat(start_time_str)
-                end_time   = datetime.time.fromisoformat(end_time_str)
-            except ValueError:
-                errors.append('Invalid date or time format.')
+                start_date     = datetime.date.fromisoformat(start_date_str)
+                start_time     = datetime.time.fromisoformat(start_time_str)
+                duration_hours = Decimal(duration_hrs_str)
+            except (ValueError, Exception):
+                errors.append('Invalid date, time, or duration.')
 
         if not errors:
             if start_date < today:
                 errors.append('Shift date cannot be in the past.')
-            if end_time <= start_time:
-                errors.append('End time must be after start time.')
+            if duration_hours <= 0 or duration_hours > 24:
+                errors.append('Duration must be between 0.5 and 24 hours.')
 
         if errors:
             for e in errors:
                 messages.error(request, e)
             ctx.update({
-                'form_start_date': start_date_str,
-                'form_start_time': start_time_str,
-                'form_end_time':   end_time_str,
-                'form_city':       city,
+                'form_start_date':    start_date_str,
+                'form_start_time':    start_time_str,
+                'form_duration_hours': duration_hrs_str,
+                'form_city':          city,
             })
             return render(request, 'EmployerApp/book-caregiver.html', ctx)
+
+        # Derive end_time from start_time + duration for display purposes
+        import datetime as _dt
+        start_dt = _dt.datetime.combine(_dt.date.today(), start_time)
+        end_dt   = start_dt + _dt.timedelta(hours=float(duration_hours))
+        end_time = end_dt.time()
 
         # Mark proposal accepted and create the Shift
         proposal.status = BookingProposal.STATUS_ACCEPTED
         proposal.save(update_fields=['status', 'updated_at'])
 
         shift = Shift.objects.create(
-            caregiver   = proposal.caregiver,
-            employer    = request.user,
-            city        = city,
-            start_date  = start_date,
-            start_time  = start_time,
-            end_time    = end_time,
-            hourly_rate = proposal.negotiated_rate,
-            status      = Shift.STATUS_SCHEDULED,
+            caregiver      = proposal.caregiver,
+            employer       = request.user,
+            city           = city,
+            start_date     = start_date,
+            start_time     = start_time,
+            end_time       = end_time,
+            duration_hours = duration_hours,
+            hourly_rate    = proposal.negotiated_rate,
+            status         = Shift.STATUS_SCHEDULED,
         )
         # Link shift back to proposal
         proposal.shift = shift
@@ -265,10 +319,10 @@ def book_caregiver(request, proposal_pk):
 
     # GET — render empty form
     ctx.update({
-        'form_start_date': '',
-        'form_start_time': '',
-        'form_end_time':   '',
-        'form_city':       '',
+        'form_start_date':     '',
+        'form_start_time':     '',
+        'form_duration_hours': '',
+        'form_city':           '',
     })
     return render(request, 'EmployerApp/book-caregiver.html', ctx)
 
@@ -282,12 +336,9 @@ def payment_checkout(request, shift_pk):
         employer=request.user,
         status=Shift.STATUS_SCHEDULED,
     )
-    # Calculate estimated total
-    start_dt = datetime.datetime.combine(shift.start_date, shift.start_time)
-    end_dt   = datetime.datetime.combine(shift.start_date, shift.end_time)
-    duration_secs = (end_dt - start_dt).total_seconds()
-    duration_hrs  = round(duration_secs / 3600, 2)
-    total_charge  = round(Decimal(str(duration_hrs)) * shift.hourly_rate, 2)
+    # Calculate total from duration_hours (set at booking time)
+    duration_hrs = shift.duration_hours or Decimal('0')
+    total_charge = round(duration_hrs * shift.hourly_rate, 2)
 
     ctx = _employer_ctx(request.user)
     ctx.update({
@@ -321,11 +372,29 @@ def confirm_payment(request, shift_pk):
     except Exception:
         pass  # proposal may not exist if shift was created manually by admin
 
+    # Calculate shift total from duration_hours stored on the shift
+    import datetime as _dt
+    duration_hrs = shift.duration_hours or Decimal('0')
+    total_charge = round(duration_hrs * shift.hourly_rate, 2)
+
     # Record simulated payment reference on EmployerProfile
     emp_profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
     ref = f'SIM-BOOKING-{shift.pk}-{int(timezone.now().timestamp())}'
     emp_profile.payment_reference = ref
     emp_profile.save(update_fields=['payment_reference', 'updated_at'])
+
+    # Record the booking payment
+    EmployerPayment.objects.create(
+        employer          = request.user,
+        payment_type      = EmployerPayment.TYPE_BOOKING,
+        amount            = total_charge,
+        status            = EmployerPayment.STATUS_COMPLETED,
+        payment_reference = ref,
+        shift             = shift,
+        description       = (
+            f'Shift #{shift.pk} — {shift.caregiver.get_full_name()}, '
+            f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr'
+        ),    )
 
     messages.success(
         request,
@@ -334,3 +403,113 @@ def confirm_payment(request, shift_pk):
         f'The caregiver has been notified.'
     )
     return redirect('EmployerApp:my_shifts')
+
+
+# ──────────────────────────────────────────────────────────────
+# Dispute views
+# ──────────────────────────────────────────────────────────────
+
+@employer_required
+def submit_dispute(request):
+    """POST — employer raises a dispute from the modal form."""
+    if request.method != 'POST':
+        return redirect('EmployerApp:my_disputes')
+
+    shift_pk   = request.POST.get('shift_pk', '').strip()
+    payment_pk = request.POST.get('payment_pk', '').strip()
+    category   = request.POST.get('category', '').strip()
+    description = request.POST.get('description', '').strip()
+
+    # Validate category
+    valid_cats = [c[0] for c in Dispute.CATEGORY_CHOICES]
+    if category not in valid_cats:
+        messages.error(request, 'Please select a valid dispute category.')
+        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
+
+    if not description:
+        messages.error(request, 'Please describe the issue before submitting.')
+        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
+
+    # Resolve shift (required — dispute must be tied to a shift or payment)
+    shift = None
+    caregiver = None
+    if shift_pk:
+        shift = get_object_or_404(Shift, pk=shift_pk, employer=request.user)
+        caregiver = shift.caregiver
+    elif payment_pk:
+        payment_obj = get_object_or_404(
+            EmployerPayment,
+            pk=payment_pk,
+            employer=request.user,
+            payment_type=EmployerPayment.TYPE_BOOKING,
+        )
+        shift = payment_obj.shift
+        if shift:
+            caregiver = shift.caregiver
+
+    if not caregiver:
+        messages.error(request, 'Could not identify the caregiver for this dispute.')
+        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
+
+    # Prevent duplicate open disputes for the same shift
+    existing = Dispute.objects.filter(
+        employer=request.user,
+        shift=shift,
+        status__in=[Dispute.STATUS_OPEN, Dispute.STATUS_UNDER_REVIEW],
+    ).first()
+    if existing:
+        messages.warning(
+            request,
+            f'You already have an open dispute (#{existing.pk}) for this shift. '
+            'Please wait for it to be resolved before raising another.'
+        )
+        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
+
+    payment_obj = None
+    if payment_pk:
+        try:
+            payment_obj = EmployerPayment.objects.get(
+                pk=payment_pk, employer=request.user
+            )
+        except EmployerPayment.DoesNotExist:
+            pass
+
+    Dispute.objects.create(
+        employer    = request.user,
+        caregiver   = caregiver,
+        shift       = shift,
+        payment     = payment_obj,
+        category    = category,
+        description = description,
+        status      = Dispute.STATUS_OPEN,
+    )
+
+    messages.success(
+        request,
+        'Your dispute has been submitted. Our team will review it and respond within 2 business days.'
+    )
+    return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:my_disputes'))
+
+
+@employer_required
+def my_disputes(request):
+    """Employer views all their own disputes."""
+    disputes = Dispute.objects.filter(
+        employer=request.user
+    ).select_related('caregiver', 'shift', 'payment').order_by('-created_at')
+
+    open_count     = disputes.filter(status=Dispute.STATUS_OPEN).count()
+    review_count   = disputes.filter(status=Dispute.STATUS_UNDER_REVIEW).count()
+    resolved_count = disputes.filter(
+        status__in=[Dispute.STATUS_RESOLVED, Dispute.STATUS_DISMISSED]
+    ).count()
+
+    ctx = _employer_ctx(request.user)
+    ctx.update({
+        'disputes':       disputes,
+        'open_count':     open_count,
+        'review_count':   review_count,
+        'resolved_count': resolved_count,
+        'categories':     Dispute.CATEGORY_CHOICES,
+    })
+    return render(request, 'EmployerApp/my-disputes.html', ctx)

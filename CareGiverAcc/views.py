@@ -66,6 +66,12 @@ def dashboard(request):
         start_date__gte=today,
     ).order_by('start_date', 'start_time')[:5]
 
+    # All schedulable shifts for the clock-in picker (no cap)
+    clockable_shifts = Shift.objects.filter(
+        caregiver=user,
+        status=Shift.STATUS_SCHEDULED,
+    ).order_by('start_date', 'start_time')
+
     history = ShiftLog.objects.filter(
         shift__caregiver=user,
         shift__status=Shift.STATUS_COMPLETED,
@@ -142,15 +148,19 @@ def dashboard(request):
         start_date__gte=today,
     ).order_by('start_date', 'start_time').first()
 
-    tracker_state      = 'none'
-    tracker_shift_pk   = 0
-    tracker_start_iso  = ''
+    tracker_state        = 'none'
+    tracker_shift_pk     = 0
+    tracker_start_iso    = ''
     tracker_clock_in_iso = ''
+    tracker_duration_secs = 0
 
     if active_log:
         tracker_state        = 'active'
         tracker_shift_pk     = active_log.shift.pk
         tracker_clock_in_iso = active_log.clock_in_time.isoformat()
+        # Duration in seconds so the JS countdown knows when to auto-clock-out
+        dur = active_log.shift.duration_hours
+        tracker_duration_secs = int(float(dur) * 3600) if dur else 0
     elif recently_completed and not active_log and not next_shift:
         tracker_state      = 'completed'
         tracker_shift_pk   = recently_completed.shift.pk
@@ -177,31 +187,106 @@ def dashboard(request):
         'week_change_pct':   week_change_pct,
         'latest_jobs':       JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).order_by('-created_at')[:3],
         # Tracker
-        'tracker_state':       tracker_state,
-        'tracker_shift_pk':    tracker_shift_pk,
-        'tracker_start_iso':   tracker_start_iso,
-        'tracker_clock_in_iso': tracker_clock_in_iso,
+        'tracker_state':          tracker_state,
+        'tracker_shift_pk':       tracker_shift_pk,
+        'tracker_start_iso':      tracker_start_iso,
+        'tracker_clock_in_iso':   tracker_clock_in_iso,
+        'tracker_duration_secs':  tracker_duration_secs if tracker_state == 'active' else 0,
+        # Clock-in picker
+        'clockable_shifts':       clockable_shifts,
+        'clockable_count':        clockable_shifts.count(),
     })
     return render(request, 'CareGiverAcc/dashboard.html', ctx)
 
 
 @caregiver_required
 def my_schedule(request):
+    from django.core.paginator import Paginator
+    from datetime import datetime as dt
+
+    user  = request.user
     today = timezone.now().date()
+    now   = timezone.now()
 
     upcoming = Shift.objects.filter(
-        caregiver=request.user,
+        caregiver=user,
         status__in=[Shift.STATUS_SCHEDULED, Shift.STATUS_IN_PROGRESS],
         start_date__gte=today,
     ).order_by('start_date', 'start_time')
 
-    shift_history = ShiftLog.objects.filter(
-        shift__caregiver=request.user,
+    # Shift history — paginated at 10
+    history_qs = ShiftLog.objects.filter(
+        shift__caregiver=user,
         shift__status=Shift.STATUS_COMPLETED,
-    ).select_related('shift').order_by('-shift__start_date')[:20]
+    ).select_related('shift', 'shift__employer').order_by('-shift__start_date')
 
-    ctx = _sidebar_context(request.user)
-    ctx.update({'shifts': upcoming, 'shift_history': shift_history, 'today': today})
+    paginator    = Paginator(history_qs, 10)
+    page_number  = request.GET.get('page', 1)
+    history_page = paginator.get_page(page_number)
+
+    # ── Same tracker state logic as dashboard ────────────────────
+    active_log = ShiftLog.objects.filter(
+        shift__caregiver=user,
+        shift__status=Shift.STATUS_IN_PROGRESS,
+        clock_in_time__isnull=False,
+        clock_out_time__isnull=True,
+    ).select_related('shift').first()
+
+    recently_completed = ShiftLog.objects.filter(
+        shift__caregiver=user,
+        shift__status=Shift.STATUS_COMPLETED,
+        clock_out_time__date=today,
+    ).order_by('-clock_out_time').first()
+
+    next_shift = Shift.objects.filter(
+        caregiver=user,
+        status=Shift.STATUS_SCHEDULED,
+        start_date__gte=today,
+    ).order_by('start_date', 'start_time').first()
+
+    # All schedulable shifts for the clock-in picker
+    clockable_shifts = Shift.objects.filter(
+        caregiver=user,
+        status=Shift.STATUS_SCHEDULED,
+    ).order_by('start_date', 'start_time')
+
+    tracker_state         = 'none'
+    tracker_shift_pk      = 0
+    tracker_start_iso     = ''
+    tracker_clock_in_iso  = ''
+    tracker_duration_secs = 0
+
+    if active_log:
+        tracker_state        = 'active'
+        tracker_shift_pk     = active_log.shift.pk
+        tracker_clock_in_iso = active_log.clock_in_time.isoformat()
+        dur = active_log.shift.duration_hours
+        tracker_duration_secs = int(float(dur) * 3600) if dur else 0
+    elif recently_completed and not active_log and not next_shift:
+        tracker_state    = 'completed'
+        tracker_shift_pk = recently_completed.shift.pk
+    elif next_shift:
+        naive_start = dt.combine(next_shift.start_date, next_shift.start_time)
+        aware_start = timezone.make_aware(naive_start) if timezone.is_naive(naive_start) else naive_start
+        tracker_shift_pk  = next_shift.pk
+        tracker_start_iso = aware_start.isoformat()
+        tracker_state     = 'ready' if now >= aware_start else 'countdown'
+
+    ctx = _sidebar_context(user)
+    ctx.update({
+        'shifts':               upcoming,
+        'shift_history':        history_page,        # Page object
+        'today':                today,
+        # Tracker
+        'tracker_state':          tracker_state,
+        'tracker_shift_pk':       tracker_shift_pk,
+        'tracker_start_iso':      tracker_start_iso,
+        'tracker_clock_in_iso':   tracker_clock_in_iso,
+        'tracker_duration_secs':  tracker_duration_secs,
+        # Clock-in picker
+        'clockable_shifts':       clockable_shifts,
+        'clockable_count':        clockable_shifts.count(),
+    })
     return render(request, 'CareGiverAcc/my-schedule.html', ctx)
 
 

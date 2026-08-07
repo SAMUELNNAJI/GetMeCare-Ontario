@@ -1,0 +1,115 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Disputes — Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <h1 class="adm-page-title" style="margin-bottom:6px">
+    <i class="fas fa-flag" style="color:#c62828;margin-right:8px"></i>Disputes
+  </h1>
+  <p style="font-size:.85rem;color:#888">All employer disputes raised against caregivers.</p>
+</div>
+
+<!-- Tab filters -->
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+  <a href="?status=all"
+     style="padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:600;
+            text-decoration:none;border:1.5px solid transparent;transition:all .15s;
+            {% if status_filter == 'all' %}background:#1b3a2d;color:#fff;border-color:#1b3a2d
+            {% else %}background:#f6f8f5;color:#555;border-color:#dde2d8{% endif %}">
+    All <span style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:20px;padding:1px 6px">{{ counts.all }}</span>
+  </a>
+  <a href="?status=open"
+     style="padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:600;
+            text-decoration:none;border:1.5px solid transparent;transition:all .15s;
+            {% if status_filter == 'open' %}background:#c62828;color:#fff;border-color:#c62828
+            {% else %}background:#f6f8f5;color:#555;border-color:#dde2d8{% endif %}">
+    Open <span style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:20px;padding:1px 6px">{{ counts.open }}</span>
+  </a>
+  <a href="?status=under_review"
+     style="padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:600;
+            text-decoration:none;border:1.5px solid transparent;transition:all .15s;
+            {% if status_filter == 'under_review' %}background:#b45309;color:#fff;border-color:#b45309
+            {% else %}background:#f6f8f5;color:#555;border-color:#dde2d8{% endif %}">
+    Under Review <span style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:20px;padding:1px 6px">{{ counts.under_review }}</span>
+  </a>
+  <a href="?status=resolved"
+     style="padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:600;
+            text-decoration:none;border:1.5px solid transparent;transition:all .15s;
+            {% if status_filter == 'resolved' %}background:#1b7d4f;color:#fff;border-color:#1b7d4f
+            {% else %}background:#f6f8f5;color:#555;border-color:#dde2d8{% endif %}">
+    Resolved <span style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:20px;padding:1px 6px">{{ counts.resolved }}</span>
+  </a>
+  <a href="?status=dismissed"
+     style="padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:600;
+            text-decoration:none;border:1.5px solid transparent;transition:all .15s;
+            {% if status_filter == 'dismissed' %}background:#555;color:#fff;border-color:#555
+            {% else %}background:#f6f8f5;color:#555;border-color:#dde2d8{% endif %}">
+    Dismissed <span style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:20px;padding:1px 6px">{{ counts.dismissed }}</span>
+  </a>
+</div>
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div class="scroll-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Submitted</th>
+            <th>Employer</th>
+            <th>Caregiver</th>
+            <th>Shift</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in disputes %}
+          <tr>
+            <td style="color:#aaa;font-size:.78rem">{{ d.pk }}</td>
+            <td style="white-space:nowrap;font-size:.82rem">
+              {{ d.created_at|date:"M d, Y" }}<br>
+              <span style="color:#aaa;font-size:.7rem">{{ d.created_at|time:"g:i A" }}</span>
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:.84rem">{{ d.employer.get_full_name }}</div>
+              <div style="font-size:.7rem;color:#aaa">{{ d.employer.email }}</div>
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:.84rem">{{ d.caregiver.get_full_name }}</div>
+              <div style="font-size:.7rem;color:#aaa">{{ d.caregiver.email }}</div>
+            </td>
+            <td style="font-size:.82rem">
+              {% if d.shift %}Shift #{{ d.shift.pk }}<br>
+                <span style="color:#888;font-size:.7rem">{{ d.shift.start_date|date:"M d, Y" }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td><span class="badge badge-grey" style="white-space:nowrap;font-size:.72rem">{{ d.get_category_display }}</span></td>
+            <td>
+              {% if d.status == 'open' %}<span class="badge badge-red">Open</span>
+              {% elif d.status == 'under_review' %}<span class="badge badge-orange">Under Review</span>
+              {% elif d.status == 'resolved' %}<span class="badge badge-green">Resolved</span>
+              {% else %}<span class="badge badge-grey">Dismissed</span>{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'AdminApp:dispute_detail' d.pk %}"
+                 class="adm-btn adm-btn-view" style="font-size:.75rem">
+                <i class="fas fa-eye"></i> Review
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align:center;padding:36px 0;color:#bbb">
+              <i class="fas fa-flag" style="font-size:1.8rem;display:block;margin-bottom:10px;color:#ddd"></i>
+              No disputes found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

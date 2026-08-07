@@ -515,8 +515,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       {{ greeting }}, {{ request.user.first_name|default:request.user.username }}
     </h1>
     <p>
-      {% if upcoming %}{{ upcoming|length }} shift{{ upcoming|length|pluralize
-      }} lined up this week{% else %}No upcoming shifts scheduled{% endif %}
+      {% if upcoming %}{{ upcoming|length }} shift{% if upcoming|length > 1 %}s{% endif %} lined up this week{% else %}No upcoming shifts scheduled{% endif %}
       &nbsp;·&nbsp; {{ profile.city|default:"Ontario" }}
     </p>
   </div>
@@ -549,7 +548,7 @@ GetMeCare{% endblock %} {% block extra_head %}
     <div class="dash-stat-val">{{ upcoming|length }}</div>
     <div class="dash-stat-lbl">Upcoming shifts</div>
     {% if upcoming %}
-    <div class="dash-stat-sub muted">next in 14h</div>
+    <div class="dash-stat-sub muted">next: {{ upcoming.0.start_date|date:"M d" }} at {{ upcoming.0.start_time|time:"g:i A" }}</div>
     {% endif %}
   </div>
   <div class="dash-stat">
@@ -654,9 +653,7 @@ GetMeCare{% endblock %} {% block extra_head %}
         <div class="shift-meta">
           <span
             ><i class="fas fa-clock"></i>
-            {% if shift.start_date == today %}Today{% else %}{{
-            shift.start_date|date:"D, M j" }}{% endif %} · {{
-            shift.start_time|time:"g:i A" }} – {{ shift.end_time|time:"g:i A" }}
+            {% if shift.start_date == today %}Today{% else %}{{ shift.start_date|date:"D, M j" }}{% endif %} · {{ shift.start_time|time:"g:i A" }}{% if shift.duration_hours %} · {{ shift.duration_hours }} hrs{% endif %}
           </span>
           {% if shift.city %}<span
             ><i class="fas fa-location-dot"></i> {{ shift.city }}</span
@@ -748,6 +745,13 @@ GetMeCare{% endblock %} {% block extra_head %}
     }
 
     function clockInBtn() {
+      {% if clockable_count > 1 %}
+      // Multiple shifts — open picker modal
+      return `<button type="button" class="tracker-btn" onclick="document.getElementById('clockin-picker').style.display='flex'">
+        <i class="fas fa-play"></i> Clock In
+      </button>`;
+      {% else %}
+      // Single shift — submit directly
       return `<form method="post" action="/clock-in/" style="display:inline">
         <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
         <input type="hidden" name="shift_id" value="${SHIFT_PK}">
@@ -755,16 +759,15 @@ GetMeCare{% endblock %} {% block extra_head %}
           <i class="fas fa-play"></i> Clock In
         </button>
       </form>`;
+      {% endif %}
     }
 
     function clockOutBtn() {
-      return `<form method="post" action="/clock-out/" style="display:inline"
-                onsubmit="return confirm('Clock out and end this shift?')">
-        <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF}">
-        <button type="submit" class="tracker-btn" style="background:rgba(224,82,82,.3);border-color:rgba(224,82,82,.5)">
-          <i class="fas fa-stop"></i> Clock Out
-        </button>
-      </form>`;
+      return `<button type="button" class="tracker-btn"
+                style="background:rgba(224,82,82,.3);border-color:rgba(224,82,82,.5)"
+                onclick="document.getElementById('clockout-modal').style.display='flex'">
+        <i class="fas fa-stop"></i> Clock Out
+      </button>`;
     }
 
     let interval = null;
@@ -787,56 +790,77 @@ GetMeCare{% endblock %} {% block extra_head %}
 
     // ── STATE: countdown ─────────────────────────────
     else if (SHIFT_STATE === 'countdown') {
-      const startMs = new Date(SHIFT_START_ISO).getTime();
-
-      function tickCountdown() {
-        const remaining = Math.max(0, (startMs - Date.now()) / 1000);
-        if (remaining <= 0) {
-          // Transition to ready
-          clearInterval(interval);
-          initReady();
-          return;
-        }
-        labelEl.textContent   = 'Shift Starts In';
-        timerEl.textContent   = fmtCountdown(remaining);
-        timerEl.style.opacity = '1';
-        statusEl.textContent  = 'Shift #' + SHIFT_PK + ' — clock in when ready';
-      }
-
-      function initReady() {
-        labelEl.textContent   = 'Ready to Clock In';
-        timerEl.textContent   = '00:00:00';
-        timerEl.style.color   = '#f0a040';
-        statusEl.textContent  = 'Shift start time reached — clock in to begin tracking';
-        actionsEl.innerHTML   = clockInBtn();
-      }
-
-      tickCountdown();
-      startInterval(tickCountdown, 1000);
-      actionsEl.innerHTML = clockInBtn();
+      // Show the scheduled shift info — do NOT auto-tick anything.
+      // The timer only starts when the caregiver actually clocks in.
+      labelEl.textContent   = 'Upcoming Shift';
+      timerEl.textContent   = '--:--:--';
+      timerEl.style.opacity = '0.4';
+      timerEl.style.color   = '';
+      statusEl.textContent  = 'Shift #' + SHIFT_PK + ' — clock in when you are ready to start';
+      actionsEl.innerHTML   = clockInBtn();
     }
 
     // ── STATE: ready ─────────────────────────────────
     else if (SHIFT_STATE === 'ready') {
       labelEl.textContent  = 'Ready to Clock In';
-      timerEl.textContent  = '00:00:00';
+      timerEl.textContent  = '--:--:--';
+      timerEl.style.opacity = '0.4';
       timerEl.style.color  = '#f0a040';
-      statusEl.textContent = 'Shift #' + SHIFT_PK + ' — clock in to start tracking';
+      statusEl.textContent = 'Shift #' + SHIFT_PK + ' — press Clock In to start your timer';
       actionsEl.innerHTML  = clockInBtn();
     }
 
     // ── STATE: active ─────────────────────────────────
+    // Timer only starts here — after a real clock-in POST has been recorded.
     else if (SHIFT_STATE === 'active') {
-      const clockInMs = new Date(CLOCK_IN_ISO).getTime();
+      const clockInMs      = new Date(CLOCK_IN_ISO).getTime();
+      const durationSecs   = {{ tracker_duration_secs|default:0 }};  // booked shift length
+      const durationMs     = durationSecs * 1000;
+      let autoClockOutDone = false;
 
       function tickActive() {
-        const elapsed = Math.max(0, (Date.now() - clockInMs) / 1000);
+        const elapsed    = Math.max(0, (Date.now() - clockInMs) / 1000);
+        const remaining  = durationSecs > 0 ? Math.max(0, durationSecs - elapsed) : null;
+
         labelEl.textContent   = 'Shift In Progress';
-        timerEl.textContent   = fmtDuration(elapsed);
         timerEl.style.color   = '#4caf7d';
         timerEl.style.opacity = '1';
-        const hrs = (elapsed / 3600).toFixed(2);
-        statusEl.textContent  = 'Shift #' + SHIFT_PK + ' — ' + hrs + ' hrs worked so far';
+
+        if (remaining !== null) {
+          // Show countdown to end of booked shift
+          timerEl.textContent  = fmtDuration(remaining);
+          const hrs = (elapsed / 3600).toFixed(2);
+          statusEl.textContent = 'Shift #' + SHIFT_PK + ' — ' + fmtDuration(remaining) + ' remaining';
+
+          // Auto clock-out when countdown reaches zero
+          if (remaining <= 0 && !autoClockOutDone) {
+            autoClockOutDone = true;
+            clearInterval(interval);
+            timerEl.textContent  = '00:00:00';
+            labelEl.textContent  = 'Shift Complete';
+            statusEl.textContent = 'Shift #' + SHIFT_PK + ' — Shift time reached. Clocking out automatically…';
+            timerEl.style.color  = '#f0a040';
+            actionsEl.innerHTML  = '<span style="font-size:.82rem;color:#888"><i class="fas fa-spinner fa-spin"></i> Clocking out…</span>';
+
+            // Auto-submit the clock-out form after a brief pause
+            setTimeout(function () {
+              var form = document.createElement('form');
+              form.method = 'POST';
+              form.action = '/clock-out/';
+              var csrf = document.createElement('input');
+              csrf.type  = 'hidden';
+              csrf.name  = 'csrfmiddlewaretoken';
+              csrf.value = CSRF;
+              form.appendChild(csrf);
+              document.body.appendChild(form);
+              form.submit();
+            }, 1500);
+          }
+        } else {
+          // No duration set — just count up
+          timerEl.textContent  = fmtDuration(elapsed);
+          statusEl.textContent = 'Shift #' + SHIFT_PK + ' — ' + (elapsed / 3600).toFixed(2) + ' hrs worked so far';
+        }
       }
 
       tickActive();
@@ -923,4 +947,152 @@ GetMeCare{% endblock %} {% block extra_head %}
     });
   })();
 </script>
+
+<!-- ── Clock-In Shift Picker Modal ──────────────────────── -->
+{% if clockable_count > 1 %}
+<div id="clockin-picker" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:center; justify-content:center;
+  padding:20px;">
+  <div style="
+    background:#fff; border-radius:18px; max-width:440px; width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,.18); overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1b3a2d,#1b7d4f);
+                padding:20px 24px 16px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="fas fa-play" style="color:#fff;font-size:.95rem"></i>
+      </div>
+      <div>
+        <div style="font-size:.95rem;font-weight:800;color:#fff">Select Shift to Clock In</div>
+        <div style="font-size:.73rem;color:rgba(255,255,255,.7);margin-top:2px">
+          You have {{ clockable_count }} scheduled shifts — choose one to start
+        </div>
+      </div>
+      <button type="button"
+              onclick="document.getElementById('clockin-picker').style.display='none'"
+              style="margin-left:auto;background:rgba(255,255,255,.15);border:none;
+                     width:28px;height:28px;border-radius:50%;color:#fff;
+                     cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Shift list -->
+    <div style="padding:16px 20px 20px;max-height:60vh;overflow-y:auto">
+      {% for s in clockable_shifts %}
+      <form method="post" action="/clock-in/" style="margin-bottom:10px">
+        {% csrf_token %}
+        <input type="hidden" name="shift_id" value="{{ s.pk }}">
+        <button type="submit" style="
+          width:100%;text-align:left;background:#fff;border:1.5px solid #dde2d8;
+          border-radius:12px;padding:14px 16px;cursor:pointer;font-family:inherit;
+          transition:border-color .15s,background .15s;display:flex;align-items:center;gap:12px">
+          <!-- Avatar -->
+          <div style="width:40px;height:40px;border-radius:50%;
+                      background:linear-gradient(135deg,#1b3a2d,#2d5a42);
+                      color:#fff;display:flex;align-items:center;justify-content:center;
+                      font-size:.82rem;font-weight:700;flex-shrink:0">
+            {{ s.employer.first_name|first|upper }}{{ s.employer.last_name|first|upper }}
+          </div>
+          <!-- Info -->
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem;color:#1a1a1a">
+              {{ s.employer.get_full_name }}
+            </div>
+            <div style="font-size:.75rem;color:#888;margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">
+              <span><i class="fas fa-calendar-day" style="margin-right:3px"></i>
+                {% if s.start_date == today %}Today{% else %}{{ s.start_date|date:"D, M j" }}{% endif %}
+              </span>
+              <span><i class="fas fa-clock" style="margin-right:3px"></i>{{ s.start_time|time:"g:i A" }}</span>
+              {% if s.city %}<span><i class="fas fa-location-dot" style="margin-right:3px"></i>{{ s.city }}</span>{% endif %}
+            </div>
+          </div>
+          <!-- Rate + arrow -->
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:.85rem;font-weight:700;color:#1b7d4f">${{ s.hourly_rate }}/hr</div>
+            <div style="font-size:.68rem;color:#aaa;margin-top:2px">Shift #{{ s.pk }}</div>
+          </div>
+          <i class="fas fa-play" style="color:#1b7d4f;font-size:.75rem;flex-shrink:0"></i>
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Clock-Out Confirmation Modal ─────────────────────── -->
+<div id="clockout-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:center; justify-content:center;
+  padding:20px;">
+  <div style="
+    background:#fff; border-radius:18px; max-width:400px; width:100%;
+    padding:32px 28px; box-shadow:0 12px 40px rgba(0,0,0,.18);
+    text-align:center; position:relative;">
+
+    <!-- Icon -->
+    <div style="
+      width:62px; height:62px; border-radius:50%;
+      background:#fdecea; margin:0 auto 18px;
+      display:flex; align-items:center; justify-content:center;">
+      <i class="fas fa-stop-circle" style="font-size:1.6rem; color:#e04040;"></i>
+    </div>
+
+    <h3 style="font-size:1.1rem; font-weight:800; color:#1a1a1a; margin:0 0 10px">
+      Clock Out of Shift?
+    </h3>
+    <p style="font-size:.875rem; color:#666; line-height:1.55; margin:0 0 26px">
+      Your hours and earnings will be calculated and saved.<br>
+      This action cannot be undone.
+    </p>
+
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <!-- Cancel -->
+      <button type="button"
+        onclick="document.getElementById('clockout-modal').style.display='none'"
+        style="
+          flex:1; padding:11px 0; border-radius:10px; font-size:.88rem;
+          font-weight:700; border:1.5px solid #ddd; background:#f5f5f5;
+          color:#555; cursor:pointer;">
+        Cancel
+      </button>
+      <!-- Confirm -->
+      <form method="post" action="/clock-out/" style="flex:1; margin:0">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <button type="submit" style="
+          width:100%; padding:11px 0; border-radius:10px; font-size:.88rem;
+          font-weight:700; border:none; background:#e04040; color:#fff;
+          cursor:pointer;">
+          <i class="fas fa-stop" style="margin-right:6px"></i>Yes, Clock Out
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Close modal when clicking the backdrop
+  document.getElementById('clockout-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('clockout-modal').style.display = 'none';
+      {% if clockable_count > 1 %}
+      document.getElementById('clockin-picker').style.display = 'none';
+      {% endif %}
+    }
+  });
+  {% if clockable_count > 1 %}
+  document.getElementById('clockin-picker').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+  {% endif %}
+</script>
+
 {% endblock %}

@@ -213,7 +213,7 @@
 </div>
 <div class="jb-footer">
 <span class="jb-posted"><i class="far fa-clock"></i> Posted {{ job.created_at|timesince }} ago</span>
-<a href="{% url 'contact' %}" class="jb-apply-btn"><i class="fas fa-paper-plane"></i> Apply</a>
+<a href="{% url 'chat_start' job.employer.id %}" class="jb-apply-btn"><i class="fas fa-paper-plane"></i> Apply</a>
 </div>
 </div>
 {% empty %}

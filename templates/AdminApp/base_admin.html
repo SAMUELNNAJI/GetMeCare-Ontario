@@ -244,6 +244,14 @@
     <a href="{% url 'AdminApp:payout_queue' %}" {% if request.resolver_match.url_name == 'payout_queue' %}class="active"{% endif %}>
       <i class="fas fa-money-bill-wave"></i> Payout Queue
     </a>
+    <a href="{% url 'AdminApp:employer_payments' %}" {% if request.resolver_match.url_name == 'employer_payments' %}class="active"{% endif %}>
+      <i class="fas fa-credit-card"></i> Employer Payments
+      {% if employer_payments_count %}<span class="adm-nav-badge">{{ employer_payments_count }}</span>{% endif %}
+    </a>
+    <a href="{% url 'AdminApp:dispute_list' %}" {% if request.resolver_match.url_name == 'dispute_list' or request.resolver_match.url_name == 'dispute_detail' %}class="active"{% endif %}>
+      <i class="fas fa-flag" style="color:#e05252"></i> Disputes
+      {% if counts.open %}<span class="adm-nav-badge" style="background:#c62828">{{ counts.open }}</span>{% endif %}
+    </a>
     <a href="{% url 'AdminApp:manage_users' %}" {% if request.resolver_match.url_name == 'manage_users' %}class="active"{% endif %}>
       <i class="fas fa-users"></i> All Users
     </a>

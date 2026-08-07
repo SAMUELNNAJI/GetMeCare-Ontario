@@ -18,4 +18,9 @@ urlpatterns = [
     # Payout queue
     path('admin-panel/payouts/',                              views.payout_queue,       name='payout_queue'),
     path('admin-panel/payouts/<int:log_pk>/mark-paid/',       views.mark_paid,          name='mark_paid'),
+    # Employer payments
+    path('admin-panel/employer-payments/',                    views.employer_payments,  name='employer_payments'),
+    # Disputes
+    path('admin-panel/disputes/',                             views.dispute_list,       name='dispute_list'),
+    path('admin-panel/disputes/<int:dispute_pk>/',            views.dispute_detail,     name='dispute_detail'),
 ]

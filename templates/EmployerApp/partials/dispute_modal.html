@@ -1,0 +1,129 @@
+<!-- ── Dispute Modal ──────────────────────────────────────── -->
+<div id="dispute-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:center; justify-content:center;
+  padding:20px;">
+  <div style="
+    background:#fff; border-radius:18px; max-width:480px; width:100%;
+    padding:32px 28px; box-shadow:0 12px 40px rgba(0,0,0,.18);
+    position:relative;">
+
+    <!-- Close X -->
+    <button type="button" id="dispute-close" style="
+      position:absolute; top:16px; right:18px;
+      background:none; border:none; font-size:1.1rem;
+      color:#aaa; cursor:pointer; line-height:1;"
+      aria-label="Close">&times;</button>
+
+    <!-- Icon + heading -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div style="
+        width:48px;height:48px;border-radius:12px;
+        background:#fdecea;display:flex;align-items:center;justify-content:center;
+        flex-shrink:0">
+        <i class="fas fa-flag" style="color:#c62828;font-size:1.1rem"></i>
+      </div>
+      <div>
+        <h3 style="font-size:1rem;font-weight:800;color:#1a1a1a;margin:0">
+          Raise a Dispute
+        </h3>
+        <p id="dispute-subtitle" style="font-size:.78rem;color:#888;margin:3px 0 0"></p>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'EmployerApp:submit_dispute' %}" id="dispute-form">
+      {% csrf_token %}
+      <input type="hidden" name="shift_pk"   id="dispute-shift-pk">
+      <input type="hidden" name="payment_pk" id="dispute-payment-pk">
+
+      <!-- Reason selector -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:5px">
+          Reason *
+        </label>
+        <select name="category" required style="
+          width:100%;padding:10px 12px;border:1.5px solid #dde2d8;
+          border-radius:9px;font-size:.87rem;font-family:inherit;
+          color:#1a1a1a;outline:none;background:#fff">
+          <option value="" disabled selected>Select a reason…</option>
+          <option value="service_quality">Poor Service Quality</option>
+          <option value="no_show">Caregiver No-Show</option>
+          <option value="late_arrival">Late Arrival</option>
+          <option value="misconduct">Unprofessional / Misconduct</option>
+          <option value="billing">Billing / Payment Issue</option>
+          <option value="safety_concern">Safety Concern</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <!-- Details textarea -->
+      <div style="margin-bottom:20px">
+        <label style="font-size:.78rem;font-weight:700;color:#555;display:block;margin-bottom:5px">
+          Details *
+          <span style="font-weight:400;color:#aaa">(describe the issue clearly)</span>
+        </label>
+        <textarea name="description" required rows="4" maxlength="1000"
+          placeholder="e.g. The caregiver arrived 3 hours late and left early without completing the agreed tasks…"
+          style="
+            width:100%;padding:10px 12px;border:1.5px solid #dde2d8;
+            border-radius:9px;font-size:.87rem;font-family:inherit;
+            color:#1a1a1a;outline:none;resize:vertical;box-sizing:border-box;
+            transition:border-color .15s"
+          onfocus="this.style.borderColor='#c62828'"
+          onblur="this.style.borderColor='#dde2d8'"></textarea>
+        <div style="font-size:.7rem;color:#aaa;margin-top:3px">
+          <i class="fas fa-info-circle"></i>
+          Your dispute will be reviewed by admin within 1–2 business days.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button type="button" id="dispute-cancel" style="
+          flex:1;padding:11px 0;border-radius:10px;font-size:.88rem;
+          font-weight:700;border:1.5px solid #ddd;background:#f5f5f5;
+          color:#555;cursor:pointer;font-family:inherit">
+          Cancel
+        </button>
+        <button type="submit" style="
+          flex:1;padding:11px 0;border-radius:10px;font-size:.88rem;
+          font-weight:700;border:none;background:#c62828;color:#fff;
+          cursor:pointer;font-family:inherit;
+          display:flex;align-items:center;justify-content:center;gap:7px">
+          <i class="fas fa-paper-plane"></i> Submit Dispute
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var modal      = document.getElementById('dispute-modal');
+  var shiftInp   = document.getElementById('dispute-shift-pk');
+  var paymentInp = document.getElementById('dispute-payment-pk');
+  var subtitle   = document.getElementById('dispute-subtitle');
+
+  // Open modal when any Dispute button is clicked
+  document.querySelectorAll('.dispute-trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      shiftInp.value   = btn.dataset.shiftPk;
+      paymentInp.value = btn.dataset.paymentPk;
+      subtitle.textContent =
+        'Shift #' + btn.dataset.shiftPk +
+        ' · ' + btn.dataset.caregiver +
+        ' · ' + btn.dataset.shiftDate;
+      modal.style.display = 'flex';
+    });
+  });
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('dispute-form').reset();
+  }
+
+  document.getElementById('dispute-close').addEventListener('click',  closeModal);
+  document.getElementById('dispute-cancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+})();
+</script>

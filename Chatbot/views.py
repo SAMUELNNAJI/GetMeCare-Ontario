@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.conf import settings
 from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation
-from Account.models import CaregiverProfile, BookingProposal
+from Account.models import CaregiverProfile, BookingProposal, EmployerProfile
 import json
 import re
 import requests
@@ -478,6 +478,7 @@ def delete_conversation(request, conversation_id):
 # ─────────────────────────────────────────────────────────────
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
@@ -496,9 +497,50 @@ def _chat_base(user):
     return 'base.html'
 
 
+def _get_chat_block_reason(user):
+    """
+    Return (redirect_name, message) if this user is not allowed to chat,
+    or None if they are permitted.
+
+    Rules:
+      - Caregiver must have CaregiverProfile.status == 'active'
+      - Employer must have EmployerProfile.is_active == True
+    """
+    if user.role == 'caregiver':
+        try:
+            profile = user.caregiver_profile
+        except CaregiverProfile.DoesNotExist:
+            return ('caregiver_dashboard',
+                    "Your caregiver profile is not set up yet. Please complete your profile before messaging.")
+        if profile.status != CaregiverProfile.STATUS_ACTIVE:
+            status_label = profile.get_status_display()
+            return ('caregiver_dashboard',
+                    f"Your account is currently {status_label}. "
+                    "You will be able to message employers once your account is activated by an admin.")
+
+    elif user.role == 'employer':
+        try:
+            profile = user.employer_profile
+        except EmployerProfile.DoesNotExist:
+            return ('activate_account',
+                    "Please activate your employer account before messaging caregivers.")
+        if not profile.is_active:
+            return ('activate_account',
+                    "Your employer account is not yet activated. "
+                    "Please complete activation to message caregivers.")
+
+    return None  # allowed
+
+
 @login_required
 def chat_list(request):
     """Show all conversations the current user is part of."""
+    block = _get_chat_block_reason(request.user)
+    if block:
+        redirect_name, message = block
+        messages.warning(request, message)
+        return redirect(redirect_name)
+
     convs = DirectConversation.objects.filter(
         Q(participant_1=request.user) | Q(participant_2=request.user)
     ).select_related('participant_1', 'participant_2').order_by('-updated_at')
@@ -524,6 +566,12 @@ def chat_list(request):
 @login_required
 def chat_room(request, conv_id):
     """Open a conversation thread."""
+    block = _get_chat_block_reason(request.user)
+    if block:
+        redirect_name, message = block
+        messages.warning(request, message)
+        return redirect(redirect_name)
+
     conv = get_object_or_404(
         DirectConversation,
         Q(participant_1=request.user) | Q(participant_2=request.user),
@@ -532,6 +580,13 @@ def chat_room(request, conv_id):
     # Mark messages from the other person as read
     conv.direct_messages.filter(is_read=False).exclude(
         sender=request.user
+    ).update(is_read=True)
+
+    # Mark pending proposals addressed to this user as read
+    BookingProposal.objects.filter(
+        conversation_id=conv_id,
+        employer=request.user,
+        is_read=False,
     ).update(is_read=True)
 
     messages_qs = list(conv.direct_messages.select_related('sender').all())
@@ -565,6 +620,12 @@ def chat_room(request, conv_id):
 @login_required
 def chat_start(request, user_id):
     """Start or resume a conversation with any user (called from browse card)."""
+    block = _get_chat_block_reason(request.user)
+    if block:
+        redirect_name, message = block
+        messages.warning(request, message)
+        return redirect(redirect_name)
+
     other_user = get_object_or_404(User, pk=user_id)
     if other_user == request.user:
         return redirect('chat_list')
@@ -575,7 +636,16 @@ def chat_start(request, user_id):
 @login_required
 @require_POST
 def chat_send(request, conv_id):
-    """POST a message — returns the new message bubble HTML."""
+    """POST a message — returns JSON with bubble HTML + new message pk.
+
+    Returning the pk lets the client advance its polling cursor immediately,
+    preventing the poller from re-inserting the same bubble as a duplicate.
+    """
+    block = _get_chat_block_reason(request.user)
+    if block:
+        _, message = block
+        return JsonResponse({'ok': False, 'error': message}, status=403)
+
     conv = get_object_or_404(
         DirectConversation,
         Q(participant_1=request.user) | Q(participant_2=request.user),
@@ -583,18 +653,26 @@ def chat_send(request, conv_id):
     )
     body = request.POST.get('body', '').strip()
     if not body:
-        return HttpResponse('')
+        return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
 
     # ── Server-side duplicate guard ───────────────────────────
     # Reject if the same sender sent the identical body in the last 3 seconds
     from django.utils import timezone as tz
     cutoff = tz.now() - timezone.timedelta(seconds=3)
-    if conv.direct_messages.filter(
+    dup = conv.direct_messages.filter(
         sender=request.user,
         body=body,
         created_at__gte=cutoff,
-    ).exists():
-        return HttpResponse('')   # silently drop — client already showed the bubble
+    ).order_by('-pk').first()
+    if dup:
+        # Return the existing pk so the client can still advance its cursor
+        from django.template.loader import render_to_string
+        html = render_to_string(
+            'chat/partials/message_bubble.html',
+            {'msg': dup, 'me': request.user},
+            request=request,
+        )
+        return JsonResponse({'ok': True, 'pk': dup.pk, 'html': html, 'duplicate': True})
 
     msg = DirectMessage.objects.create(
         conversation=conv,
@@ -603,15 +681,24 @@ def chat_send(request, conv_id):
     )
     DirectConversation.objects.filter(pk=conv.pk).update(updated_at=timezone.now())
 
-    return render(request, 'chat/partials/message_bubble.html', {
-        'msg': msg,
-        'me': request.user,
-    })
+    from django.template.loader import render_to_string
+    html = render_to_string(
+        'chat/partials/message_bubble.html',
+        {'msg': msg, 'me': request.user},
+        request=request,
+    )
+    return JsonResponse({'ok': True, 'pk': msg.pk, 'html': html, 'duplicate': False})
 
 
 @login_required
 def chat_poll(request, conv_id):
-    """HTMX polling endpoint — return any messages after `after` (message pk)."""
+    """Polling endpoint — return any messages after `after` (message pk).
+
+    Includes ALL new messages (both sides) so the client can deduplicate by
+    DOM id rather than relying on the server to exclude the sender's own
+    messages (which causes them to go missing when the optimistic bubble
+    was never inserted, e.g. after a page reload mid-send).
+    """
     conv = get_object_or_404(
         DirectConversation,
         Q(participant_1=request.user) | Q(participant_2=request.user),
@@ -625,10 +712,10 @@ def chat_poll(request, conv_id):
 
     new_msgs = conv.direct_messages.filter(
         pk__gt=after_pk
-    ).exclude(sender=request.user).select_related('sender')
+    ).select_related('sender').order_by('pk')
 
-    # Mark them read
-    new_msgs.filter(is_read=False).update(is_read=True)
+    # Mark incoming messages as read
+    new_msgs.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
 
     return render(request, 'chat/partials/poll_messages.html', {
         'messages': new_msgs,

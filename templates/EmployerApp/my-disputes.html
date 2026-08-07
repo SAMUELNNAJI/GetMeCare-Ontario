@@ -1,0 +1,118 @@
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}My Disputes — Employer{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ds-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px; }
+  .ds-stat { background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,.06); display:flex; align-items:center; gap:12px; }
+  .ds-stat-icon { width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+  .ds-stat-val { font-size:1.3rem; font-weight:800; color:#1a1a1a; line-height:1; }
+  .ds-stat-lbl { font-size:.7rem; color:#888; margin-top:3px; }
+  .ds-row-detail { font-size:.78rem; color:#666; margin-top:3px; }
+  .ds-badge-open         { background:#fdecea; color:#c62828; }
+  .ds-badge-under_review { background:#fff8e1; color:#b45309; }
+  .ds-badge-resolved     { background:#e6f5ee; color:#1b7d4f; }
+  .ds-badge-dismissed    { background:#f0f0f0; color:#666; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <h1 class="ep-page-title" style="margin-bottom:6px">
+    <i class="fas fa-flag" style="color:#c62828;margin-right:8px"></i>My Disputes
+  </h1>
+  <p style="font-size:.85rem;color:#888">Disputes and complaints you have raised with our support team.</p>
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">{{ msg }}</div>
+{% endfor %}
+
+<!-- Summary -->
+<div class="ds-summary">
+  <div class="ds-stat">
+    <div class="ds-stat-icon" style="background:#fdecea"><i class="fas fa-circle-dot" style="color:#c62828"></i></div>
+    <div><div class="ds-stat-val">{{ open_count }}</div><div class="ds-stat-lbl">Open</div></div>
+  </div>
+  <div class="ds-stat">
+    <div class="ds-stat-icon" style="background:#fff8e1"><i class="fas fa-magnifying-glass" style="color:#b45309"></i></div>
+    <div><div class="ds-stat-val">{{ review_count }}</div><div class="ds-stat-lbl">Under Review</div></div>
+  </div>
+  <div class="ds-stat">
+    <div class="ds-stat-icon" style="background:#e6f5ee"><i class="fas fa-check-circle" style="color:#1b7d4f"></i></div>
+    <div><div class="ds-stat-val">{{ resolved_count }}</div><div class="ds-stat-lbl">Resolved / Closed</div></div>
+  </div>
+  <div class="ds-stat">
+    <div class="ds-stat-icon" style="background:#f0f4ff"><i class="fas fa-flag" style="color:#1a56c4"></i></div>
+    <div><div class="ds-stat-val">{{ disputes|length }}</div><div class="ds-stat-lbl">Total</div></div>
+  </div>
+</div>
+
+<div class="ep-card">
+  <div class="ep-card-pad">
+    <div class="scroll-table-wrap">
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Caregiver</th>
+            <th>Shift</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Admin Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in disputes %}
+          <tr>
+            <td style="color:#aaa;font-size:.78rem">{{ d.pk }}</td>
+            <td style="white-space:nowrap;font-size:.82rem">
+              {{ d.created_at|date:"M d, Y" }}<br>
+              <span style="color:#aaa;font-size:.7rem">{{ d.created_at|time:"g:i A" }}</span>
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:.85rem">{{ d.caregiver.get_full_name }}</div>
+              <div style="font-size:.7rem;color:#aaa">{{ d.caregiver.email }}</div>
+            </td>
+            <td style="font-size:.82rem">
+              {% if d.shift %}
+                Shift #{{ d.shift.pk }}<br>
+                <span style="color:#888;font-size:.7rem">{{ d.shift.start_date|date:"M d, Y" }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td><span class="badge badge-grey" style="white-space:nowrap">{{ d.get_category_display }}</span></td>
+            <td>
+              <span class="badge ds-badge-{{ d.status }}">{{ d.get_status_display }}</span>
+            </td>
+            <td style="font-size:.8rem;color:#555;max-width:220px">
+              {% if d.admin_note %}
+                {{ d.admin_note|truncatechars:100 }}
+                {% if d.resolved_at %}
+                  <div style="font-size:.68rem;color:#aaa;margin-top:2px">
+                    Resolved {{ d.resolved_at|date:"M d, Y" }}
+                  </div>
+                {% endif %}
+              {% else %}
+                <span style="color:#ccc">Awaiting review</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" style="text-align:center;padding:36px 0;color:#bbb">
+              <i class="fas fa-flag" style="font-size:1.6rem;display:block;margin-bottom:10px;color:#ddd"></i>
+              No disputes raised yet.<br>
+              <span style="font-size:.8rem">You can raise a dispute from your
+                <a href="{% url 'EmployerApp:my_shifts' %}" style="color:#1b7d4f">My Shifts</a> or
+                <a href="{% url 'EmployerApp:payment_history' %}" style="color:#1b7d4f">Payment History</a> page.
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

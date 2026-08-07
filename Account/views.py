@@ -159,7 +159,7 @@ def clock_out(request):
     messages.success(
         request,
         f'Clocked out. You worked {log.hours_worked} hrs — '
-        f'${log.amount_earned} CAD will be credited after admin settlement.'
+        f'${log.amount_earned} CAD will be settled by the admin shortly.'
     )
     return redirect('CareGiverAcc:dashboard')
 

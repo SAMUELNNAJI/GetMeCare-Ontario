@@ -647,6 +647,24 @@
   .scroll-table-wrap::-webkit-scrollbar-track{background:#f2f4f0;border-radius:4px}
   .scroll-table-wrap::-webkit-scrollbar-thumb{background:#c8d8c8;border-radius:4px}
   .scroll-table-wrap::-webkit-scrollbar-thumb:hover{background:#1b7d4f}
+
+  /* Sidebar unread badge */
+  .nav-unread-badge {
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: #e05252;
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
 </style>
     {% block extra_head %}{% endblock %}
   </head>
@@ -721,11 +739,16 @@
         <a
           href="{% url 'EmployerApp:payment_history' %}"
           data-nav="payment_history"
-          ><i class="fas fa-receipt"></i> Payment History</a
+          ><i class="fas fa-receipt"></i> Payment History{% if unseen_payments %}<span style="margin-left:6px;background:#e04040;color:#fff;border-radius:20px;padding:1px 7px;font-size:.65rem;font-weight:700;vertical-align:middle">{{ unseen_payments }}</span>{% endif %}</a
+        >
+        <a
+          href="{% url 'EmployerApp:my_disputes' %}"
+          data-nav="my_disputes"
+          ><i class="fas fa-flag" style="color:#e05252"></i> My Disputes</a
         >
         <div class="ep-nav-section">Messaging</div>
         <a href="{% url 'chat_list' %}" data-nav="chat_list"
-          ><i class="fas fa-comments"></i> Messages</a
+          ><i class="fas fa-comments"></i> Messages{% if total_unread %}<span class="nav-unread-badge">{{ total_unread }}</span>{% endif %}</a
         >
         {% if not is_activated %}<a
           href="{% url 'EmployerApp:activate_account' %}"

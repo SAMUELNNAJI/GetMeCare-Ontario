@@ -96,6 +96,47 @@
   }
   .pq-stat .sv { font-size:1.4rem; font-weight:800; color:#1b3a2d; }
   .pq-stat .sl { font-size:.72rem; color:#888; margin-top:2px; }
+
+  /* ── Admin earnings card ── */
+  .pq-admin-earn {
+    background: linear-gradient(135deg, #1b3a2d 0%, #1b7d4f 100%);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 18px rgba(27,61,45,.18);
+  }
+  .pq-admin-earn-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: #fff; flex-shrink: 0;
+  }
+  .pq-admin-earn-info { flex: 1; min-width: 160px; }
+  .pq-admin-earn-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: rgba(255,255,255,.65); margin-bottom: 4px;
+  }
+  .pq-admin-earn-total {
+    font-size: 2rem; font-weight: 800; color: #fff; line-height: 1;
+  }
+  .pq-admin-earn-sub {
+    font-size: .75rem; color: rgba(255,255,255,.6); margin-top: 4px;
+  }
+  .pq-admin-earn-pills {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .pq-earn-pill {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 10px; padding: 10px 16px;
+    text-align: center; min-width: 110px;
+  }
+  .pq-earn-pill .pv { font-size: 1.1rem; font-weight: 800; color: #fff; }
+  .pq-earn-pill .pl { font-size: .65rem; color: rgba(255,255,255,.6); margin-top: 3px; text-transform: uppercase; letter-spacing: .04em; }
 </style>
 {% endblock %}
 
@@ -122,6 +163,28 @@
   <div class="pq-stat">
     <div class="sv">${{ total_paid|floatformat:2 }}</div>
     <div class="sl">Total Paid (CAD)</div>
+  </div>
+</div>
+
+<!-- Admin earnings card -->
+<div class="pq-admin-earn">
+  <div class="pq-admin-earn-icon">
+    <i class="fas fa-chart-line"></i>
+  </div>
+  <div class="pq-admin-earn-info">
+    <div class="pq-admin-earn-label">Platform Revenue (15% cut)</div>
+    <div class="pq-admin-earn-total">${{ admin_earned_total|floatformat:2 }}</div>
+    <div class="pq-admin-earn-sub">Total earned across all completed shifts</div>
+  </div>
+  <div class="pq-admin-earn-pills">
+    <div class="pq-earn-pill">
+      <div class="pv">${{ admin_earned_pending|floatformat:2 }}</div>
+      <div class="pl">Pending shifts</div>
+    </div>
+    <div class="pq-earn-pill">
+      <div class="pv">${{ admin_earned_paid|floatformat:2 }}</div>
+      <div class="pl">Paid-out shifts</div>
+    </div>
   </div>
 </div>
 
@@ -224,10 +287,13 @@
       Caregiver's 85%: <strong style="color:#1b3a2d">${{ log.amount_earned|floatformat:2 }}</strong>
     </span>
     {% if log.payment_status == 'pending' %}
-    <form method="post" action="{% url 'AdminApp:mark_paid' log.pk %}">
+    <form method="post" action="{% url 'AdminApp:mark_paid' log.pk %}" id="mark-paid-form-{{ log.pk }}">
       {% csrf_token %}
-      <button type="submit" class="pq-mark-paid-btn"
-              onclick="return confirm('Mark payout as paid for {{ log.shift.caregiver.get_full_name }}?')">
+      <button type="button" class="pq-mark-paid-btn"
+              data-form="mark-paid-form-{{ log.pk }}"
+              data-name="{{ log.shift.caregiver.get_full_name }}"
+              data-amount="{{ log.amount_earned|floatformat:2 }}"
+              onclick="openMarkPaidModal(this)">
         <i class="fas fa-check"></i> Mark as Paid
       </button>
     </form>
@@ -247,5 +313,124 @@
   </div>
 </div>
 {% endfor %}
+
+{% if tab == 'paid' and paid_page.paginator.num_pages > 1 %}
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:22px;flex-wrap:wrap">
+
+  {% if paid_page.has_previous %}
+  <a href="?tab=paid&page={{ paid_page.previous_page_number }}"
+     style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:.82rem;font-weight:600;background:#fff;border:1.5px solid #dde2d8;color:#333;text-decoration:none">
+    <i class="fas fa-chevron-left" style="font-size:.7rem"></i> Prev
+  </a>
+  {% endif %}
+
+  {% for num in paid_page.paginator.page_range %}
+    {% if paid_page.number == num %}
+    <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;font-size:.82rem;font-weight:700;background:#1b3a2d;color:#fff">
+      {{ num }}
+    </span>
+    {% elif num >= paid_page.number|add:"-2" and num <= paid_page.number|add:"2" %}
+    <a href="?tab=paid&page={{ num }}"
+       style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;font-size:.82rem;font-weight:600;background:#fff;border:1.5px solid #dde2d8;color:#333;text-decoration:none">
+      {{ num }}
+    </a>
+    {% endif %}
+  {% endfor %}
+
+  {% if paid_page.has_next %}
+  <a href="?tab=paid&page={{ paid_page.next_page_number }}"
+     style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:.82rem;font-weight:600;background:#fff;border:1.5px solid #dde2d8;color:#333;text-decoration:none">
+    Next <i class="fas fa-chevron-right" style="font-size:.7rem"></i>
+  </a>
+  {% endif %}
+
+  <span style="font-size:.78rem;color:#aaa;margin-left:8px">
+    Page {{ paid_page.number }} of {{ paid_page.paginator.num_pages }}
+    &bull; {{ paid_count }} total
+  </span>
+</div>
+{% endif %}
+
+<!-- ── Mark as Paid confirmation modal ─────────────────────── -->
+<div id="mark-paid-modal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.45); align-items:center; justify-content:center;
+  padding:20px;">
+  <div style="
+    background:#fff; border-radius:18px; max-width:420px; width:100%;
+    padding:32px 28px; box-shadow:0 12px 40px rgba(0,0,0,.18);
+    text-align:center; position:relative;">
+
+    <!-- Icon -->
+    <div style="
+      width:62px; height:62px; border-radius:50%;
+      background:#e6f5ee; margin:0 auto 18px;
+      display:flex; align-items:center; justify-content:center;">
+      <i class="fas fa-money-bill-wave" style="font-size:1.5rem; color:#1b7d4f;"></i>
+    </div>
+
+    <h3 style="font-size:1.1rem; font-weight:800; color:#1a1a1a; margin:0 0 8px">
+      Confirm Payout
+    </h3>
+    <p id="mark-paid-body" style="font-size:.875rem; color:#666; line-height:1.6; margin:0 0 24px">
+      <!-- filled by JS -->
+    </p>
+
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <button type="button" id="mark-paid-cancel"
+        style="
+          flex:1; padding:11px 0; border-radius:10px; font-size:.88rem;
+          font-weight:700; border:1.5px solid #ddd; background:#f5f5f5;
+          color:#555; cursor:pointer;">
+        Cancel
+      </button>
+      <button type="button" id="mark-paid-confirm"
+        style="
+          flex:1; padding:11px 0; border-radius:10px; font-size:.88rem;
+          font-weight:700; border:none; background:#1b7d4f; color:#fff;
+          cursor:pointer;">
+        <i class="fas fa-check" style="margin-right:6px"></i>Yes, Mark as Paid
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var _markPaidForm = null;
+
+  function openMarkPaidModal(btn) {
+    _markPaidForm = document.getElementById(btn.dataset.form);
+    var name      = btn.dataset.name;
+    var amount    = btn.dataset.amount;
+    document.getElementById('mark-paid-body').innerHTML =
+      'Mark payout of <strong>$' + amount + ' CAD</strong> as paid to<br>' +
+      '<strong>' + name + '</strong>?<br>' +
+      '<span style="font-size:.78rem;color:#aaa;margin-top:6px;display:block">This action cannot be undone.</span>';
+    document.getElementById('mark-paid-modal').style.display = 'flex';
+  }
+
+  document.getElementById('mark-paid-confirm').addEventListener('click', function () {
+    if (_markPaidForm) _markPaidForm.submit();
+  });
+
+  document.getElementById('mark-paid-cancel').addEventListener('click', function () {
+    document.getElementById('mark-paid-modal').style.display = 'none';
+    _markPaidForm = null;
+  });
+
+  document.getElementById('mark-paid-modal').addEventListener('click', function (e) {
+    if (e.target === this) {
+      this.style.display = 'none';
+      _markPaidForm = null;
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.getElementById('mark-paid-modal').style.display = 'none';
+      _markPaidForm = null;
+    }
+  });
+</script>
 
 {% endblock %}

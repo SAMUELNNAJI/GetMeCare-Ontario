@@ -41,6 +41,7 @@ Employer{% endblock %} {% block extra_head %}
           <th>City</th>
           <th>Rate</th>
           <th>Status</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -48,7 +49,7 @@ Employer{% endblock %} {% block extra_head %}
         <tr>
           <td>{{ s.start_date|date:"M d, Y" }}</td>
           <td>
-            {{ s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}
+            {{ s.start_time|time:"g:i A" }}{% if s.duration_hours %} · {{ s.duration_hours }} hrs{% endif %}
           </td>
           <td>
             <div style="display: flex; align-items: center">
@@ -66,11 +67,24 @@ Employer{% endblock %} {% block extra_head %}
               >{{ s.get_status_display }}</span
             >
           </td>
+          <td style="white-space:nowrap">
+            {% if s.status == 'completed' %}
+            <button type="button"
+              class="dispute-trigger ep-btn ep-btn-ghost"
+              style="font-size:.75rem;padding:5px 10px;color:#c62828;border-color:#f5c6c6"
+              data-shift-pk="{{ s.pk }}"
+              data-payment-pk=""
+              data-caregiver="{{ s.caregiver.get_full_name }}"
+              data-shift-date="{{ s.start_date|date:'M d, Y' }}">
+              <i class="fas fa-flag"></i> Dispute
+            </button>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
         <tr>
           <td
-            colspan="6"
+            colspan="7"
             style="text-align: center; padding: 28px 0; color: #bbb"
           >
             <i
@@ -86,4 +100,8 @@ Employer{% endblock %} {% block extra_head %}
 </div><!-- /scroll-table-wrap -->
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% include "EmployerApp/partials/dispute_modal.html" %}
 {% endblock %}

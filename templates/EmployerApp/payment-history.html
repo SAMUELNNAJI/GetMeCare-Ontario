@@ -1,64 +1,264 @@
-{% extends "EmployerApp/base_employer.html" %} {% block title %}Payment History
-— Employer{% endblock %} {% block content %}
-<div style="margin-bottom: 20px">
-  <h1 class="ep-page-title" style="margin-bottom: 6px">
-    <i class="fas fa-receipt" style="color: #1b7d4f; margin-right: 8px"></i
-    >Payment History
+{% extends "EmployerApp/base_employer.html" %}
+{% block title %}Payment History — Employer{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ph-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .ph-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ph-stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .ph-stat-val { font-size: 1.35rem; font-weight: 800; color: #1a1a1a; line-height: 1; }
+  .ph-stat-lbl { font-size: .72rem; color: #888; margin-top: 3px; }
+  .ph-section-title {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #888;
+    margin: 24px 0 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div style="margin-bottom:20px">
+  <h1 class="ep-page-title" style="margin-bottom:6px">
+    <i class="fas fa-receipt" style="color:#1b7d4f;margin-right:8px"></i>Payment History
   </h1>
-  <p style="font-size: 0.85rem; color: #888">
-    A record of all completed shift payments.
-  </p>
+  <p style="font-size:.85rem;color:#888">All payments you have made — activation fee and shift bookings.</p>
 </div>
+
+<!-- Django messages -->
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
+  {{ msg }}
+</div>
+{% endfor %}
+
+<!-- Summary cards -->
+<div class="ph-summary">
+  <div class="ph-stat">
+    <div class="ph-stat-icon" style="background:#e6f5ee">
+      <i class="fas fa-dollar-sign" style="color:#1b7d4f"></i>
+    </div>
+    <div>
+      <div class="ph-stat-val">${{ total_paid|floatformat:2 }}</div>
+      <div class="ph-stat-lbl">Total Paid</div>
+    </div>
+  </div>
+
+  <div class="ph-stat">
+    <div class="ph-stat-icon" style="background:#e8f0fe">
+      <i class="fas fa-bolt" style="color:#1a56c4"></i>
+    </div>
+    <div>
+      <div class="ph-stat-val">
+        {% if activation_fee %}${{ activation_fee|floatformat:2 }}{% else %}—{% endif %}
+      </div>
+      <div class="ph-stat-lbl">Activation Fee</div>
+    </div>
+  </div>
+
+  <div class="ph-stat">
+    <div class="ph-stat-icon" style="background:#fff3e0">
+      <i class="fas fa-calendar-check" style="color:#c96000"></i>
+    </div>
+    <div>
+      <div class="ph-stat-val">{{ booking_count }}</div>
+      <div class="ph-stat-lbl">Shift Bookings</div>
+    </div>
+  </div>
+
+  <div class="ph-stat">
+    <div class="ph-stat-icon" style="background:#f3e8ff">
+      <i class="fas fa-money-bill-wave" style="color:#7c3aed"></i>
+    </div>
+    <div>
+      <div class="ph-stat-val">${{ booking_total|floatformat:2 }}</div>
+      <div class="ph-stat-lbl">Bookings Total</div>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────
+     Section 1 — My Payments (activation + bookings)
+──────────────────────────────────────────────── -->
+<div class="ph-section-title">
+  <i class="fas fa-credit-card" style="margin-right:5px;color:#1b3a2d"></i>My Payments
+</div>
+
+<div class="ep-card" style="margin-bottom:28px">
+  <div class="ep-card-pad">
+    <div class="scroll-table-wrap">
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th>Date &amp; Time</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Reference</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in emp_payments %}
+          <tr>
+            <td style="white-space:nowrap;font-size:.82rem">
+              {{ payment.paid_at|date:"M d, Y" }}<br>
+              <span style="color:#aaa;font-size:.72rem">{{ payment.paid_at|time:"g:i A" }}</span>
+            </td>
+            <td>
+              {% if payment.payment_type == 'activation' %}
+                <span class="badge badge-blue">
+                  <i class="fas fa-bolt" style="margin-right:3px"></i>Activation
+                </span>
+              {% else %}
+                <span class="badge badge-green">
+                  <i class="fas fa-calendar-check" style="margin-right:3px"></i>Booking
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size:.83rem;color:#444">
+              {{ payment.description|default:"—" }}
+              {% if payment.shift %}
+              <div style="margin-top:3px;font-size:.72rem;color:#1b7d4f;font-weight:600">
+                <i class="fas fa-link"></i>
+                Shift #{{ payment.shift.pk }} &mdash;
+                {{ payment.shift.start_date|date:"M d, Y" }},
+                {{ payment.shift.start_time|time:"g:i A" }}
+                {% if payment.shift.duration_hours %}({{ payment.shift.duration_hours }} hrs){% endif %}
+              </div>
+              {% endif %}
+            </td>
+            <td style="font-weight:700;font-size:.93rem;white-space:nowrap">
+              ${{ payment.amount|floatformat:2 }}
+            </td>
+            <td>
+              {% if payment.status == 'completed' %}
+                <span class="badge badge-green">Completed</span>
+              {% elif payment.status == 'failed' %}
+                <span class="badge badge-red">Failed</span>
+              {% elif payment.status == 'refunded' %}
+                <span class="badge badge-orange">Refunded</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.72rem;color:#aaa;font-family:monospace;word-break:break-all;max-width:180px">
+              {{ payment.payment_reference|default:"—" }}
+            </td>
+            <td style="white-space:nowrap">
+              {% if payment.payment_type == 'booking' and payment.shift %}
+              <button type="button"
+                class="dispute-trigger ep-btn ep-btn-ghost"
+                style="font-size:.75rem;padding:5px 10px;color:#c62828;border-color:#f5c6c6"
+                data-shift-pk="{{ payment.shift.pk }}"
+                data-payment-pk="{{ payment.pk }}"
+                data-caregiver="{{ payment.shift.caregiver.get_full_name }}"
+                data-shift-date="{{ payment.shift.start_date|date:'M d, Y' }}">
+                <i class="fas fa-flag"></i> Dispute
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" style="text-align:center;padding:36px 0;color:#bbb">
+              <i class="fas fa-credit-card" style="font-size:1.6rem;display:block;margin-bottom:10px;color:#ddd"></i>
+              No payment records yet.
+              {% if not is_activated %}
+              <div style="margin-top:12px">
+                <a href="{% url 'EmployerApp:activate_account' %}" class="ep-btn ep-btn-primary" style="display:inline-flex">
+                  <i class="fas fa-bolt"></i>&nbsp;Activate Account
+                </a>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────
+     Section 2 — Completed Shift Payouts (caregiver side)
+──────────────────────────────────────────────── -->
+<div class="ph-section-title">
+  <i class="fas fa-user-nurse" style="margin-right:5px;color:#1b7d4f"></i>Completed Shift Payouts
+  <span style="font-weight:400;color:#bbb;font-size:.7rem;margin-left:6px;text-transform:none">
+    What each caregiver earned on your completed shifts
+  </span>
+</div>
+
 <div class="ep-card">
   <div class="ep-card-pad">
     <div class="scroll-table-wrap">
-<table class="ep-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Caregiver</th>
-          <th>Hours</th>
-          <th>Rate</th>
-          <th>Caregiver Earned</th>
-          <th>Payment Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for log in logs %}
-        <tr>
-          <td>{{ log.shift.start_date|date:"M d, Y" }}</td>
-          <td>
-            {{ log.shift.caregiver.get_full_name|default:log.shift.caregiver.username }}
-          </td>
-          <td>{{ log.hours_worked|default:"—" }} hrs</td>
-          <td>${{ log.shift.hourly_rate }}/hr</td>
-          <td>
-            {% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{% endif %}
-          </td>
-          <td>
-            <span
-              class="badge {% if log.payment_status == 'paid' %}badge-green{% elif log.payment_status == 'disputed' %}badge-red{% else %}badge-orange{% endif %}"
-              >{{ log.get_payment_status_display }}</span
-            >
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td
-            colspan="6"
-            style="text-align: center; padding: 28px 0; color: #bbb"
-          >
-            <i
-              class="fas fa-receipt"
-              style="font-size: 1.6rem; display: block; margin-bottom: 8px"
-            ></i
-            >No payment records yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div><!-- /scroll-table-wrap -->
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th>Shift Date</th>
+            <th>Caregiver</th>
+            <th>Hours</th>
+            <th>Rate</th>
+            <th>Caregiver Earned</th>
+            <th>Payout Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.shift.start_date|date:"M d, Y" }}</td>
+            <td>{{ log.shift.caregiver.get_full_name|default:log.shift.caregiver.username }}</td>
+            <td>{{ log.hours_worked|default:"—" }} hrs</td>
+            <td>${{ log.shift.hourly_rate }}/hr</td>
+            <td>{% if log.amount_earned %}${{ log.amount_earned }}{% else %}—{% endif %}</td>
+            <td>
+              <span class="badge
+                {% if log.payment_status == 'paid' %}badge-green
+                {% elif log.payment_status == 'disputed' %}badge-red
+                {% else %}badge-orange{% endif %}">
+                {{ log.get_payment_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;padding:28px 0;color:#bbb">
+              <i class="fas fa-receipt" style="font-size:1.6rem;display:block;margin-bottom:8px;color:#ddd"></i>
+              No completed shifts yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+{% include "EmployerApp/partials/dispute_modal.html" %}
 {% endblock %}

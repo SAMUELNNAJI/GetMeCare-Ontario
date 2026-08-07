@@ -315,6 +315,61 @@
   .prop-badge-booked   { background: #e6f5ee; color: #1b7d4f; }
   .prop-badge-declined { background: #fdecea; color: #c62828; }
   .prop-badge-expired  { background: #f5f5f5; color: #aaa; }
+
+  /* ── Alert modal ── */
+  .cr-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  .cr-modal-overlay.open { display: flex; }
+  .cr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 28px 22px;
+    max-width: 340px;
+    width: calc(100% - 40px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    text-align: center;
+    animation: cr-modal-in .18s ease;
+  }
+  @keyframes cr-modal-in {
+    from { transform: scale(.92); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .cr-modal-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  .cr-modal-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+  }
+  .cr-modal-body {
+    font-size: .85rem;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .cr-modal-ok {
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 28px;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+    font-family: inherit;
+  }
+  .cr-modal-ok:hover { background: #145e3a; }
 </style>
 {% endblock %}
 
@@ -418,34 +473,157 @@
 <span id="conv-id" style="display:none">{{ conv.pk }}</span>
 <span id="last-proposal-pk" style="display:none">{% if proposals %}{{ proposals.last.pk }}{% else %}0{% endif %}</span>
 <meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- Alert modal (replaces browser alert()) -->
+<div class="cr-modal-overlay" id="cr-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cr-modal-title">
+  <div class="cr-modal">
+    <div class="cr-modal-icon" id="cr-modal-icon">⚠️</div>
+    <div class="cr-modal-title" id="cr-modal-title"></div>
+    <div class="cr-modal-body"  id="cr-modal-body"></div>
+    <button class="cr-modal-ok" id="cr-modal-ok">OK</button>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 (function () {
-  const input    = document.getElementById('chat-input');
-  const list     = document.getElementById('msg-list');
-  const form     = document.getElementById('send-form');
-  const convId   = parseInt(document.getElementById('conv-id').textContent.trim());
-  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  'use strict';
 
-  let isSending  = false;
+  // ── DOM refs ──────────────────────────────────────────────
+  const input      = document.getElementById('chat-input');
+  const list       = document.getElementById('msg-list');
+  const form       = document.getElementById('send-form');
+  const convId     = parseInt(document.getElementById('conv-id').textContent.trim(), 10);
+  const csrfToken  = document.querySelector('meta[name="csrf-token"]').content;
+  const scrollKey  = 'chat-scroll-' + convId;
 
-  // Auto-resize
+  // ── Modal helper (replaces browser alert()) ───────────────
+  const modalOverlay = document.getElementById('cr-modal-overlay');
+  const modalTitle   = document.getElementById('cr-modal-title');
+  const modalBody    = document.getElementById('cr-modal-body');
+  const modalIcon    = document.getElementById('cr-modal-icon');
+  const modalOkBtn   = document.getElementById('cr-modal-ok');
+
+  function showModal(message, title, icon) {
+    modalIcon.textContent  = icon  || '⚠️';
+    modalTitle.textContent = title || 'Notice';
+    modalBody.textContent  = message;
+    modalOverlay.classList.add('open');
+    modalOkBtn.focus();
+  }
+
+  modalOkBtn.addEventListener('click', function () {
+    modalOverlay.classList.remove('open');
+  });
+  // Close on backdrop click
+  modalOverlay.addEventListener('click', function (e) {
+    if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+  });
+  // Close on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') modalOverlay.classList.remove('open');
+  });
+
+  // ── Shared cursor — single source of truth for both send & poll ──
+  // Initialised from the page (last pk rendered server-side, or 0).
+  let lastMsgPk = parseInt(
+    document.getElementById('last-msg-pk').textContent.trim() || '0', 10
+  ) || 0;
+
+  // ── Sending state ─────────────────────────────────────────
+  let isSending = false;
+
+  // ── Textarea auto-resize ──────────────────────────────────
   input.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 100) + 'px';
   });
 
-  function scrollToBottom() { list.scrollTop = list.scrollHeight; }
-  scrollToBottom();
+  // ── Scroll helpers ────────────────────────────────────────
+  function isNearBottom() {
+    return list.scrollHeight - list.scrollTop - list.clientHeight < 100;
+  }
+  function scrollToBottom() {
+    list.scrollTop = list.scrollHeight;
+  }
 
-  function updateLastPk() {
+  // ── Scroll persistence ────────────────────────────────────
+  // Save immediately (no debounce) on the events that matter.
+  function saveScroll() {
+    try {
+      sessionStorage.setItem(scrollKey, String(Math.round(list.scrollTop)));
+    } catch (_) {}
+  }
+
+  function restoreScroll() {
+    try {
+      const saved = parseInt(sessionStorage.getItem(scrollKey), 10);
+      if (Number.isFinite(saved) && saved > 0) {
+        // Clamp to the current scrollable range
+        const max = Math.max(0, list.scrollHeight - list.clientHeight);
+        list.scrollTop = Math.min(saved, max);
+        return;
+      }
+    } catch (_) {}
+    // No saved position → start at the bottom
+    scrollToBottom();
+  }
+
+  // Throttled scroll save (no more than once per 150 ms while scrolling)
+  let scrollTimer = null;
+  list.addEventListener('scroll', function () {
+    if (scrollTimer) return;
+    scrollTimer = setTimeout(function () {
+      scrollTimer = null;
+      saveScroll();
+    }, 150);
+  }, { passive: true });
+
+  // Always flush before the page goes away
+  window.addEventListener('pagehide',        saveScroll);
+  window.addEventListener('beforeunload',    saveScroll);
+  // Also save when the tab is hidden (mobile background, tab switch)
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) saveScroll();
+  });
+
+  // Restore after the browser has painted (layout is stable)
+  requestAnimationFrame(function () {
+    requestAnimationFrame(restoreScroll);   // double rAF ensures height is settled
+  });
+
+  // ── DOM deduplication helper ──────────────────────────────
+  // Insert HTML fragments only if their id is not already in the list.
+  // Returns true if at least one new node was added.
+  function insertNewNodes(html, container) {
+    if (!html || !html.trim()) return false;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    let added = false;
+    // Walk direct children (each message row / proposal row)
+    Array.from(tmp.children).forEach(function (node) {
+      const id = node.id;
+      if (id && document.getElementById(id)) {
+        // Already present — skip (dedup)
+        return;
+      }
+      container.appendChild(node);
+      added = true;
+    });
+    return added;
+  }
+
+  // Advance the shared cursor to the highest msg-{pk} id currently in the DOM
+  function syncLastPk() {
     const bubbles = list.querySelectorAll('[id^="msg-"]');
-    if (bubbles.length) {
-      const lastId = bubbles[bubbles.length - 1].id.replace('msg-', '');
-      document.getElementById('last-msg-pk').textContent = lastId;
-    }
+    bubbles.forEach(function (el) {
+      const pk = parseInt(el.id.replace('msg-', ''), 10);
+      if (Number.isFinite(pk) && pk > lastMsgPk) lastMsgPk = pk;
+    });
+    // Keep the hidden span in sync (for any code that still reads it)
+    const span = document.getElementById('last-msg-pk');
+    if (span) span.textContent = String(lastMsgPk);
   }
 
   // ── Send message ──────────────────────────────────────────
@@ -456,9 +634,11 @@
     isSending = true;
     input.value = '';
     input.style.height = 'auto';
+
     const btn = form.querySelector('.cr-send-btn');
     if (btn) btn.disabled = true;
 
+    // Remove "no messages" hint if present
     const hint = document.getElementById('empty-hint');
     if (hint) hint.remove();
 
@@ -466,21 +646,37 @@
     fd.append('body', body);
     fd.append('csrfmiddlewaretoken', csrfToken);
 
-    fetch(`/chatbot/messages/${convId}/send/`, {
+    fetch('/chatbot/messages/' + convId + '/send/', {
       method: 'POST',
-      headers: {'X-Requested-With': 'XMLHttpRequest'},
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
       body: fd,
     })
-    .then(r => r.text())
-    .then(html => {
-      if (html.trim()) {
-        list.insertAdjacentHTML('beforeend', html);
-        updateLastPk();
+    .then(function (r) {
+      if (!r.ok) throw new Error('send failed: ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data.ok) return;
+
+      // Advance the cursor BEFORE inserting so the next poll call skips this pk
+      if (data.pk && data.pk > lastMsgPk) lastMsgPk = data.pk;
+      syncLastPk();   // also scan DOM in case rounding differences
+
+      // Only insert if not already in DOM (duplicate-safe)
+      if (data.html && !document.getElementById('msg-' + data.pk)) {
+        list.insertAdjacentHTML('beforeend', data.html);
+        syncLastPk();
         scrollToBottom();
+        saveScroll();
       }
     })
-    .catch(() => { input.value = body; })
-    .finally(() => {
+    .catch(function () {
+      // Restore the unsent text so the user can retry
+      input.value = body;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+    })
+    .finally(function () {
       isSending = false;
       if (btn) btn.disabled = false;
       input.focus();
@@ -501,71 +697,100 @@
     }
   });
 
-  // ── Poll messages every 2s ────────────────────────────────
+  // ── Poll messages every 2 s ───────────────────────────────
+  // The server now returns ALL new messages (mine + theirs) after `after`.
+  // We deduplicate by DOM id so there are never double bubbles.
+  let pollActive = false;
+
   function poll() {
-    const after = document.getElementById('last-msg-pk').textContent.trim() || '0';
-    fetch(`/chatbot/messages/${convId}/poll/?after=${after}`, {
-      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    if (pollActive) return;   // skip if a previous request is still in flight
+    pollActive = true;
+
+    fetch('/chatbot/messages/' + convId + '/poll/?after=' + lastMsgPk, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
-    .then(r => r.text())
-    .then(html => {
-      if (!html.trim()) return;
-      list.insertAdjacentHTML('beforeend', html);
-      updateLastPk();
-      scrollToBottom();
-    });
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      if (!html || !html.trim()) return;
+      const wasNearBottom = isNearBottom();
+      const added = insertNewNodes(html, list);
+      if (added) {
+        syncLastPk();
+        if (wasNearBottom) {
+          scrollToBottom();
+          saveScroll();
+        }
+      }
+    })
+    .catch(function () { /* network hiccup — try again next tick */ })
+    .finally(function () { pollActive = false; });
   }
+
   setInterval(poll, 2000);
 
-  // ── Poll proposals every 3s ───────────────────────────────
-  let lastProposalPk = parseInt(document.getElementById('last-proposal-pk').textContent.trim() || '0');
+  // ── Poll proposals every 3 s ─────────────────────────────
+  let lastProposalPk = parseInt(
+    document.getElementById('last-proposal-pk').textContent.trim() || '0', 10
+  ) || 0;
+  let propPollActive = false;
 
   function pollProposals() {
-    fetch(`/chatbot/messages/${convId}/proposals/poll/?after=${lastProposalPk}`, {
-      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    if (propPollActive) return;
+    propPollActive = true;
+
+    fetch('/chatbot/messages/' + convId + '/proposals/poll/?after=' + lastProposalPk, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
-    .then(r => r.text())
-    .then(html => {
-      if (!html.trim()) return;
-      // Update existing proposal cards or append new ones
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      if (!html || !html.trim()) return;
+      const wasNearBottom = isNearBottom();
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
-      tmp.querySelectorAll('[id^="proposal-"]').forEach(newCard => {
+      let added = false;
+      tmp.querySelectorAll('[id^="proposal-"]').forEach(function (newCard) {
         const existing = document.getElementById(newCard.id);
         if (existing) {
+          // Update status on existing card (e.g. pending → accepted)
           existing.replaceWith(newCard);
         } else {
           list.appendChild(newCard);
-          const pk = parseInt(newCard.id.replace('proposal-', ''));
-          if (pk > lastProposalPk) lastProposalPk = pk;
-          scrollToBottom();
+          added = true;
         }
+        const pk = parseInt(newCard.id.replace('proposal-', ''), 10);
+        if (Number.isFinite(pk) && pk > lastProposalPk) lastProposalPk = pk;
       });
-      // update the hidden span
-      document.getElementById('last-proposal-pk').textContent = lastProposalPk;
-    });
+      document.getElementById('last-proposal-pk').textContent = String(lastProposalPk);
+      if (added && wasNearBottom) {
+        scrollToBottom();
+        saveScroll();
+      }
+    })
+    .catch(function () {})
+    .finally(function () { propPollActive = false; });
   }
+
   setInterval(pollProposals, 3000);
 
   // ── Proposal panel (caregiver only) ──────────────────────
-  const toggleBtn  = document.getElementById('proposal-toggle');
-  const panel      = document.getElementById('proposal-panel');
-  const cancelBtn  = document.getElementById('proposal-cancel');
-  const submitBtn  = document.getElementById('proposal-submit');
+  const toggleBtn = document.getElementById('proposal-toggle');
+  const panel     = document.getElementById('proposal-panel');
+  const cancelBtn = document.getElementById('proposal-cancel');
+  const submitBtn = document.getElementById('proposal-submit');
 
   if (toggleBtn && panel) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', function () {
       panel.classList.toggle('open');
     });
-    cancelBtn.addEventListener('click', () => {
+    cancelBtn.addEventListener('click', function () {
       panel.classList.remove('open');
     });
-    submitBtn.addEventListener('click', () => {
+    submitBtn.addEventListener('click', function () {
       const rate = parseFloat(document.getElementById('prop-rate').value);
       const msg  = document.getElementById('prop-msg').value.trim();
 
       if (!rate || rate <= 0) {
-        alert('Please enter a valid hourly rate.');
+        showModal('Please enter a valid hourly rate.', 'Invalid Rate', '💰');
         return;
       }
 
@@ -577,28 +802,35 @@
       fd.append('rate', rate.toFixed(2));
       fd.append('message', msg);
 
-      fetch(`/chatbot/messages/${convId}/proposals/send/`, {
+      fetch('/chatbot/messages/' + convId + '/proposals/send/', {
         method: 'POST',
-        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: fd,
       })
-      .then(r => r.json())
-      .then(data => {
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
         if (data.html) {
           const hint = document.getElementById('empty-hint');
           if (hint) hint.remove();
-          list.insertAdjacentHTML('beforeend', data.html);
-          const pk = data.proposal_pk;
-          if (pk > lastProposalPk) lastProposalPk = pk;
-          document.getElementById('last-proposal-pk').textContent = lastProposalPk;
+          // Only insert if not already present
+          if (!document.getElementById('proposal-' + data.proposal_pk)) {
+            list.insertAdjacentHTML('beforeend', data.html);
+          }
+          const pk = parseInt(data.proposal_pk, 10);
+          if (Number.isFinite(pk) && pk > lastProposalPk) lastProposalPk = pk;
+          document.getElementById('last-proposal-pk').textContent = String(lastProposalPk);
           scrollToBottom();
+          saveScroll();
         }
         panel.classList.remove('open');
         document.getElementById('prop-rate').value = '';
         document.getElementById('prop-msg').value  = '';
       })
-      .catch(err => { console.error(err); alert('Failed to send proposal.'); })
-      .finally(() => {
+      .catch(function (err) {
+        console.error(err);
+        showModal('Failed to send proposal. Please try again.', 'Send Failed', '❌');
+      })
+      .finally(function () {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Proposal';
       });
