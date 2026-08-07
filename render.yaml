@@ -14,6 +14,12 @@ services:
         value: getmecare-ontario.onrender.com,localhost,127.0.0.1
       - key: GROQ_API_KEY
         sync: false
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: IMAGEKIT_PUBLIC_KEY
+        sync: false
+      - key: IMAGEKIT_URL_ENDPOINT
+        sync: false
 
 databases:
   - name: getmecare-db

@@ -18,7 +18,7 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1b3060, #3060c0);
+    background: linear-gradient(135deg, #0d6b3d, #1aab5c);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,16 +39,16 @@
     margin-bottom: 24px;
   }
   .ep-price-box {
-    background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+    background: linear-gradient(135deg, #edfcf3, #d4f7e3);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
-    border: 2px solid #dbeafe;
+    border: 2px solid #b4ecc8;
   }
   .ep-price {
     font-size: 2.5rem;
     font-weight: 800;
-    color: #1b3060;
+    color: #0d6b3d;
     line-height: 1;
     margin-bottom: 6px;
   }
@@ -75,7 +75,7 @@
   .ep-activate-btn {
     display: block;
     width: 100%;
-    background: #1b3060;
+    background: #0d6b3d;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -87,7 +87,7 @@
     transition: background .15s, opacity .15s;
   }
   .ep-activate-btn:hover {
-    background: #132448;
+    background: #095230;
     opacity: 0.95;
   }
   .ep-cancel-link {
@@ -128,11 +128,15 @@
     <form method="post">
       {% csrf_token %}
       <button type="submit" class="ep-activate-btn">
-        <i class="fas fa-lock"></i> Pay Now & Activate
+        <i class="fas fa-lock"></i> Pay Now & Activate via Fincra
       </button>
     </form>
 
     <a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
+    <p style="margin-top:12px;font-size:.75rem;color:#bbb">
+      Payments are securely processed by <strong>Fincra</strong>.<br>
+      GetMeCare never stores your card details.
+    </p>
   </div>
 </div>
 {% endblock %}

@@ -181,8 +181,13 @@
   <div class="cl-empty">
     <i class="fas fa-comment-slash"></i>
     <strong style="color:#555;font-size:1rem;display:block;margin-bottom:6px">No conversations yet</strong>
+    {% if request.user.role == 'caregiver' %}
+    <p>Browse available jobs and reach out to employers.</p>
+    <a href="{% url 'browse_jobs' %}" style="display:inline-block;margin-top:16px;background:#1b7d4f;color:#fff;padding:10px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">Browse Jobs</a>
+    {% else %}
     <p>Browse caregivers and click <strong>Chat</strong> to start a conversation.</p>
     <a href="{% url 'browse' %}" style="display:inline-block;margin-top:16px;background:#1b7d4f;color:#fff;padding:10px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">Browse Caregivers</a>
+    {% endif %}
   </div>
   {% endif %}
 </div>

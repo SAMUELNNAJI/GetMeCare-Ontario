@@ -392,7 +392,7 @@ class EmployerProfile(models.Model):
     is_active          = models.BooleanField(default=False,
                          help_text='True after one-time activation fee is paid')
     activation_paid_at = models.DateTimeField(null=True, blank=True)
-    # Stripe / payment reference (filled when real payment is integrated)
+    # Fincra payment reference (filled when real payment is processed)
     payment_reference  = models.CharField(max_length=200, blank=True)
     created_at         = models.DateTimeField(auto_now_add=True)
     updated_at         = models.DateTimeField(auto_now=True)
@@ -513,7 +513,7 @@ class EmployerPayment(models.Model):
     payment_reference = models.CharField(
         max_length=200,
         blank=True,
-        help_text='Stripe / simulated payment reference',
+        help_text='Fincra / simulated payment reference',
     )
     # Optional link to the shift this payment covers (null for activation fee)
     shift             = models.ForeignKey(

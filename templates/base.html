@@ -159,7 +159,7 @@
         <div class="footer-col">
           <h5>FOR FAMILIES</h5>
           <ul>
-            <li><a href="#">Post a Care Request</a></li>
+            <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.role == 'employer' %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" {% if user.is_authenticated and user.role != 'employer' %}onclick="handlePostCareRequest(); return false;"{% endif %}>Post a Care Request</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
           </ul>
@@ -215,6 +215,45 @@
           .forEach((a) => a.addEventListener("click", closeMenu));
         window.addEventListener("resize", () => {
           if (window.innerWidth > 680) closeMenu();
+        });
+      })();
+    </script>
+
+    <!-- ===================== CARE REQUEST POPUP ===================== -->
+    <div class="care-request-popup-overlay" id="careRequestPopup" style="display:none;">
+      <div class="care-request-popup-box">
+        <button class="care-request-popup-close" id="careRequestPopupClose" aria-label="Close">&times;</button>
+        <div class="care-request-popup-icon"><i class="fas fa-info-circle"></i></div>
+        <h3 class="care-request-popup-title">Caregivers Cannot Post Care Requests</h3>
+        <p class="care-request-popup-msg">
+          Only employers (families or individuals seeking care) can post care requests.
+          As a caregiver, you can <strong>browse available jobs</strong> and apply to care requests posted by employers.
+        </p>
+        <a href="{% url 'browse_jobs' %}" class="care-request-popup-btn">
+          <i class="fas fa-briefcase"></i> Browse Jobs Instead
+        </a>
+      </div>
+    </div>
+
+    <script>
+      function handlePostCareRequest() {
+        const overlay = document.getElementById('careRequestPopup');
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      (function() {
+        const overlay = document.getElementById('careRequestPopup');
+        const closeBtn = document.getElementById('careRequestPopupClose');
+        function closePopup() {
+          overlay.style.display = 'none';
+          document.body.style.overflow = '';
+        }
+        closeBtn.addEventListener('click', closePopup);
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) closePopup();
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && overlay.style.display === 'flex') closePopup();
         });
       })();
     </script>

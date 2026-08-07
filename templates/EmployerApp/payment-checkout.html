@@ -48,9 +48,9 @@
     margin-bottom:22px;
     background:#fafcf9;
   }
-  .stripe-placeholder i { font-size:2rem; color:#bbb; display:block; margin-bottom:8px; }
-  .stripe-placeholder p { font-size:.8rem; color:#aaa; margin:0; }
-  .stripe-placeholder strong { font-size:.85rem; color:#555; display:block; margin-bottom:6px; }
+  .stripe-placeholder i { font-size:2rem; color:#1b7d4f; display:block; margin-bottom:8px; }
+  .stripe-placeholder p { font-size:.8rem; color:#555; margin:0; }
+  .stripe-placeholder strong { font-size:.85rem; color:#1b3a2d; display:block; margin-bottom:6px; }
 
   .co-pay-btn {
     width:100%;
@@ -162,20 +162,20 @@
         <span class="co-total-val">${{ total_charge }}</span>
       </div>
 
-      <!-- Stripe placeholder -->
+      <!-- Fincra payment info -->
       <div class="stripe-placeholder">
-        <i class="fab fa-stripe" style="color:#635bff;font-size:2.5rem"></i>
-        <strong>Stripe Payment — Coming Soon</strong>
-        <p>Card processing via Stripe will be integrated here.<br>
-           Click "Confirm Booking" below to simulate a successful payment.</p>
+        <i class="fas fa-credit-card" style="color:#1b7d4f;font-size:2.5rem"></i>
+        <strong>Secure Payment via Fincra</strong>
+        <p>Click "Pay Now" below to be redirected to Fincra's secure<br>
+           checkout page to complete your card payment.</p>
       </div>
 
-      <!-- Pay button (simulates payment for now) -->
-      <form method="post" action="{% url 'EmployerApp:confirm_payment' shift.pk %}">
+      <!-- Pay button — POST triggers Fincra checkout redirect -->
+      <form method="post" action="{% url 'EmployerApp:payment_checkout' shift.pk %}">
         {% csrf_token %}
         <button type="submit" class="co-pay-btn">
           <i class="fas fa-lock lock-icon"></i>
-          Confirm Booking — Pay ${{ total_charge }}
+          Pay Now — ${{ total_charge }}
         </button>
       </form>
 
@@ -185,7 +185,7 @@
 
       <div class="co-secure-note">
         <i class="fas fa-shield-alt"></i>
-        Payments are secured by Stripe. GetMeCare never stores card details.
+        Payments are secured by Fincra. GetMeCare never stores card details.
       </div>
     </div>
   </div>

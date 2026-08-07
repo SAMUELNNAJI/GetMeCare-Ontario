@@ -510,11 +510,11 @@ def _get_chat_block_reason(user):
         try:
             profile = user.caregiver_profile
         except CaregiverProfile.DoesNotExist:
-            return ('caregiver_dashboard',
+            return ('Account:caregiver_dashboard',
                     "Your caregiver profile is not set up yet. Please complete your profile before messaging.")
         if profile.status != CaregiverProfile.STATUS_ACTIVE:
             status_label = profile.get_status_display()
-            return ('caregiver_dashboard',
+            return ('Account:caregiver_dashboard',
                     f"Your account is currently {status_label}. "
                     "You will be able to message employers once your account is activated by an admin.")
 
@@ -522,10 +522,10 @@ def _get_chat_block_reason(user):
         try:
             profile = user.employer_profile
         except EmployerProfile.DoesNotExist:
-            return ('activate_account',
+            return ('EmployerApp:activate_account',
                     "Please activate your employer account before messaging caregivers.")
         if not profile.is_active:
-            return ('activate_account',
+            return ('EmployerApp:activate_account',
                     "Your employer account is not yet activated. "
                     "Please complete activation to message caregivers.")
 

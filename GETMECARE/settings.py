@@ -150,13 +150,39 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Custom user model
 AUTH_USER_MODEL = 'Account.CustomUser'
 
-# Media files (user uploads)
-import os
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# ── Media files (user uploads) ──────────────────────────────────
+# In production (Render):  uploads go to ImageKit so they survive deploys.
+# In development (local):  uploads stay in the media/ folder.
+IMAGEKIT_PRIVATE_KEY  = os.getenv('IMAGEKIT_PRIVATE_KEY', '')
+IMAGEKIT_PUBLIC_KEY   = os.getenv('IMAGEKIT_PUBLIC_KEY', '')
+IMAGEKIT_URL_ENDPOINT = os.getenv('IMAGEKIT_URL_ENDPOINT', '')
+IMAGEKIT_FOLDER       = os.getenv('IMAGEKIT_FOLDER', 'getmecare')
+
+if IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT and not DEBUG:
+    # Production — ImageKit cloud storage
+    DEFAULT_FILE_STORAGE = 'GETMECARE.imagekit_storage.ImageKitStorage'
+    MEDIA_URL = '/media/'
+else:
+    # Development — local disk
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Groq API Configuration
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+# ── Fincra Payment Gateway ──────────────────────────────────
+FINCRA_SECRET_KEY    = os.getenv('FINCRA_SECRET_KEY')
+FINCRA_PUBLIC_KEY    = os.getenv('FINCRA_PUBLIC_KEY')
+FINCRA_WEBHOOK_KEY   = os.getenv('FINCRA_WEBHOOK_KEY')
+FINCRA_BASE_URL      = os.getenv('FINCRA_BASE_URL', 'https://sandboxapi.fincra.com')
+FINCRA_BUSINESS_ID   = os.getenv('FINCRA_BUSINESS_ID', '')
+# Currency used for Fincra checkout.  NGN supports card, bank_transfer and
+# payAttitude.  USD only supports card.  When using NGN, USD prices are
+# auto-converted using FINCRA_USD_TO_NGN_RATE.
+FINCRA_CURRENCY      = os.getenv('FINCRA_CURRENCY', 'USD')
+# Approximate USD→NGN rate used for checkout conversion.
+# Update this periodically to match the real market rate.
+FINCRA_USD_TO_NGN_RATE = float(os.getenv('FINCRA_USD_TO_NGN_RATE', '1580'))
 
 # Security settings for production
 if not DEBUG:

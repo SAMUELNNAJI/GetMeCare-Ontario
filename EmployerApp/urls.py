@@ -19,4 +19,12 @@ urlpatterns = [
     # Disputes
     path('employer/disputes/',                            views.my_disputes,       name='my_disputes'),
     path('employer/disputes/submit/',                     views.submit_dispute,    name='submit_dispute'),
+    # ── Fincra payment callbacks (redirect after hosted checkout) ──────────────
+    path('employer/fincra/activation/callback/',
+         views.fincra_activation_callback,  name='fincra_activation_callback'),
+    path('employer/fincra/booking/<int:shift_pk>/callback/',
+         views.fincra_booking_callback,     name='fincra_booking_callback'),
+    # Fincra webhook — called by Fincra's servers (not the browser)
+    path('webhooks/fincra/',
+         views.fincra_webhook,              name='fincra_webhook'),
 ]

@@ -2,11 +2,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, JsonResponse
 import datetime
+import json
+import logging
 from decimal import Decimal
 
 from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute
 from Account.forms import JobPostingForm
+from EmployerApp import fincra_payments
+
+logger = logging.getLogger(__name__)
 
 
 def employer_required(view_func):
@@ -189,37 +196,116 @@ def close_job(request, job_id):
 
 @employer_required
 def activate_account(request):
-    """Simulate payment — in production wire this to Stripe."""
+    """Initiate a Fincra hosted checkout for the one-time activation fee."""
     ctx = _employer_ctx(request.user)
 
     if request.method == 'POST':
-        # Simulated successful payment
-        profile = ctx['emp_profile']
+        reference = fincra_payments.generate_reference(prefix='ACT')
+
+        # Build the redirect URL where Fincra sends the customer after paying
+        from django.urls import reverse
+        redirect_url = request.build_absolute_uri(
+            reverse('EmployerApp:fincra_activation_callback')
+        )
+
+        full_name = (
+            f'{request.user.first_name} {request.user.last_name}'.strip()
+            or request.user.username
+        )
+
+        try:
+            result = fincra_payments.initiate_checkout(
+                amount        = float(EmployerProfile.ACTIVATION_FEE),
+                customer_name = full_name,
+                customer_email= request.user.email,
+                reference     = reference,
+                redirect_url  = redirect_url,
+                metadata      = {
+                    'user_id':      request.user.pk,
+                    'payment_type': EmployerPayment.TYPE_ACTIVATION,
+                },
+                description   = 'GetMeCare — One-time account activation fee',
+            )
+
+            # Stash the reference in the session so the callback can pick it up
+            request.session['fincra_activation_ref'] = reference
+
+            # Redirect the employer to Fincra's hosted checkout page
+            checkout_link = result['data']['link']
+            return redirect(checkout_link)
+
+        except Exception as exc:
+            logger.exception('Fincra activation checkout failed')
+            print(f'\n[FINCRA ERROR] {exc}\n')  # visible in terminal
+            messages.error(
+                request,
+                f'Unable to start payment session: {exc}. Please try again.',
+            )
+            return redirect('EmployerApp:activate_account')
+
+    return render(request, 'EmployerApp/activate.html', ctx)
+
+
+@employer_required
+def fincra_activation_callback(request):
+    """Handle the redirect back from Fincra after activation fee payment.
+
+    Fincra appends ?reference=<merchant_ref>&status=<status> to the redirectUrl.
+    We verify the payment server-side before activating the account.
+    """
+    reference = (
+        request.GET.get('reference')
+        or request.session.get('fincra_activation_ref', '')
+    )
+
+    if not reference:
+        messages.error(request, 'Payment reference not found. Please try again.')
+        return redirect('EmployerApp:activate_account')
+
+    try:
+        result   = fincra_payments.verify_payment(reference)
+        pay_data = result.get('data', {})
+        status   = pay_data.get('status', '').lower()
+    except Exception as exc:
+        logger.exception('Fincra activation verify failed: ref=%s', reference)
+        messages.error(request, 'Could not verify payment. Please contact support.')
+        return redirect('EmployerApp:activate_account')
+
+    if status != 'success':
+        messages.error(
+            request,
+            f'Payment was not successful (status: {status or "unknown"}). '
+            'Please try again or contact support.',
+        )
+        return redirect('EmployerApp:activate_account')
+
+    # ── Payment confirmed — activate the account ──────────────────────────────
+    profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
+    if not profile.is_active:
         profile.is_active          = True
         profile.activation_paid_at = timezone.now()
-        ref = f'SIM-{request.user.pk}-{int(timezone.now().timestamp())}'
-        profile.payment_reference  = ref
+        profile.payment_reference  = reference
         profile.save()
 
-        # Record the activation payment
         EmployerPayment.objects.create(
             employer          = request.user,
             payment_type      = EmployerPayment.TYPE_ACTIVATION,
             amount            = EmployerProfile.ACTIVATION_FEE,
             status            = EmployerPayment.STATUS_COMPLETED,
-            payment_reference = ref,
-            description       = 'One-time account activation fee',
+            payment_reference = reference,
+            description       = 'One-time account activation fee (Fincra)',
         )
 
-        # Clear the modal-dismissed flag so the dashboard knows account is now active
-        request.session.pop('modal_dismissed', None)
-        messages.success(
-            request,
-            'Account activated! You can now post job offers and connect with caregivers.'
-        )
-        return redirect('EmployerApp:dashboard')
+    # Clean up session flag
+    request.session.pop('fincra_activation_ref', None)
+    request.session.pop('modal_dismissed', None)
 
-    return render(request, 'EmployerApp/activate.html', ctx)
+    messages.success(
+        request,
+        'Payment confirmed! Your account is now active. '
+        'You can post job offers and connect with caregivers.',
+    )
+    return redirect('EmployerApp:dashboard')
 
 
 @employer_required
@@ -329,7 +415,7 @@ def book_caregiver(request, proposal_pk):
 
 @employer_required
 def payment_checkout(request, shift_pk):
-    """Show the Stripe payment placeholder for a newly created shift."""
+    """Show the payment summary and initiate a Fincra hosted checkout for a shift booking."""
     shift = get_object_or_404(
         Shift,
         pk=shift_pk,
@@ -340,6 +426,52 @@ def payment_checkout(request, shift_pk):
     duration_hrs = shift.duration_hours or Decimal('0')
     total_charge = round(duration_hrs * shift.hourly_rate, 2)
 
+    # Handle POST — employer clicked "Pay Now" → initiate Fincra checkout
+    if request.method == 'POST':
+        from django.urls import reverse
+
+        reference    = fincra_payments.generate_reference(prefix='BOOK')
+        redirect_url = request.build_absolute_uri(
+            reverse('EmployerApp:fincra_booking_callback', kwargs={'shift_pk': shift.pk})
+        )
+
+        full_name = (
+            f'{request.user.first_name} {request.user.last_name}'.strip()
+            or request.user.username
+        )
+
+        try:
+            result = fincra_payments.initiate_checkout(
+                amount        = float(total_charge),
+                customer_name = full_name,
+                customer_email= request.user.email,
+                reference     = reference,
+                redirect_url  = redirect_url,
+                metadata      = {
+                    'user_id':      request.user.pk,
+                    'shift_id':     shift.pk,
+                    'payment_type': EmployerPayment.TYPE_BOOKING,
+                },
+                description   = (
+                    f'GetMeCare — Shift #{shift.pk} booking, '
+                    f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr'
+                ),
+            )
+
+            # Store the reference in session for the callback
+            request.session['fincra_booking_ref']   = reference
+            request.session['fincra_booking_shift'] = shift.pk
+
+            return redirect(result['data']['link'])
+
+        except Exception as exc:
+            logger.exception('Fincra booking checkout failed')
+            messages.error(
+                request,
+                f'Unable to start payment session: {exc}. Please try again.',
+            )
+
+    # GET — render the checkout summary page (employer clicks "Pay Now" here)
     ctx = _employer_ctx(request.user)
     ctx.update({
         'shift':        shift,
@@ -350,59 +482,90 @@ def payment_checkout(request, shift_pk):
 
 
 @employer_required
-def confirm_payment(request, shift_pk):
-    """Simulate a successful Stripe payment.
-       Marks the proposal as booked, records payment reference, and redirects to employer shifts.
-    """
-    if request.method != 'POST':
-        return redirect('EmployerApp:my_shifts')
+def fincra_booking_callback(request, shift_pk):
+    """Handle the redirect back from Fincra after a shift-booking payment.
 
-    shift = get_object_or_404(
-        Shift,
-        pk=shift_pk,
-        employer=request.user,
-        status=Shift.STATUS_SCHEDULED,
+    Fincra appends ?reference=<merchant_ref>&status=<status> to the redirectUrl.
+    We verify the payment server-side before marking the booking as confirmed.
+    """
+    shift = get_object_or_404(Shift, pk=shift_pk, employer=request.user)
+
+    reference = (
+        request.GET.get('reference')
+        or request.session.get('fincra_booking_ref', '')
     )
 
-    # Mark proposal as booked
+    if not reference:
+        messages.error(request, 'Payment reference not found. Please contact support.')
+        return redirect('EmployerApp:my_shifts')
+
     try:
-        proposal = shift.booking_proposal
-        proposal.status = BookingProposal.STATUS_BOOKED
-        proposal.save(update_fields=['status', 'updated_at'])
-    except Exception:
-        pass  # proposal may not exist if shift was created manually by admin
+        result   = fincra_payments.verify_payment(reference)
+        pay_data = result.get('data', {})
+        status   = pay_data.get('status', '').lower()
+    except Exception as exc:
+        logger.exception('Fincra booking verify failed: ref=%s', reference)
+        messages.error(request, 'Could not verify payment. Please contact support.')
+        return redirect('EmployerApp:my_shifts')
 
-    # Calculate shift total from duration_hours stored on the shift
-    import datetime as _dt
-    duration_hrs = shift.duration_hours or Decimal('0')
-    total_charge = round(duration_hrs * shift.hourly_rate, 2)
+    if status != 'success':
+        messages.error(
+            request,
+            f'Payment was not successful (status: {status or "unknown"}). '
+            'Please try again or contact support.',
+        )
+        return redirect('EmployerApp:payment_checkout', shift_pk=shift.pk)
 
-    # Record simulated payment reference on EmployerProfile
-    emp_profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
-    ref = f'SIM-BOOKING-{shift.pk}-{int(timezone.now().timestamp())}'
-    emp_profile.payment_reference = ref
-    emp_profile.save(update_fields=['payment_reference', 'updated_at'])
+    # ── Payment confirmed ──────────────────────────────────────────────────────
+    # Guard against double-processing (webhook may have already done this)
+    already_recorded = EmployerPayment.objects.filter(
+        payment_reference=reference
+    ).exists()
 
-    # Record the booking payment
-    EmployerPayment.objects.create(
-        employer          = request.user,
-        payment_type      = EmployerPayment.TYPE_BOOKING,
-        amount            = total_charge,
-        status            = EmployerPayment.STATUS_COMPLETED,
-        payment_reference = ref,
-        shift             = shift,
-        description       = (
-            f'Shift #{shift.pk} — {shift.caregiver.get_full_name()}, '
-            f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr'
-        ),    )
+    if not already_recorded:
+        # Mark proposal as booked
+        try:
+            proposal = shift.booking_proposal
+            proposal.status = BookingProposal.STATUS_BOOKED
+            proposal.save(update_fields=['status', 'updated_at'])
+        except Exception:
+            pass
+
+        duration_hrs = shift.duration_hours or Decimal('0')
+        total_charge = round(duration_hrs * shift.hourly_rate, 2)
+
+        EmployerPayment.objects.create(
+            employer          = request.user,
+            payment_type      = EmployerPayment.TYPE_BOOKING,
+            amount            = total_charge,
+            status            = EmployerPayment.STATUS_COMPLETED,
+            payment_reference = reference,
+            shift             = shift,
+            description       = (
+                f'Shift #{shift.pk} — {shift.caregiver.get_full_name()}, '
+                f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr (Fincra)'
+            ),
+        )
+
+    # Clean up session
+    request.session.pop('fincra_booking_ref', None)
+    request.session.pop('fincra_booking_shift', None)
 
     messages.success(
         request,
         f'Payment confirmed! Shift #{shift.pk} with {shift.caregiver.get_full_name()} '
         f'on {shift.start_date.strftime("%b %d, %Y")} is booked. '
-        f'The caregiver has been notified.'
+        f'The caregiver has been notified.',
     )
     return redirect('EmployerApp:my_shifts')
+
+
+# Keep the old confirm_payment view as a graceful fallback for any stale links.
+# In the new flow the employer is redirected to Fincra's hosted page instead.
+@employer_required
+def confirm_payment(request, shift_pk):
+    """Legacy endpoint — redirects to checkout if accessed directly."""
+    return redirect('EmployerApp:payment_checkout', shift_pk=shift_pk)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -513,3 +676,129 @@ def my_disputes(request):
         'categories':     Dispute.CATEGORY_CHOICES,
     })
     return render(request, 'EmployerApp/my-disputes.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────
+# Fincra Webhook Endpoint
+# Receives charge.successful events from Fincra and records
+# payments that may not have been captured by the redirect flow.
+# ──────────────────────────────────────────────────────────────
+@csrf_exempt
+def fincra_webhook(request):
+    """Process Fincra webhook notifications (charge.successful).
+
+    This endpoint is called by Fincra’s servers whenever a checkout
+    payment succeeds.  It runs independently of the redirect callback
+    so payments are recorded even if the customer closes the browser.
+
+    Signature is validated using HMAC-SHA512 with FINCRA_WEBHOOK_KEY.
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    # ── Validate signature ────────────────────────────────────────────────────
+    signature = request.headers.get('signature', '')
+    if not fincra_payments.validate_webhook_signature(request.body, signature):
+        logger.warning('Fincra webhook rejected: invalid signature')
+        return HttpResponse('Invalid signature', status=400)
+
+    # ── Parse payload ─────────────────────────────────────────────────────────
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid JSON', status=400)
+
+    event = payload.get('event', '')
+    data  = payload.get('data', {})
+
+    if event != 'charge.successful':
+        # We only process successful charge events; acknowledge others silently
+        logger.info('Fincra webhook ignored event: %s', event)
+        return HttpResponse(status=200)
+
+    reference = data.get('reference', '')
+    status    = data.get('status', '').lower()
+    metadata  = data.get('metadata', {})
+
+    if not reference or status != 'success':
+        logger.info('Fincra webhook: reference=%s status=%s — skipped', reference, status)
+        return HttpResponse(status=200)
+
+    # Skip if already processed (by the redirect callback)
+    if EmployerPayment.objects.filter(payment_reference=reference).exists():
+        logger.info('Fincra webhook: payment ref=%s already recorded', reference)
+        return HttpResponse(status=200)
+
+    payment_type = metadata.get('payment_type', '')
+    user_id      = metadata.get('user_id')
+    shift_id     = metadata.get('shift_id')
+
+    # ── Activation fee ────────────────────────────────────────────────────────
+    if payment_type == EmployerPayment.TYPE_ACTIVATION and user_id:
+        from Account.models import CustomUser
+        try:
+            employer = CustomUser.objects.get(pk=user_id, is_employer=True)
+        except CustomUser.DoesNotExist:
+            logger.error('Fincra webhook: employer user_id=%s not found', user_id)
+            return HttpResponse(status=200)
+
+        profile, _ = EmployerProfile.objects.get_or_create(user=employer)
+        if not profile.is_active:
+            profile.is_active          = True
+            profile.activation_paid_at = timezone.now()
+            profile.payment_reference  = reference
+            profile.save()
+
+            EmployerPayment.objects.create(
+                employer          = employer,
+                payment_type      = EmployerPayment.TYPE_ACTIVATION,
+                amount            = EmployerProfile.ACTIVATION_FEE,
+                status            = EmployerPayment.STATUS_COMPLETED,
+                payment_reference = reference,
+                description       = 'One-time account activation fee (Fincra webhook)',
+            )
+            logger.info('Fincra webhook: activation recorded for user %s', user_id)
+
+    # ── Shift booking ─────────────────────────────────────────────────────────
+    elif payment_type == EmployerPayment.TYPE_BOOKING and user_id and shift_id:
+        from Account.models import CustomUser
+        try:
+            employer = CustomUser.objects.get(pk=user_id, is_employer=True)
+            shift    = Shift.objects.get(pk=shift_id)
+        except (CustomUser.DoesNotExist, Shift.DoesNotExist) as exc:
+            logger.error('Fincra webhook: entity not found — %s', exc)
+            return HttpResponse(status=200)
+
+        # Mark proposal as booked
+        try:
+            proposal = shift.booking_proposal
+            if proposal.status != BookingProposal.STATUS_BOOKED:
+                proposal.status = BookingProposal.STATUS_BOOKED
+                proposal.save(update_fields=['status', 'updated_at'])
+        except Exception:
+            pass
+
+        duration_hrs = shift.duration_hours or Decimal('0')
+        total_charge = round(duration_hrs * shift.hourly_rate, 2)
+
+        EmployerPayment.objects.create(
+            employer          = employer,
+            payment_type      = EmployerPayment.TYPE_BOOKING,
+            amount            = total_charge,
+            status            = EmployerPayment.STATUS_COMPLETED,
+            payment_reference = reference,
+            shift             = shift,
+            description       = (
+                f'Shift #{shift.pk} — {shift.caregiver.get_full_name()}, '
+                f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr (Fincra webhook)'
+            ),
+        )
+        logger.info('Fincra webhook: booking payment recorded for shift %s', shift_id)
+
+    else:
+        logger.warning(
+            'Fincra webhook: unrecognised payment_type=%s user_id=%s shift_id=%s',
+            payment_type, user_id, shift_id,
+        )
+
+    return HttpResponse(status=200)
