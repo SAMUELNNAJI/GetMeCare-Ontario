@@ -15,16 +15,16 @@ def _get_total_unread(user):
     """
     try:
         from django.db.models import Q
-        from Chatbot.models import DirectConversation
+        from Chatbot.models import DirectConversation, DirectMessage
         from Account.models import BookingProposal
 
-        # Count unread direct messages across all conversations
-        unread_msgs = 0
-        convs = DirectConversation.objects.filter(
-            Q(participant_1=user) | Q(participant_2=user)
-        )
-        for conv in convs:
-            unread_msgs += conv.unread_count(user)
+        # Count unread direct messages across all conversations in a single query
+        unread_msgs = DirectMessage.objects.filter(
+            conversation__in=DirectConversation.objects.filter(
+                Q(participant_1=user) | Q(participant_2=user)
+            ),
+            is_read=False
+        ).exclude(sender=user).count()
 
         # Count unread proposals (employer only — proposals are sent TO the employer)
         unread_proposals = 0
@@ -69,5 +69,20 @@ def sidebar_context(request):
 
     # Inject unread count for both roles
     ctx['total_unread'] = _get_total_unread(request.user)
+
+    # Add upcoming shifts count for caregivers
+    if role == 'caregiver':
+        try:
+            from Account.models import Shift
+            from django.utils import timezone
+            today = timezone.now().date()
+            upcoming_shifts_count = Shift.objects.filter(
+                caregiver=request.user,
+                status=Shift.STATUS_SCHEDULED,
+                start_date__gte=today,
+            ).count()
+            ctx['upcoming_shifts_count'] = upcoming_shifts_count
+        except Exception:
+            ctx['upcoming_shifts_count'] = 0
 
     return ctx

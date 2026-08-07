@@ -33,6 +33,7 @@
 .cp-btn-primary:hover{background:#142e21;color:#fff}
 .cp-btn-ghost{background:#fff;color:#1b3a2d;border:2px solid #1b3a2d}
 .cp-btn-ghost:hover{background:#f0faf5}
+.cp-btn-disabled{background:#ccc;color:#666;border:2px solid #ccc;cursor:not-allowed}
 
 /* ── Grid layout ── */
 .cp-grid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
@@ -119,7 +120,11 @@
       {% endif %}
       <div class="cp-hero-actions">
         {% if request.user.is_authenticated and request.user.is_employer %}
-        <a href="{% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-primary"><i class="fas fa-comment-dots"></i> Send Message</a>
+        <a href="{% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-primary"><i class="fas fa-comment-dots"></i> Chat Now</a>
+        {% elif request.user.is_authenticated %}
+        <span class="cp-btn cp-btn-disabled" style="opacity:0.6;cursor:not-allowed"><i class="fas fa-comment-dots"></i> Employers Only</span>
+        {% else %}
+        <a href="{% url 'Account:login' %}?next={% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-primary"><i class="fas fa-comment-dots"></i> Chat Now</a>
         {% endif %}
         <a href="{% url 'contact' %}" class="cp-btn cp-btn-ghost"><i class="fas fa-envelope"></i> Contact Us</a>
       </div>
@@ -193,15 +198,21 @@
     <div class="cp-cta-card">
       <h4>Connect with {{ profile.user.first_name }}</h4>
       <p>Send a message to discuss your care needs and get started.</p>
-      <a href="{% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-white"><i class="fas fa-comment-dots"></i> Send Message</a>
+      <a href="{% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-white"><i class="fas fa-comment-dots"></i> Chat Now</a>
       <a href="{% url 'contact' %}" class="cp-btn cp-btn-outline-white"><i class="fas fa-envelope"></i> Contact Support</a>
     </div>
     {% elif not request.user.is_authenticated %}
     <div class="cp-cta-card">
       <h4>Want to connect?</h4>
       <p>Sign in as an employer to send a message to {{ profile.user.first_name }}.</p>
-      <a href="{% url 'Account:login' %}" class="cp-btn cp-btn-white"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+      <a href="{% url 'Account:login' %}?next={% url 'chat_start' profile.user.pk %}" class="cp-btn cp-btn-white"><i class="fas fa-sign-in-alt"></i> Sign In to Chat</a>
       <a href="{% url 'Account:signup' %}" class="cp-btn cp-btn-outline-white" style="margin-top:8px"><i class="fas fa-user-plus"></i> Create Account</a>
+    </div>
+    {% else %}
+    <div class="cp-cta-card" style="opacity:0.8">
+      <h4>Employers Only</h4>
+      <p>Chat functionality is available for employers only.</p>
+      <span class="cp-btn cp-btn-white" style="opacity:0.6;cursor:not-allowed"><i class="fas fa-comment-dots"></i> Chat Unavailable</span>
     </div>
     {% endif %}
 

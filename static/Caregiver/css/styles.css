@@ -1213,15 +1213,18 @@ img {
 
 .stag {
   font-size: 11px;
-  font-weight: 500;
-  color: #4a5568;
-  background: #f0f2f5;
-  padding: 4px 10px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  color: #37474f;
+  background: linear-gradient(135deg, #f0f2f5, #e8eaed);
+  padding: 5px 12px;
+  border-radius: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 .stag:hover {
-  background: #e0e4e8;
+  background: linear-gradient(135deg, #e0e4e8, #d5d9dd);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Footer row: rate + availability */
@@ -2746,21 +2749,22 @@ img {
 .bc-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 .bc-card {
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8faf9 100%);
   border: 1px solid #e8eaed;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   position: relative;
   transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease,
-    border-color 0.3s ease;
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s ease;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 .bc-card::before {
   content: "";
@@ -2768,78 +2772,88 @@ img {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #00897b, #4db6ac);
+  height: 5px;
+  background: linear-gradient(90deg, #00897b, #26a69a, #4db6ac);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
 }
 .bc-card:hover::before {
   opacity: 1;
 }
 .bc-card:hover {
-  box-shadow: 0 12px 40px rgba(0, 137, 123, 0.15);
-  transform: translateY(-4px);
-  border-color: #4db6ac;
+  box-shadow: 0 20px 50px rgba(0, 137, 123, 0.2);
+  transform: translateY(-6px);
+  border-color: #26a69a;
 }
 .bc-card.featured {
   border: 2px solid #00897b;
-  box-shadow: 0 4px 20px rgba(0, 137, 123, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 137, 123, 0.2);
+  background: linear-gradient(135deg, #ffffff 0%, #e8f5f1 100%);
 }
 .bc-card.featured::before {
   opacity: 1;
-  background: linear-gradient(90deg, #00897b, #e5a550);
+  background: linear-gradient(90deg, #00897b, #e5a550, #ff7043);
 }
 .bc-featured-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
   background: linear-gradient(135deg, #00897b, #00695c);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 20px;
+  padding: 6px 14px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 8px rgba(0, 137, 123, 0.3);
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(0, 137, 123, 0.4);
   z-index: 2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .bc-card-top {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 .bc-avatar-wrap {
   position: relative;
   flex-shrink: 0;
 }
 .bc-avatar-wrap img {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   object-fit: cover;
   display: block;
-  border: 3px solid #f0f0f0;
-  transition: border-color 0.3s ease;
+  border: 4px solid #f0f5f3;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .bc-card:hover .bc-avatar-wrap img {
   border-color: #4db6ac;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 137, 123, 0.2);
 }
 .bc-dot {
   position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 14px;
-  height: 14px;
+  bottom: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 3px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+.bc-card:hover .bc-dot {
+  transform: scale(1.1);
 }
 .bc-dot.available {
-  background: #43a047;
+  background: linear-gradient(135deg, #43a047, #66bb6a);
 }
 .bc-meta {
   flex: 1;
@@ -2848,40 +2862,44 @@ img {
 .bc-name-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 .bc-name-row h4 {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #1a2332;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
+  line-height: 1.3;
 }
 .bc-verified {
   color: #00897b;
-  font-size: 14px;
+  font-size: 15px;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 137, 123, 0.2));
 }
 .bc-cred {
-  font-size: 12px;
-  color: #637381;
-  margin-bottom: 4px;
-  font-weight: 500;
+  font-size: 13px;
+  color: #546e7a;
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
 }
 .bc-loc {
-  font-size: 12px;
+  font-size: 13px;
   color: #637381;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  font-weight: 500;
 }
 .bc-loc i {
   color: #00897b;
-  font-size: 11px;
+  font-size: 12px;
 }
 .bc-rating {
   display: flex;
@@ -2914,32 +2932,36 @@ img {
 .bc-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 .bc-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 2px solid #f0f5f3;
 }
 .bc-rate {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: #f57c00;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.6px;
+  background: linear-gradient(135deg, #f57c00, #ff9800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .bc-avail {
-  font-size: 11px;
+  font-size: 12px;
   color: #637381;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 500;
+  gap: 5px;
+  font-weight: 600;
 }
 .bc-card .btn-request {
   font-size: 13px;
@@ -2961,55 +2983,77 @@ img {
 .bc-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 14px 14px;
+  gap: 10px;
+  padding: 0 8px 8px;
 }
 .btn-view-profile {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 0;
-  border-radius: 10px;
-  font-size: .78rem;
-  font-weight: 600;
-  background: #fff;
+  gap: 8px;
+  padding: 12px 0;
+  border-radius: 12px;
+  font-size: .8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, #f8faf9);
   color: #1b7d4f;
   border: 2px solid #1b7d4f;
   text-decoration: none;
-  transition: background .15s, color .15s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  box-shadow: 0 2px 8px rgba(27, 125, 79, 0.1);
+  letter-spacing: 0.3px;
 }
 .btn-view-profile:hover {
-  background: #1b7d4f;
+  background: linear-gradient(135deg, #1b7d4f, #2e8b57);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(27, 125, 79, 0.3);
 }
 .bc-actions .btn-request {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 0;
-  font-size: .78rem;
-  font-weight: 600;
-  border-radius: 10px;
+  gap: 8px;
+  padding: 12px 0;
+  font-size: .8rem;
+  font-weight: 700;
+  border-radius: 12px;
   width: 100%;
+  background: linear-gradient(135deg, #00897b, #26a69a);
+  color: #fff;
+  border: none;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 137, 123, 0.25);
+  letter-spacing: 0.3px;
+}
+.bc-actions .btn-request:hover {
+  background: linear-gradient(135deg, #00695c, #00897b);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 137, 123, 0.35);
 }
 
 /* Care type tags on browse card */
 .bc-care-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  padding: 6px 16px 0;
+  gap: 6px;
+  padding: 8px 16px 0;
 }
 .bc-care-tag {
-  background: #f3e5f5;
+  background: linear-gradient(135deg, #f3e5f5, #e1bee7);
   color: #7b1fa2;
   border-radius: 20px;
-  padding: 3px 10px;
-  font-size: .7rem;
+  padding: 4px 12px;
+  font-size: .72rem;
   font-weight: 600;
+  box-shadow: 0 2px 6px rgba(123, 31, 162, 0.1);
+  transition: all 0.3s ease;
+}
+.bc-care-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(123, 31, 162, 0.2);
 }
 
 .load-more-wrap {

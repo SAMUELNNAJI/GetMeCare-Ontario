@@ -1,0 +1,1 @@
+web: gunicorn GETMECARE.wsgi:application --log-file -

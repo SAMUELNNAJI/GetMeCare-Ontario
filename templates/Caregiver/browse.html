@@ -124,63 +124,43 @@
 <div class="bc-grid stagger-children">
 {% for profile in page_obj %}
 <div class="bc-card animate-on-scroll hover-lift">
-
-  <!-- Top: avatar + name/meta -->
-  <a href="{% url 'caregiver_profile' profile.pk %}" class="bc-card-link" aria-label="View {{ profile.user.first_name }}'s profile">
-    <div class="bc-card-top">
-      <div class="bc-avatar-wrap">
-        {% if profile.profile_image %}
-        <img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}">
-        {% else %}
-        <div class="bc-avatar-initials">{% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}{% else %}{{ profile.user.username|slice:":2"|upper }}{% endif %}</div>
-        {% endif %}
-        <span class="bc-dot available"></span>
-      </div>
-      <div class="bc-meta">
-        <div class="bc-name-row">
-          <h4>{{ profile.user.first_name }} {{ profile.user.last_name|first }}.</h4>
-          <span class="bc-verified" title="Verified"><i class="fas fa-circle-check"></i></span>
-        </div>
-        <p class="bc-cred"><i class="fas fa-briefcase-medical" style="margin-right:4px;opacity:.7"></i>{% if profile.care_types_display %}{{ profile.care_types_display|first }}{% else %}Certified PSW{% endif %}</p>
-        <p class="bc-loc"><i class="fas fa-location-dot"></i> {{ profile.city|default:"Ontario" }}, ON</p>
-      </div>
-    </div>
-
-    <!-- Care type tags -->
-    {% if profile.care_types_display %}
-    <div class="bc-care-tags">
-      {% for label in profile.care_types_display|slice:":4" %}
-      <span class="bc-care-tag">{{ label }}</span>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Rate banner -->
-    <div class="bc-rate-banner">
-      <div class="bc-rate-left">
-        <span class="bc-rate-amt">{% if profile.hourly_rate %}${{ profile.hourly_rate }}{% else %}—{% endif %}</span>
-        <span class="bc-rate-unit">CAD / hr</span>
-      </div>
-      <span class="bc-avail-badge"><i class="fas fa-circle" style="font-size:.45rem;margin-right:4px"></i>Available</span>
-    </div>
-  </a>
-
-  <!-- Action buttons -->
-  <div class="bc-actions">
-    <a href="{% url 'caregiver_profile' profile.pk %}" class="bc-btn bc-btn-outline">
-      <i class="fas fa-user"></i> View Profile
-    </a>
-    {% if request.user.is_authenticated %}
-    <a href="{% url 'chat_start' profile.user.pk %}" class="bc-btn bc-btn-solid">
-      <i class="fas fa-comment-dots"></i> Chat
-    </a>
-    {% else %}
-    <a href="{% url 'Account:login' %}?next={% url 'chat_start' profile.user.pk %}" class="bc-btn bc-btn-solid">
-      <i class="fas fa-comment-dots"></i> Chat
-    </a>
-    {% endif %}
-  </div>
-
+<a href="{% url 'caregiver_profile' profile.pk %}" class="bc-card-link" aria-label="View {{ profile.user.first_name }}'s profile">
+<div class="bc-card-top">
+<div class="bc-avatar-wrap">
+{% if profile.profile_image %}
+<img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}">
+{% else %}
+<div style="width:64px;height:64px;border-radius:50%;background:#1b3a2d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700">{% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}{% else %}{{ profile.user.username|slice:":2"|upper }}{% endif %}</div>
+{% endif %}
+<span class="bc-dot available"></span>
+</div>
+<div class="bc-meta">
+<div class="bc-name-row">
+<h4>{{ profile.user.first_name }} {{ profile.user.last_name|first }}.</h4>
+<span class="bc-verified"><i class="fas fa-check-circle"></i></span>
+</div>
+<p class="bc-cred">{% if profile.care_types_display %}{{ profile.care_types_display|first }}{% else %}Certified PSW{% endif %}</p>
+<p class="bc-loc"><i class="fas fa-map-marker-alt"></i> {{ profile.city|default:"Ontario" }}, ON</p>
+</div>
+</div>
+{% if profile.care_types_display %}
+<div class="bc-care-tags">{% for label in profile.care_types_display|slice:":3" %}<span class="bc-care-tag">{{ label }}</span>{% endfor %}</div>
+{% endif %}
+{% if profile.skills_list %}
+<div class="bc-skills">{% for skill in profile.skills_list|slice:":3" %}<span class="stag">{{ skill }}</span>{% endfor %}</div>
+{% endif %}
+<div class="bc-footer">
+<span class="bc-rate">{% if profile.hourly_rate %}${{ profile.hourly_rate }} CAD / hr{% else %}Rate on request{% endif %}</span>
+</div>
+</a>
+<div class="bc-actions">
+<a href="{% url 'caregiver_profile' profile.pk %}" class="btn-view-profile"><i class="fas fa-user"></i> View Profile</a>
+{% if request.user.is_authenticated %}
+<a href="{% url 'chat_start' profile.user.pk %}" class="btn-request"><i class="fas fa-comment-dots"></i> Chat</a>
+{% else %}
+<a href="{% url 'Account:login' %}?next={% url 'chat_start' profile.user.pk %}" class="btn-request"><i class="fas fa-comment-dots"></i> Chat</a>
+{% endif %}
+</div>
 </div>
 {% empty %}
 <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#aaa">

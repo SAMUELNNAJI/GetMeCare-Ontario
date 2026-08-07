@@ -243,6 +243,7 @@
     </a>
     <a href="{% url 'AdminApp:payout_queue' %}" {% if request.resolver_match.url_name == 'payout_queue' %}class="active"{% endif %}>
       <i class="fas fa-money-bill-wave"></i> Payout Queue
+      {% if payout_queue_count %}<span class="adm-nav-badge">{{ payout_queue_count }}</span>{% endif %}
     </a>
     <a href="{% url 'AdminApp:employer_payments' %}" {% if request.resolver_match.url_name == 'employer_payments' %}class="active"{% endif %}>
       <i class="fas fa-credit-card"></i> Employer Payments

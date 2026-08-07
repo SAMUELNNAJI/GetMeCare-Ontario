@@ -28,7 +28,8 @@ def _admin_sidebar():
     return {
         'pending_docs':            CaregiverDocument.objects.filter(status=CaregiverDocument.STATUS_PENDING).count(),
         'pending_profiles':        CaregiverProfile.objects.filter(status=CaregiverProfile.STATUS_PENDING).count(),
-        'employer_payments_count': EmployerPayment.objects.count(),
+        'employer_payments_count': EmployerPayment.objects.filter(admin_seen=False).count(),
+        'payout_queue_count':      ShiftLog.objects.filter(payment_status=ShiftLog.PAY_PENDING).count(),
         'counts': {
             'open': Dispute.objects.filter(status=Dispute.STATUS_OPEN).count(),
         },
@@ -191,18 +192,16 @@ def review_documents(request):
 @admin_required
 def manage_shifts(request):
     from Account.models import BookingProposal
-    shifts_qs = Shift.objects.select_related('caregiver', 'employer').order_by('-created_at')
-    # Annotate each shift with whether it came from a negotiation
-    booked_shift_ids = set(
-        BookingProposal.objects.filter(
-            status=BookingProposal.STATUS_BOOKED,
-            shift__isnull=False,
-        ).values_list('shift_id', flat=True)
+    from django.db.models import Exists, OuterRef
+
+    # Annotate shifts with whether they came from a negotiation using subquery
+    negotiation_exists = BookingProposal.objects.filter(
+        status=BookingProposal.STATUS_BOOKED,
+        shift=OuterRef('pk'),
     )
-    shifts = []
-    for s in shifts_qs:
-        s.from_negotiation = s.pk in booked_shift_ids
-        shifts.append(s)
+    shifts = Shift.objects.annotate(
+        from_negotiation=Exists(negotiation_exists)
+    ).select_related('caregiver', 'employer').order_by('-created_at')
 
     pending_payout_count = ShiftLog.objects.filter(
         shift__status=Shift.STATUS_COMPLETED,
@@ -471,6 +470,9 @@ def serve_document(request, doc_id):
 def employer_payments(request):
     """Admin view — all employer payments (activation fees + shift bookings)."""
     from decimal import Decimal as D
+
+    # Mark all unseen payments as seen now that the admin is viewing this page
+    EmployerPayment.objects.filter(admin_seen=False).update(admin_seen=True)
 
     tab = request.GET.get('tab', 'all')
 

@@ -249,7 +249,7 @@
     <a href="{% url 'CareGiverAcc:dashboard' %}"  {% if request.resolver_match.url_name == 'dashboard'  %}class="active"{% endif %}><i class="fas fa-th-large"></i> Overview</a>
     <a href="{% url 'CareGiverAcc:documents' %}"  {% if request.resolver_match.url_name == 'documents'  %}class="active"{% endif %}><i class="fas fa-file-alt"></i> Documents</a>
     <a href="{% url 'Account:edit_profile' %}"><i class="fas fa-user-edit"></i> Edit profile</a>
-    <a href="{% url 'CareGiverAcc:my_schedule' %}" {% if request.resolver_match.url_name == 'my_schedule' %}class="active"{% endif %}><i class="fas fa-clock"></i> Shift tracker</a>
+    <a href="{% url 'CareGiverAcc:my_schedule' %}" {% if request.resolver_match.url_name == 'my_schedule' %}class="active"{% endif %}><i class="fas fa-clock"></i> Shift tracker{% if upcoming_shifts_count %}<span class="nav-unread-badge">{{ upcoming_shifts_count }}</span>{% endif %}</a>
     <a href="{% url 'CareGiverAcc:earnings' %}"   {% if request.resolver_match.url_name == 'earnings'   %}class="active"{% endif %}><i class="fas fa-wallet"></i> Earnings</a>
     <a href="{% url 'chat_list' %}" {% if request.resolver_match.url_name == 'chat_list' or request.resolver_match.url_name == 'chat_room' %}class="active"{% endif %}><i class="fas fa-comments"></i> Messages{% if total_unread %}<span class="nav-unread-badge">{{ total_unread }}</span>{% endif %}</a>
     <a href="{% url 'browse_jobs' %}" {% if request.resolver_match.url_name == 'browse_jobs' %}class="active"{% endif %}><i class="fas fa-briefcase"></i> Browse jobs</a>

@@ -532,6 +532,10 @@ class EmployerPayment(models.Model):
         default=False,
         help_text='True after the employer has viewed the payment history page',
     )
+    admin_seen        = models.BooleanField(
+        default=False,
+        help_text='True after the admin has viewed the employer payments page',
+    )
 
     class Meta:
         ordering = ['-paid_at']

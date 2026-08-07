@@ -39,12 +39,22 @@ def _sidebar_context(user):
         {'label': 'Direct deposit details',   'done': False},
     ]
     onboarding_pct = int(sum(1 for c in checklist if c['done']) / len(checklist) * 100)
+    
+    # Count upcoming shifts for badge
+    today = timezone.now().date()
+    upcoming_shifts_count = Shift.objects.filter(
+        caregiver=user,
+        status=Shift.STATUS_SCHEDULED,
+        start_date__gte=today,
+    ).count()
+    
     return {
         'profile':         profile,
         'total_earned':    f"{total_earned:.2f}",
         'completed_count': completed_count,
         'onboarding_pct':  onboarding_pct,
         'checklist':       checklist,
+        'upcoming_shifts_count': upcoming_shifts_count,
     }
 
 
@@ -113,7 +123,7 @@ def dashboard(request):
         shift__caregiver=user,
         clock_out_time__date__gte=prev_monday,
         clock_out_time__date__lte=prev_monday + timedelta(days=6),
-    )
+    ).select_related('shift')
     prev_total = float(
         prev_logs.aggregate(t=Sum('amount_earned'))['t'] or Decimal('0.00')
     )
@@ -314,12 +324,16 @@ def earnings(request):
 def documents(request):
     from Account.forms import DocumentUploadForm, REQUIRED_DOC_TYPES
 
-    user_docs     = CaregiverDocument.objects.filter(user=request.user)
-    uploaded_types = set(user_docs.values_list('doc_type', flat=True))
+    # Get all user documents in a single query, ordered by upload date
+    user_docs = CaregiverDocument.objects.filter(
+        user=request.user
+    ).select_related('user').order_by('-uploaded_at')
 
     # Build per-type status map for the required checklist
     latest_by_type = {}
+    uploaded_types = set()
     for doc in user_docs:
+        uploaded_types.add(doc.doc_type)
         if doc.doc_type not in latest_by_type:
             latest_by_type[doc.doc_type] = doc
 
