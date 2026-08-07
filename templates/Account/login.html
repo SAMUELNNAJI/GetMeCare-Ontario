@@ -24,28 +24,42 @@
     gap: 8px;
     color: var(--grey);
     cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .remember-me:hover {
+    color: var(--teal);
   }
   .remember-me input {
     width: 15px;
     height: 15px;
     accent-color: var(--teal);
+    cursor: pointer;
   }
   .forgot-password {
     color: var(--teal);
     font-weight: 600;
+    transition: all 0.2s ease;
   }
   .forgot-password:hover {
     text-decoration: underline;
+    color: var(--teal-dark);
   }
   .login-signup-prompt {
     margin-top: 24px;
     text-align: center;
     color: var(--grey);
     font-size: 13px;
+    padding: 16px;
+    background: var(--grey-light);
+    border-radius: 12px;
   }
   .login-signup-prompt a {
     color: var(--teal);
     font-weight: 700;
+    transition: color 0.2s ease;
+  }
+  .login-signup-prompt a:hover {
+    color: var(--teal-dark);
   }
   @media (max-width: 560px) {
     .login-options {
