@@ -101,6 +101,8 @@ GetMeCare{% endblock %} {% block extra_head %}
     grid-template-columns: 340px 1fr;
     gap: 20px;
     align-items: start;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   /* Upload card */
@@ -471,6 +473,55 @@ GetMeCare{% endblock %} {% block extra_head %}
     color: #c62828;
   }
 
+  /* Mobile-specific overflow fixes */
+  @media (max-width: 480px) {
+    * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    body {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    .cg-content {
+      padding: 16px;
+      overflow-x: hidden;
+      width: 100%;
+    }
+    .doc-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+    .upload-card {
+      position: static;
+      width: 100%;
+    }
+    .docs-card {
+      width: 100%;
+    }
+    .req-card {
+      width: 100%;
+    }
+    .verify-banner {
+      padding: 12px 14px;
+      width: 100%;
+    }
+    .page-title {
+      font-size: 1rem;
+      word-wrap: break-word;
+    }
+    .doc-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .doc-table {
+      min-width: 500px;
+    }
+  }
+
   /* Additional mobile responsiveness */
   @media (max-width: 600px) {
     .verify-banner {
@@ -527,6 +578,36 @@ GetMeCare{% endblock %} {% block extra_head %}
     .form-group select {
       font-size: 0.8rem;
       padding: 7px 9px;
+    }
+    .doc-grid {
+      grid-template-columns: 1fr;
+    }
+    .upload-card {
+      position: static;
+      order: 2;
+    }
+    .docs-card {
+      order: 1;
+    }
+    .page-title {
+      font-size: 1.1rem;
+    }
+    .req-card {
+      padding: 16px;
+    }
+    .upload-card {
+      padding: 16px;
+    }
+    .docs-card {
+      padding: 16px;
+    }
+    .doc-table-wrapper {
+      margin: 0 -16px;
+      padding: 0 16px;
+    }
+    .btn-view {
+      padding: 3px 8px;
+      font-size: 0.7rem;
     }
   }
 
