@@ -3,7 +3,7 @@ services:
     name: getmecare
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    buildCommand: ./build.sh
     startCommand: gunicorn GETMECARE.wsgi:application --workers 2 --threads 4 --timeout 120 --log-file -
     envVars:
       - key: DEBUG
