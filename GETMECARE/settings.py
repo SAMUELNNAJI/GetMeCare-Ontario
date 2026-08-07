@@ -31,6 +31,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure--$rr@32q-e2p__*03@pcz8@i)@
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Also allow any Render domain dynamically
+if not DEBUG:
+    ALLOWED_HOSTS.append('.onrender.com')
 
 
 # Application definition
