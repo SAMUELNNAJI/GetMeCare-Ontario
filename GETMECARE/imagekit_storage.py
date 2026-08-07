@@ -6,7 +6,6 @@ Used as DEFAULT_FILE_STORAGE in production so user-uploaded media
 (profile images, documents, etc.) persist across Render deploys.
 """
 
-import io
 import uuid
 
 from django.conf import settings
@@ -26,7 +25,7 @@ class ImageKitStorage(Storage):
     Django storage backend backed by ImageKit.io.
 
     Uploads go through the ImageKit Upload API; URLs are served
-    from ImageKit's CDN (https://ik.imagekit.io/<cloud_name>/...).
+    from ImageKit's CDN (https://ik.imagekit.io/<id>/...).
     """
 
     def __init__(self):
@@ -36,14 +35,14 @@ class ImageKitStorage(Storage):
             )
         self.client = ImageKit(
             private_key=settings.IMAGEKIT_PRIVATE_KEY,
-            public_key=settings.IMAGEKIT_PUBLIC_KEY,
-            url_endpoint=settings.IMAGEKIT_URL_ENDPOINT,
         )
+        self.url_endpoint = settings.IMAGEKIT_URL_ENDPOINT.rstrip('/')
+        self.folder = getattr(settings, 'IMAGEKIT_FOLDER', 'getmecare')
 
     # ── Required Storage interface ──────────────────────────────────────
 
     def _save(self, name, content):
-        """Upload a file to ImageKit and return a unique file name."""
+        """Upload a file to ImageKit and return the file path."""
         # Ensure the file pointer is at the start
         if hasattr(content, 'seek'):
             content.seek(0)
@@ -60,23 +59,17 @@ class ImageKitStorage(Storage):
             ext = name[name.rfind('.'):]
         unique_name = f'{uuid.uuid4().hex[:16]}{ext}'
 
-        # Build a folder path inside ImageKit (e.g. "getmecare/media/")
-        folder = getattr(settings, 'IMAGEKIT_FOLDER', 'getmecare')
-
-        upload_result = self.client.upload(
+        upload_result = self.client.files.upload(
             file=file_bytes,
             file_name=unique_name,
-            options={
-                'folder': f'/{folder}',
-                'useUniqueFileName': False,
-            },
+            folder=f'/{self.folder}',
+            use_unique_file_name=False,
         )
 
-        if upload_result and upload_result.get('response_metadata', {}).get('status_code') == 200:
-            # Return the ImageKit file path (used internally by Django)
-            return upload_result.get('filePath', unique_name)
+        # The response is a Pydantic model — access fields as attributes
+        if upload_result and upload_result.file_path:
+            return upload_result.file_path
 
-        # If upload failed, raise so Django knows something went wrong
         raise IOError(f'ImageKit upload failed: {upload_result}')
 
     def _open(self, name, mode='rb'):
@@ -90,10 +83,8 @@ class ImageKitStorage(Storage):
     def url(self, name):
         """Return the CDN URL for a stored file."""
         # name is the filePath returned by _save (e.g. "/getmecare/abc123.jpg")
-        endpoint = settings.IMAGEKIT_URL_ENDPOINT.rstrip('/')
-        # Strip leading slash from name to avoid double slashes
         path = name.lstrip('/')
-        return f'{endpoint}/{path}'
+        return f'{self.url_endpoint}/{path}'
 
     def exists(self, name):
         """Always return False so Django generates a fresh unique name."""
@@ -108,3 +99,17 @@ class ImageKitStorage(Storage):
     def get_modified_time(self, name):
         from django.utils import timezone
         return timezone.now()
+
+    def delete(self, name):
+        """Delete a file from ImageKit by looking up its file_id."""
+        try:
+            # List files matching the path and delete by ID
+            path = name.lstrip('/')
+            files = self.client.files.list(
+                path=f'/{path}',
+                limit=1,
+            )
+            if files and len(files) > 0:
+                self.client.files.delete(files[0].file_id)
+        except Exception:
+            pass  # best-effort deletion
