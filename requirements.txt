@@ -13,4 +13,4 @@ groq==1.6.0
 Pillow>=10.0.0
 boto3==1.35.54
 django-storages==1.14.4
-imagekitio==1.0.8
+imagekitio==1.2.6
