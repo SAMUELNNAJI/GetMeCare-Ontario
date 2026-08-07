@@ -1,1 +1,1 @@
-web: gunicorn GETMECARE.wsgi:application --log-file -
+web: gunicorn GETMECARE.wsgi:application --workers 2 --threads 4 --worker-class sync --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --keepalive 5 --log-file -
