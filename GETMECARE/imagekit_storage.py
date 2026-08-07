@@ -35,6 +35,8 @@ class ImageKitStorage(Storage):
             )
         self.client = ImageKit(
             private_key=settings.IMAGEKIT_PRIVATE_KEY,
+            public_key=settings.IMAGEKIT_PUBLIC_KEY,
+            url_endpoint=settings.IMAGEKIT_URL_ENDPOINT,
         )
         self.url_endpoint = settings.IMAGEKIT_URL_ENDPOINT.rstrip('/')
         self.folder = getattr(settings, 'IMAGEKIT_FOLDER', 'getmecare')
