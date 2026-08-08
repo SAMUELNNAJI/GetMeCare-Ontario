@@ -158,8 +158,13 @@ IMAGEKIT_PUBLIC_KEY   = os.getenv('IMAGEKIT_PUBLIC_KEY', '')
 IMAGEKIT_URL_ENDPOINT = os.getenv('IMAGEKIT_URL_ENDPOINT', '')
 IMAGEKIT_FOLDER       = os.getenv('IMAGEKIT_FOLDER', 'getmecare')
 
-if IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT and not DEBUG:
-    # Production — ImageKit cloud storage
+USE_IMAGEKIT = (
+    os.getenv('USE_IMAGEKIT', '').lower() in ('true', '1', 'yes')
+    or os.getenv('IMAGEKIT', '').lower() in ('true', '1', 'yes')
+)
+
+if IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT and (USE_IMAGEKIT or not DEBUG):
+    # Production / explicit-test mode — ImageKit cloud storage
     DEFAULT_FILE_STORAGE = 'GETMECARE.imagekit_storage.ImageKitStorage'
     MEDIA_URL = '/media/'
 else:

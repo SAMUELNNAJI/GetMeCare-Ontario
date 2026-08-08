@@ -4,8 +4,11 @@ and serves them from ImageKit's CDN.
 
 Used as DEFAULT_FILE_STORAGE in production so user-uploaded media
 (profile images, documents, etc.) persist across Render deploys.
+
+Compatible with imagekitio Python SDK v5.x.
 """
 
+import logging
 import uuid
 
 from django.conf import settings
@@ -17,6 +20,8 @@ try:
     from imagekitio import ImageKit
 except ImportError:
     ImageKit = None
+
+logger = logging.getLogger(__name__)
 
 
 @deconstructible
@@ -33,13 +38,13 @@ class ImageKitStorage(Storage):
             raise ImportError(
                 "Install the ImageKit SDK: pip install imagekitio"
             )
-        self.client = ImageKit(
-            private_key=settings.IMAGEKIT_PRIVATE_KEY,
-            public_key=settings.IMAGEKIT_PUBLIC_KEY,
-            url_endpoint=settings.IMAGEKIT_URL_ENDPOINT,
-        )
+        private_key = settings.IMAGEKIT_PRIVATE_KEY
+        if not private_key:
+            raise ValueError("IMAGEKIT_PRIVATE_KEY is not set.")
+        self.client = ImageKit(private_key=private_key)
         self.url_endpoint = settings.IMAGEKIT_URL_ENDPOINT.rstrip('/')
         self.folder = getattr(settings, 'IMAGEKIT_FOLDER', 'getmecare')
+        logger.info("ImageKitStorage initialized for endpoint %s", self.url_endpoint)
 
     # ── Required Storage interface ──────────────────────────────────────
 
@@ -61,15 +66,28 @@ class ImageKitStorage(Storage):
             ext = name[name.rfind('.'):]
         unique_name = f'{uuid.uuid4().hex[:16]}{ext}'
 
+        folder = f'/{self.folder}'.rstrip('/')
+        logger.info(
+            "Uploading to ImageKit: folder=%s file_name=%s bytes=%d",
+            folder, unique_name, len(file_bytes),
+        )
+
         upload_result = self.client.files.upload(
             file=file_bytes,
             file_name=unique_name,
-            folder=f'/{self.folder}',
+            folder=folder,
             use_unique_file_name=False,
         )
 
+        logger.debug("ImageKit upload result: %s", upload_result)
+
         # The response is a Pydantic model — access fields as attributes
         if upload_result and upload_result.file_path:
+            logger.info(
+                "ImageKit upload success: file_path=%s url=%s",
+                upload_result.file_path,
+                getattr(upload_result, 'url', None),
+            )
             return upload_result.file_path
 
         raise IOError(f'ImageKit upload failed: {upload_result}')
@@ -104,14 +122,24 @@ class ImageKitStorage(Storage):
 
     def delete(self, name):
         """Delete a file from ImageKit by looking up its file_id."""
+        path = name.lstrip('/')
+        logger.info("Attempting to delete ImageKit asset: %s", path)
         try:
-            # List files matching the path and delete by ID
-            path = name.lstrip('/')
-            files = self.client.files.list(
-                path=f'/{path}',
-                limit=1,
+            # List assets in the folder and find the one matching this path.
+            folder = '/'.join(path.split('/')[:-1]) or self.folder
+            search_path = f'/{folder}'.rstrip('/')
+            assets = self.client.assets.list(
+                path=search_path,
+                type='file',
+                limit=100,
             )
-            if files and len(files) > 0:
-                self.client.files.delete(files[0].file_id)
-        except Exception:
-            pass  # best-effort deletion
+            for asset in assets:
+                if getattr(asset, 'file_path', None) == path or getattr(asset, 'file_path', None) == f'/{path}':
+                    file_id = getattr(asset, 'file_id', None)
+                    if file_id:
+                        self.client.files.delete(file_id)
+                        logger.info("Deleted ImageKit asset: %s", file_id)
+                        return
+            logger.warning("Could not find ImageKit asset to delete: %s", path)
+        except Exception as exc:
+            logger.warning("ImageKit delete failed for %s: %s", path, exc)
