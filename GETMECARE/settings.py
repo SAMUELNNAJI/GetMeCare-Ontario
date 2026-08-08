@@ -16,10 +16,11 @@ import os
 import dj_database_url
 from django.conf.urls.static import static
 
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env from the project root, overriding any existing env vars.
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -169,8 +170,20 @@ if IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT and (USE_IMAGEKIT or not DEBUG
     MEDIA_URL = '/media/'
 else:
     # Development — local disk
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Django 5.1+ uses STORAGES instead of DEFAULT_FILE_STORAGE.
+# Mirror the conditional backend choice above so ImageKit is actually used.
+STORAGES = {
+    'default': {
+        'BACKEND': DEFAULT_FILE_STORAGE,
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
 # Groq API Configuration
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')

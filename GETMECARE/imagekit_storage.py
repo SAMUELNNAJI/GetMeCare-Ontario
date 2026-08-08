@@ -81,14 +81,17 @@ class ImageKitStorage(Storage):
 
         logger.debug("ImageKit upload result: %s", upload_result)
 
-        # The response is a Pydantic model — access fields as attributes
+        # The response is a Pydantic model — access fields as attributes.
+        # Strip the leading '/' because Django treats absolute paths as
+        # path-traversal attempts.
         if upload_result and upload_result.file_path:
+            stored_path = upload_result.file_path.lstrip('/')
             logger.info(
                 "ImageKit upload success: file_path=%s url=%s",
-                upload_result.file_path,
+                stored_path,
                 getattr(upload_result, 'url', None),
             )
-            return upload_result.file_path
+            return stored_path
 
         raise IOError(f'ImageKit upload failed: {upload_result}')
 
