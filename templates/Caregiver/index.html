@@ -35,7 +35,7 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
       <a href="{% url 'browse' %}" class="btn-outline-white glow-hover"
         ><i class="fas fa-search"></i> Browse Caregivers</a
       >
-      <a href="#" class="btn-teal glow-hover"
+      <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% else %}#{% endif %}" class="btn-teal glow-hover" {% if user.is_authenticated %}onclick="return false;"{% endif %}
         >Apply as a Caregiver <i class="fas fa-arrow-right"></i
       ></a>
     </div>
@@ -576,7 +576,7 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
       <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.role == 'employer' %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" class="btn-cta-outline glow-hover" {% if user.is_authenticated and user.role != 'employer' %}onclick="handlePostCareRequest(); return false;"{% endif %}
         ><i class="fas fa-shield-alt"></i> Post a Care Request</a
       >
-      <a href="#" class="btn-cta-orange glow-hover"
+      <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% else %}#{% endif %}" class="btn-cta-orange glow-hover" {% if user.is_authenticated %}onclick="return false;"{% endif %}
         ><i class="fas fa-briefcase"></i> Apply as a PSW &rarr;</a
       >
     </div>

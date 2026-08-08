@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>400 — Bad Request | GetMeCare Ontario</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
+  <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f2f4f0 0%, #e8ede5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a1a1a;
+      overflow: hidden;
+    }
+    .error-container {
+      text-align: center;
+      padding: 48px 32px;
+      max-width: 520px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    .error-code {
+      font-size: 8rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #6b3a00, #d4760a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: -4px;
+      user-select: none;
+    }
+    .error-icon {
+      font-size: 2.8rem;
+      color: #d4760a;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+    .error-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1b3a2d;
+      margin-bottom: 12px;
+    }
+    .error-message {
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .error-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .error-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .error-btn-primary {
+      background: linear-gradient(135deg, #1b3a2d, #1b7d4f);
+      color: #fff;
+      border: none;
+    }
+    .error-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(27, 125, 79, 0.3);
+    }
+    .error-btn-ghost {
+      background: #fff;
+      color: #1b3a2d;
+      border: 2px solid #d4ddd8;
+    }
+    .error-btn-ghost:hover {
+      border-color: #1b7d4f;
+      color: #1b7d4f;
+    }
+    .error-brand {
+      margin-top: 48px;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+    .error-brand a {
+      color: #1b7d4f;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .bg-circle {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.04;
+      background: #d4760a;
+      pointer-events: none;
+    }
+    .bg-circle-1 { width: 500px; height: 500px; top: -150px; right: -100px; }
+    .bg-circle-2 { width: 350px; height: 350px; bottom: -100px; left: -80px; }
+  </style>
+</head>
+<body>
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+
+  <div class="error-container">
+    <div class="error-code">400</div>
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h1 class="error-title">Bad Request</h1>
+    <p class="error-message">
+      The server couldn't understand your request.<br>
+      Please check the URL and try again.
+    </p>
+    <div class="error-actions">
+      <a href="/" class="error-btn error-btn-primary">
+        <i class="fas fa-home"></i> Go Home
+      </a>
+      <a href="javascript:history.back()" class="error-btn error-btn-ghost">
+        <i class="fas fa-arrow-left"></i> Go Back
+      </a>
+    </div>
+    <p class="error-brand">
+      <a href="/">GetMeCare</a> Ontario — Trusted caregiver connections
+    </p>
+  </div>
+</body>
+</html>

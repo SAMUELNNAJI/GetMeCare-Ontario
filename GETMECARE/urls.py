@@ -18,6 +18,31 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import render
+
+
+# ── Custom error handler views ────────────────────────────────
+def custom_bad_request(request, exception=None):
+    return render(request, '400.html', status=400)
+
+
+def custom_permission_denied(request, exception=None):
+    return render(request, '403.html', status=403)
+
+
+def custom_page_not_found(request, exception=None):
+    return render(request, '404.html', status=404)
+
+
+def custom_server_error(request):
+    return render(request, '500.html', status=500)
+
+
+handler400 = 'GETMECARE.urls.custom_bad_request'
+handler403 = 'GETMECARE.urls.custom_permission_denied'
+handler404 = 'GETMECARE.urls.custom_page_not_found'
+handler500 = 'GETMECARE.urls.custom_server_error'
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,3 +53,12 @@ urlpatterns = [
     path('', include('CareGiverAcc.urls')),
     path('chatbot/', include('Chatbot.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# ── Error-page preview URLs (development only) ────────────────
+if settings.DEBUG:
+    urlpatterns += [
+        path('test-400/', custom_bad_request, name='test-400'),
+        path('test-403/', custom_permission_denied, name='test-403'),
+        path('test-404/', custom_page_not_found, name='test-404'),
+        path('test-500/', custom_server_error, name='test-500'),
+    ]

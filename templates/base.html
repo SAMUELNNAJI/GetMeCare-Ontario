@@ -167,7 +167,7 @@
         <div class="footer-col">
           <h5>FOR CAREGIVERS</h5>
           <ul>
-            <li><a href="{% url 'Account:signup' %}">Apply as a PSW</a></li>
+            <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% else %}#{% endif %}" {% if user.is_authenticated %}onclick="return false;"{% endif %}>Apply as a PSW</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             <li><a href="{% url 'terms' %}">Terms of Service</a></li>
           </ul>
