@@ -15,10 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from django.views.generic import TemplateView
+from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap
 
 
 # ── Custom error handler views ────────────────────────────────
@@ -46,6 +49,14 @@ handler500 = 'GETMECARE.urls.custom_server_error'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
+    path('sitemap.xml', sitemap, {
+        'sitemaps': {
+            'static': StaticViewSitemap,
+            'caregivers': CaregiverSitemap,
+            'jobs': JobSitemap,
+        }
+    }, name='django.contrib.sitemaps.views.sitemap'),
     path('', include('Caregiver.urls')),
     path('', include('Account.urls')),
     path('', include('AdminApp.urls')),

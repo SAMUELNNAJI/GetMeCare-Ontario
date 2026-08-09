@@ -4,10 +4,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}GetMeCare Ontario - Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly. Background checked, certified, and admin-mediated for your family's safety.{% endblock %}">
+    <meta name="keywords" content="PSW Ontario, Personal Support Worker, caregiver Ontario, home care, senior care, postpartum care, dementia care, Ontario caregiver services, direct hire caregiver">
+    <meta name="author" content="GetMeCare Ontario">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{% block og_url %}https://getmecare.ca{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
+    <meta property="og:site_name" content="GetMeCare Ontario">
+    <meta property="og:locale" content="en_CA">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{% block twitter_url %}https://getmecare.ca{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}https://getmecare.ca{% endblock %}">
+    
     {% if user.is_authenticated %}
     <meta name="user-id" content="{{ user.id }}">
     {% endif %}
-    <title>{% block title %}GetMeCare ONTARIO{% endblock %}</title>
+    <title>{% block title %}GetMeCare ONTARIO - Hire Trusted PSWs & Caregivers{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
     <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'Caregiver/css/styles.css' %}" />
@@ -22,6 +49,40 @@
     <link rel="stylesheet" href="{% static 'Chatbot/css/chatbot.css' %}" />
     <script src="{% static 'Caregiver/js/animations.js' %}" defer></script>
     <script src="{% static 'Chatbot/js/chatbot.js' %}" defer></script>
+    
+    <!-- Structured Data (JSON-LD) for Local Business -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "GetMeCare Ontario",
+      "description": "Connecting Ontario families with trusted, pre-vetted independent Personal Support Workers. Mediated, transparent, and safe.",
+      "url": "https://getmecare.ca",
+      "telephone": "+1-416-000-0000",
+      "address": {
+        "@type": "PostalAddress",
+        "addressRegion": "ON",
+        "addressCountry": "CA"
+      },
+      "areaServed": {
+        "@type": "GeoCircle",
+        "geoMidpoint": {
+          "@type": "GeoCoordinates",
+          "latitude": 43.6532,
+          "longitude": -79.3832
+        },
+        "geoRadius": "500000"
+      },
+      "priceRange": "$$",
+      "openingHours": "Mo-Su 00:00-23:59",
+      "sameAs": [
+        "https://www.facebook.com/getmecare",
+        "https://www.twitter.com/getmecare",
+        "https://www.linkedin.com/company/getmecare"
+      ]
+    }
+    </script>
+    
     {% block extra_head %}{% endblock %}
   </head>
   <body>
