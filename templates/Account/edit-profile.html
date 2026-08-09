@@ -350,6 +350,34 @@ GetMeCare{% endblock %} {% block extra_head %}
     display: none;
   }
 
+  /* Avatar upload progress indicator */
+  .avatar-upload-progress {
+    margin-top: 12px;
+    display: none;
+    text-align: center;
+  }
+  .avatar-upload-progress.active {
+    display: block;
+  }
+  .avatar-progress-bar {
+    background: #f0f2ee;
+    border-radius: 10px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .avatar-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b7d4f, #4caf7d);
+    border-radius: 10px;
+    transition: width 0.2s ease;
+    width: 0%;
+  }
+  .avatar-progress-text {
+    font-size: 0.73rem;
+    color: #666;
+  }
+
   @media (max-width: 860px) {
     .ep-grid {
       grid-template-columns: 1fr;
@@ -405,7 +433,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       />
     </form>
 
-    <div class="ep-av-upload-wrap" onclick="document.getElementById('avatar-file-input').click()" title="Change photo">
+    <div class="ep-av-upload-wrap" onclick="document.getElementById('avatar-file-input').click()" title="Change photo" id="avatar-upload-trigger">
       <div class="ep-big-av" id="ep-av-preview">
         <span id="ep-av-initials">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</span>
         {% if profile and profile.profile_image %}
@@ -417,6 +445,14 @@ GetMeCare{% endblock %} {% block extra_head %}
       <div class="ep-av-upload-badge">
         <i class="fas fa-camera"></i>
       </div>
+    </div>
+    
+    <!-- Avatar upload progress indicator -->
+    <div class="avatar-upload-progress" id="avatar-progress">
+      <div class="avatar-progress-bar">
+        <div class="avatar-progress-fill" id="avatar-progress-fill"></div>
+      </div>
+      <div class="avatar-progress-text" id="avatar-progress-text">Uploading... 0%</div>
     </div>
 
     <div class="ep-av-name">
@@ -707,11 +743,18 @@ GetMeCare{% endblock %} {% block extra_head %}
     var imgEl = document.getElementById("ep-av-img");
     var initials = document.getElementById("ep-av-initials");
     var form = document.getElementById("avatar-form");
+    var avatarTrigger = document.getElementById("avatar-upload-trigger");
+    var progressDiv = document.getElementById("avatar-progress");
+    var progressFill = document.getElementById("avatar-progress-fill");
+    var progressText = document.getElementById("avatar-progress-text");
 
     if (!fileInput) return;
 
     fileInput.addEventListener("change", function () {
       if (fileInput.files && fileInput.files[0]) {
+        var file = fileInput.files[0];
+        
+        // Preview the image
         var reader = new FileReader();
         reader.onload = function (e) {
           if (imgEl) {
@@ -720,9 +763,46 @@ GetMeCare{% endblock %} {% block extra_head %}
             if (initials) initials.style.display = "none";
           }
         };
-        reader.readAsDataURL(fileInput.files[0]);
-        // Auto-submit the image form
-        if (form) form.submit();
+        reader.readAsDataURL(file);
+
+        // Upload with progress tracking
+        var formData = new FormData(form);
+        var xhr = new XMLHttpRequest();
+
+        // Show progress indicator
+        progressDiv.classList.add("active");
+        if (avatarTrigger) avatarTrigger.style.pointerEvents = "none";
+
+        // Track upload progress
+        xhr.upload.addEventListener("progress", function (e) {
+          if (e.lengthComputable) {
+            var percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percentComplete + "%";
+            progressText.textContent = "Uploading... " + percentComplete + "%";
+          }
+        });
+
+        xhr.addEventListener("load", function () {
+          if (xhr.status === 200 || xhr.status === 302) {
+            // Success - redirect to refresh page
+            window.location.href = window.location.href;
+          } else {
+            // Error
+            progressDiv.classList.remove("active");
+            if (avatarTrigger) avatarTrigger.style.pointerEvents = "auto";
+            alert("Upload failed. Please try again.");
+          }
+        });
+
+        xhr.addEventListener("error", function () {
+          progressDiv.classList.remove("active");
+          if (avatarTrigger) avatarTrigger.style.pointerEvents = "auto";
+          alert("Upload failed. Please try again.");
+        });
+
+        xhr.open("POST", form.action, true);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send(formData);
       }
     });
   })();

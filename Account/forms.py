@@ -10,6 +10,10 @@ class SignupForm(UserCreationForm):
         ('caregiver', 'Caregiver / PSW'),
     ]
 
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'placeholder': 'Choose a username'}),
+    )
     first_name = forms.CharField(
         max_length=50,
         widget=forms.TextInput(attrs={'placeholder': 'First name'}),
@@ -42,7 +46,13 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'email', 'phone', 'role', 'password1', 'password2')
+        fields = ('username', 'first_name', 'last_name', 'email', 'phone', 'role', 'password1', 'password2')
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if CustomUser.objects.filter(username=username).exists():
+            raise forms.ValidationError('This username is already taken.')
+        return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -52,7 +62,7 @@ class SignupForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.username = self.cleaned_data['email']
+        user.username = self.cleaned_data['username']
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
@@ -64,8 +74,9 @@ class SignupForm(UserCreationForm):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'placeholder': 'you@example.com'}),
+    username_or_email = forms.CharField(
+        label='Username or Email',
+        widget=forms.TextInput(attrs={'placeholder': 'Username or email address'}),
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'Enter your password'}),
@@ -78,17 +89,17 @@ class LoginForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get('email')
+        username_or_email = cleaned_data.get('username_or_email')
         password = cleaned_data.get('password')
 
-        if email and password:
+        if username_or_email and password:
             self.user_cache = authenticate(
                 self.request,
-                username=email,
+                username=username_or_email,
                 password=password,
             )
             if self.user_cache is None:
-                raise forms.ValidationError('Invalid email address or password.')
+                raise forms.ValidationError('Invalid username/email or password.')
 
         return cleaned_data
 

@@ -138,21 +138,21 @@
         </div>
         {% endif %}
 
-        <div class="form-group {% if form.email.errors %}has-error{% endif %}">
-          <label for="{{ form.email.id_for_label }}">Email address <span class="req">*</span></label>
+        <div class="form-group {% if form.username_or_email.errors %}has-error{% endif %}">
+          <label for="{{ form.username_or_email.id_for_label }}">Username or Email <span class="req">*</span></label>
           <div class="input-wrap">
-            <i class="fas fa-envelope input-icon"></i>
+            <i class="fas fa-user input-icon"></i>
             <input
-              type="email"
-              name="{{ form.email.html_name }}"
-              id="{{ form.email.id_for_label }}"
-              value="{{ form.email.value|default:'' }}"
-              placeholder="you@example.com"
-              autocomplete="email"
+              type="text"
+              name="{{ form.username_or_email.html_name }}"
+              id="{{ form.username_or_email.id_for_label }}"
+              value="{{ form.username_or_email.value|default:'' }}"
+              placeholder="Username or email address"
+              autocomplete="username"
               required
             />
           </div>
-          {% for error in form.email.errors %}<span class="field-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</span>{% endfor %}
+          {% for error in form.username_or_email.errors %}<span class="field-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</span>{% endfor %}
         </div>
 
         <div class="form-group {% if form.password.errors %}has-error{% endif %}">

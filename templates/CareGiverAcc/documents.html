@@ -249,6 +249,34 @@ GetMeCare{% endblock %} {% block extra_head %}
     cursor: not-allowed;
   }
 
+  /* Upload progress indicator */
+  .upload-progress {
+    margin-top: 12px;
+    display: none;
+  }
+  .upload-progress.active {
+    display: block;
+  }
+  .upload-progress-bar {
+    background: #f0f2ee;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b7d4f, #4caf7d);
+    border-radius: 10px;
+    transition: width 0.2s ease;
+    width: 0%;
+  }
+  .upload-progress-text {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+  }
+
   /* No-more-types note */
   .no-types-note {
     text-align: center;
@@ -761,9 +789,17 @@ GetMeCare{% endblock %} {% block extra_head %}
         {% endif %}
       </div>
       {% endfor %}
-      <button type="submit" class="btn-upload">
+      <button type="submit" class="btn-upload" id="upload-btn">
         <i class="fas fa-cloud-arrow-up"></i> Upload Document
       </button>
+      
+      <!-- Progress indicator -->
+      <div class="upload-progress" id="upload-progress">
+        <div class="upload-progress-bar">
+          <div class="upload-progress-fill" id="upload-progress-fill"></div>
+        </div>
+        <div class="upload-progress-text" id="upload-progress-text">Uploading... 0%</div>
+      </div>
     </form>
     {% else %}
     <div class="no-types-note">
@@ -907,6 +943,10 @@ GetMeCare{% endblock %} {% block extra_head %}
     var fname = document.getElementById("fname-text");
     var form = document.getElementById("doc-upload-form");
     var input = form ? form.querySelector('input[type="file"]') : null;
+    var uploadBtn = document.getElementById("upload-btn");
+    var progressDiv = document.getElementById("upload-progress");
+    var progressFill = document.getElementById("upload-progress-fill");
+    var progressText = document.getElementById("upload-progress-text");
 
     if (!zone || !input) return;
 
@@ -944,6 +984,59 @@ GetMeCare{% endblock %} {% block extra_head %}
         zone.style.background = "#f0faf4";
       }
     });
+
+    // Handle form submission with progress tracking
+    if (form && uploadBtn) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        
+        if (!input.files || input.files.length === 0) {
+          alert("Please select a file to upload.");
+          return;
+        }
+
+        var formData = new FormData(form);
+        var xhr = new XMLHttpRequest();
+
+        // Show progress indicator
+        progressDiv.classList.add("active");
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+        // Track upload progress
+        xhr.upload.addEventListener("progress", function (e) {
+          if (e.lengthComputable) {
+            var percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percentComplete + "%";
+            progressText.textContent = "Uploading... " + percentComplete + "%";
+          }
+        });
+
+        xhr.addEventListener("load", function () {
+          if (xhr.status === 200 || xhr.status === 302) {
+            // Success - redirect to refresh page
+            window.location.href = window.location.href;
+          } else {
+            // Error
+            progressDiv.classList.remove("active");
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Upload Document';
+            alert("Upload failed. Please try again.");
+          }
+        });
+
+        xhr.addEventListener("error", function () {
+          progressDiv.classList.remove("active");
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Upload Document';
+          alert("Upload failed. Please try again.");
+        });
+
+        xhr.open("POST", form.action, true);
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.send(formData);
+      });
+    }
   })();
 </script>
 {% endblock %}

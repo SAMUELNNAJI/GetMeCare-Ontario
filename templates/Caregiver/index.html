@@ -222,21 +222,22 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
     </div>
 
     <div class="psw-cards stagger-children">
-      <!-- Card 1 -->
+      {% for profile in verified_caregivers %}
       <div class="psw-card animate-on-scroll hover-lift">
         <div class="psw-card-top">
           <div class="psw-avatar-wrap">
-            <img
-              src="https://randomuser.me/api/portraits/women/44.jpg"
-              alt="Mary O."
-            />
+            {% if profile.profile_image %}
+            <img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}" />
+            {% else %}
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="{{ profile.user.get_full_name }}" />
+            {% endif %}
             <span class="psw-verified-dot"><i class="fas fa-check"></i></span>
           </div>
           <div class="psw-card-meta">
-            <h4>Mary O.</h4>
+            <h4>{{ profile.user.get_full_name }}</h4>
             <p class="psw-credential">Certified PSW</p>
             <p class="psw-location">
-              <i class="fas fa-map-marker-alt"></i> Mississauga, ON
+              <i class="fas fa-map-marker-alt"></i> {{ profile.city|default:"Ontario" }}
             </p>
             <div class="psw-rating">
               <i class="fas fa-star"></i><strong>4.9</strong
@@ -253,115 +254,23 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
           >
         </div>
         <div class="psw-skill-tags">
-          <span class="stag">Dementia Care</span>
-          <span class="stag">Mobility Assist</span>
-          <span class="stag">Medication Mgmt</span>
+          {% for skill in profile.skills_list|slice:":3" %}
+          <span class="stag">{{ skill }}</span>
+          {% endfor %}
         </div>
         <div class="psw-card-footer">
-          <span class="psw-rate-label">$32.00 CAD / hr</span>
+          <span class="psw-rate-label">${{ profile.hourly_rate|default:"0.00" }} CAD / hr</span>
           <span class="psw-availability"
-            ><i class="far fa-clock"></i> Weekdays + Weekends</span
+            ><i class="far fa-clock"></i> Flexible</span
           >
         </div>
-        <a href="#" class="btn-request"
-          ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
+        <a href="{% url 'caregiver_profile' profile.pk %}" class="btn-request"
+          ><i class="far fa-comment-dots"></i> View Profile</a
         >
       </div>
-
-      <!-- Card 2 -->
-      <div class="psw-card animate-on-scroll hover-lift">
-        <div class="psw-card-top">
-          <div class="psw-avatar-wrap">
-            <img
-              src="https://randomuser.me/api/portraits/women/65.jpg"
-              alt="Patricia A."
-            />
-            <span class="psw-verified-dot"><i class="fas fa-check"></i></span>
-          </div>
-          <div class="psw-card-meta">
-            <h4>Patricia A.</h4>
-            <p class="psw-credential">Registered PSW · RPN Trained</p>
-            <p class="psw-location">
-              <i class="fas fa-map-marker-alt"></i> Toronto, ON
-            </p>
-            <div class="psw-rating">
-              <i class="fas fa-star"></i><strong>5</strong
-              ><span>(52 reviews)</span>
-            </div>
-          </div>
-        </div>
-        <div class="psw-compliance-tags">
-          <span class="ctag ctag-teal"
-            ><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span
-          >
-          <span class="ctag ctag-teal"
-            ><i class="fas fa-check-circle"></i> PSW Certified</span
-          >
-          <span class="ctag ctag-teal"
-            ><i class="fas fa-check-circle"></i> RPN Trained</span
-          >
-        </div>
-        <div class="psw-skill-tags">
-          <span class="stag">Palliative Care</span>
-          <span class="stag">Post-Surgery</span>
-          <span class="stag">Alzheimer Support</span>
-        </div>
-        <div class="psw-card-footer">
-          <span class="psw-rate-label">$35.00 CAD / hr</span>
-          <span class="psw-availability"
-            ><i class="far fa-clock"></i> Flexible — all shifts</span
-          >
-        </div>
-        <a href="#" class="btn-request"
-          ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
-        >
-      </div>
-
-      <!-- Card 3 -->
-      <div class="psw-card animate-on-scroll hover-lift">
-        <div class="psw-card-top">
-          <div class="psw-avatar-wrap">
-            <img
-              src="https://randomuser.me/api/portraits/women/33.jpg"
-              alt="Josephine K."
-            />
-            <span class="psw-verified-dot"><i class="fas fa-check"></i></span>
-          </div>
-          <div class="psw-card-meta">
-            <h4>Josephine K.</h4>
-            <p class="psw-credential">Certified PSW</p>
-            <p class="psw-location">
-              <i class="fas fa-map-marker-alt"></i> Ottawa, ON
-            </p>
-            <div class="psw-rating">
-              <i class="fas fa-star"></i><strong>4.8</strong
-              ><span>(21 reviews)</span>
-            </div>
-          </div>
-        </div>
-        <div class="psw-compliance-tags">
-          <span class="ctag ctag-teal"
-            ><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span
-          >
-          <span class="ctag ctag-teal"
-            ><i class="fas fa-check-circle"></i> PSW Certified</span
-          >
-        </div>
-        <div class="psw-skill-tags">
-          <span class="stag">Companion Care</span>
-          <span class="stag">Meal Prep</span>
-          <span class="stag">Light Housekeeping</span>
-        </div>
-        <div class="psw-card-footer">
-          <span class="psw-rate-label">$29.50 CAD / hr</span>
-          <span class="psw-availability"
-            ><i class="far fa-clock"></i> Mon–Fri, Days</span
-          >
-        </div>
-        <a href="#" class="btn-request"
-          ><i class="far fa-comment-dots"></i> Request Connection / Chat</a
-        >
-      </div>
+      {% empty %}
+      <p>No verified caregivers available at the moment.</p>
+      {% endfor %}
     </div>
   </div>
 </section>

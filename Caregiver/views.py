@@ -4,7 +4,12 @@ from Account.models import CaregiverProfile, JobPosting
 
 
 def home(request):
-    return render(request, 'Caregiver/index.html')
+    verified_caregivers = CaregiverProfile.objects.filter(
+        status=CaregiverProfile.STATUS_ACTIVE
+    ).select_related('user').order_by('-created_at')[:3]
+    return render(request, 'Caregiver/index.html', {
+        'verified_caregivers': verified_caregivers,
+    })
 
 
 def browse(request):

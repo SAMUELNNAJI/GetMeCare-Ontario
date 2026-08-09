@@ -688,6 +688,30 @@ GetMeCare Ontario{% endblock %} {% block extra_head %}
           </div>
         </div>
 
+        <!-- Username -->
+        <div class="form-group {% if form.username.errors %}has-error{% endif %}">
+          <label for="{{ form.username.id_for_label }}"
+            >Username <span class="req">*</span></label
+          >
+          <div class="input-wrap">
+            <i class="fas fa-at input-icon"></i>
+            <input
+              type="text"
+              name="{{ form.username.html_name }}"
+              id="{{ form.username.id_for_label }}"
+              value="{{ form.username.value|default:'' }}"
+              placeholder="Choose a username"
+              autocomplete="username"
+              required
+            />
+          </div>
+          {% for error in form.username.errors %}
+          <span class="field-error"
+            ><i class="fas fa-exclamation-circle"></i> {{ error }}</span
+          >
+          {% endfor %}
+        </div>
+
         <!-- Email -->
         <div class="form-group {% if form.email.errors %}has-error{% endif %}">
           <label for="{{ form.email.id_for_label }}"
