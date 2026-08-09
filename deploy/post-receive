@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# ============================================================
+#  Git post-receive hook — runs on the VPS after every
+#  `git push origin main`
+#
+#  Install:
+#    cp /home/getmecare/app/deploy/post-receive \
+#       /home/getmecare/repo.git/hooks/post-receive
+#    chmod +x /home/getmecare/repo.git/hooks/post-receive
+# ============================================================
+set -euo pipefail
+
+# ── Config — edit these to match your VPS paths ─────────────
+APP_DIR="/home/getmecare/app"          # where the live code lives
+VENV_DIR="$APP_DIR/venv"              # virtualenv inside the app dir
+REPO_DIR="/home/getmecare/repo.git"   # bare git repo on the VPS
+GIT_WORK_TREE="$APP_DIR"
+GIT_DIR="$REPO_DIR"
+GUNICORN_SERVICE="gunicorn-getmecare" # systemd service name
+# ────────────────────────────────────────────────────────────
+
+echo ""
+echo "====================================================="
+echo "  GetMeCare — deploying new push"
+echo "====================================================="
+
+# 1. Check out the latest code into the working directory
+echo "[1/6] Checking out code..."
+GIT_WORK_TREE="$APP_DIR" git --git-dir="$GIT_DIR" checkout -f main
+
+cd "$APP_DIR"
+
+# 2. Install / update Python dependencies
+echo "[2/6] Installing dependencies..."
+"$VENV_DIR/bin/pip" install --quiet --upgrade pip
+"$VENV_DIR/bin/pip" install --quiet -r requirements.txt
+
+# 3. Collect static files
+echo "[3/6] Collecting static files..."
+"$VENV_DIR/bin/python" manage.py collectstatic --noinput --clear
+
+# 4. Run database migrations
+echo "[4/6] Running migrations..."
+"$VENV_DIR/bin/python" manage.py migrate --noinput
+
+# 5. Copy Nginx config if it changed and reload Nginx
+echo "[5/6] Updating Nginx config..."
+NGINX_CONF_SRC="$APP_DIR/nginx/getmecare.conf"
+NGINX_CONF_DST="/etc/nginx/sites-available/getmecare"
+
+# Only copy + reload if the file actually changed
+if ! diff -q "$NGINX_CONF_SRC" "$NGINX_CONF_DST" > /dev/null 2>&1; then
+    sudo cp "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
+    # Ensure symlink exists in sites-enabled
+    if [ ! -L "/etc/nginx/sites-enabled/getmecare" ]; then
+        sudo ln -s "$NGINX_CONF_DST" /etc/nginx/sites-enabled/getmecare
+    fi
+    sudo nginx -t && sudo systemctl reload nginx
+    echo "    Nginx config updated and reloaded."
+else
+    echo "    Nginx config unchanged, skipping reload."
+fi
+
+# 6. Restart Gunicorn so new code takes effect
+echo "[6/6] Restarting Gunicorn..."
+sudo systemctl restart "$GUNICORN_SERVICE"
+
+echo ""
+echo "✓ Deploy complete — $(date '+%Y-%m-%d %H:%M:%S')"
+echo "====================================================="

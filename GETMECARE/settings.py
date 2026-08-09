@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django.contrib.sitemaps',
     'Caregiver',
     'Account.apps.AccountConfig',
@@ -159,6 +160,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Custom user model
 AUTH_USER_MODEL = 'Account.CustomUser'
+
+SITE_ID = 1
 
 # ── Media files (user uploads) ──────────────────────────────────
 # In production (Render):  uploads go to ImageKit so they survive deploys.

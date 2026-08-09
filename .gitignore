@@ -3,6 +3,10 @@
 .env.*
 !.env.example
 
+# Deploy scripts — always include these
+!deploy/
+!nginx/
+
 # Python
 __pycache__/
 *.py[cod]

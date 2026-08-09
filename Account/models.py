@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.urls import reverse
 
 
 class CustomUser(AbstractUser):
@@ -107,6 +108,9 @@ class CaregiverProfile(models.Model):
     @property
     def skills_list(self):
         return [s.strip() for s in self.skills.split(',') if s.strip()]
+
+    def get_absolute_url(self):
+        return reverse('caregiver_profile', kwargs={'pk': self.pk})
 
     @property
     def care_types_list(self):
@@ -466,6 +470,9 @@ class JobPosting(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.employer.get_full_name()} ({self.city})"
+
+    def get_absolute_url(self):
+        return reverse('browse_jobs')
 
 
 # ──────────────────────────────────────────────────────────────

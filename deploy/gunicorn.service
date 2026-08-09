@@ -1,0 +1,51 @@
+# ============================================================
+#  Gunicorn systemd service for GetMeCare
+#
+#  Install:
+#    sudo cp /home/getmecare/app/deploy/gunicorn.service \
+#            /etc/systemd/system/gunicorn-getmecare.service
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable gunicorn-getmecare
+#    sudo systemctl start gunicorn-getmecare
+# ============================================================
+
+[Unit]
+Description=Gunicorn daemon for GetMeCare
+After=network.target
+
+[Service]
+User=getmecare
+Group=www-data
+WorkingDirectory=/home/getmecare/app
+
+# Load environment variables from .env file
+EnvironmentFile=/home/getmecare/app/.env
+
+# Gunicorn settings:
+#   --workers     = (2 × CPU cores) + 1  — adjust for your VPS
+#   --threads     = extra concurrency per worker (good for I/O like uploads)
+#   --timeout     = 120s so large uploads don't get killed mid-flight
+#   --bind        = only listen on localhost; Nginx proxies from outside
+#   --access-logfile / --error-logfile = persistent logs
+ExecStart=/home/getmecare/app/venv/bin/gunicorn \
+    GETMECARE.wsgi:application \
+    --workers 3 \
+    --threads 4 \
+    --worker-class gthread \
+    --timeout 120 \
+    --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/getmecare/access.log \
+    --error-logfile  /var/log/getmecare/error.log \
+    --log-level info \
+    --capture-output
+
+# Restart automatically if it crashes
+Restart=on-failure
+RestartSec=5s
+
+# Graceful shutdown — wait up to 30s for in-flight requests to finish
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
