@@ -4,10 +4,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum
+from django.http import JsonResponse
 from decimal import Decimal
+import logging
 
 from .forms import LoginForm, SignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm
 from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog
+
+_profile_logger = logging.getLogger(__name__)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -61,7 +65,7 @@ def signup(request):
             # Auto-create CaregiverProfile when role is caregiver
             if user.is_caregiver:
                 CaregiverProfile.objects.get_or_create(user=user)
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect_for_user(user)
     else:
         form = SignupForm()
@@ -167,9 +171,9 @@ def clock_out(request):
 # ──────────────────────────────────────────────────────────────
 # Edit Profile
 # ──────────────────────────────────────────────────────────────
+
 @login_required(login_url='Account:login')
 def edit_profile(request):
-    from Account.forms import ProfileImageForm, BankDetailsForm
     user = request.user
     profile = None
     profile_form = None
@@ -183,13 +187,48 @@ def edit_profile(request):
         action = request.POST.get('action', 'profile')
 
         if action == 'image' and user.is_caregiver:
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+            # Guard: file must actually be present in the request
+            if 'profile_image' not in request.FILES:
+                msg = 'No file received. Please select an image and try again.'
+                if is_ajax:
+                    return JsonResponse({'ok': False, 'error': msg}, status=400)
+                messages.error(request, msg)
+                return redirect('Account:edit_profile')
+
             image_form = ProfileImageForm(request.POST, request.FILES, instance=profile)
             if image_form.is_valid():
-                image_form.save()
-                messages.success(request, 'Profile photo updated.')
+                try:
+                    saved_profile = image_form.save()
+                    img_url = ''
+                    if saved_profile.profile_image:
+                        img_url = saved_profile.profile_image.url
+                    if is_ajax:
+                        return JsonResponse({'ok': True, 'url': img_url})
+                    messages.success(request, 'Profile photo updated.')
+                except Exception as exc:
+                    import traceback
+                    _profile_logger.error(
+                        'Profile image save failed for user %s:\n%s',
+                        user.pk, traceback.format_exc(),
+                    )
+                    user_msg = str(exc) or 'Upload failed — please try again.'
+                    if is_ajax:
+                        return JsonResponse({'ok': False, 'error': user_msg}, status=500)
+                    messages.error(request, f'Photo upload failed: {user_msg}')
             else:
-                messages.error(request, 'Photo upload failed. Use JPG or PNG under 5 MB.')
-            return redirect('Account:edit_profile')
+                error_msg = '; '.join(
+                    str(e) for errors in image_form.errors.values() for e in errors
+                )
+                _profile_logger.warning(
+                    'ProfileImageForm invalid for user %s: %s', user.pk, image_form.errors
+                )
+                if is_ajax:
+                    return JsonResponse({'ok': False, 'error': error_msg or 'Invalid image.'}, status=400)
+                messages.error(request, error_msg or 'Photo upload failed. Use JPG or PNG under 5 MB.')
+            if not is_ajax:
+                return redirect('Account:edit_profile')
 
         elif action == 'bank' and user.is_caregiver:
             bank_form = BankDetailsForm(request.POST, instance=profile)

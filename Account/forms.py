@@ -179,11 +179,52 @@ class ProfileImageForm(forms.ModelForm):
         model = CaregiverProfile
         fields = ('profile_image',)
 
+    # Allowed MIME types and their corresponding magic-byte signatures
+    _ALLOWED_MIME = {'image/jpeg', 'image/png', 'image/webp'}
+    _MAGIC = {
+        b'\xff\xd8\xff': 'image/jpeg',
+        b'\x89PNG':      'image/png',
+        b'RIFF':         'image/webp',   # RIFF????WEBP — checked below
+    }
+
     def clean_profile_image(self):
         img = self.cleaned_data.get('profile_image')
-        if img:
-            if img.size > 5 * 1024 * 1024:
-                raise forms.ValidationError('Image must be under 5 MB.')
+        if not img:
+            return img
+
+        # 1. Size check
+        if img.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('Image must be under 5 MB.')
+
+        # 2. Extension check
+        ext = img.name.rsplit('.', 1)[-1].lower() if '.' in img.name else ''
+        if ext not in ('jpg', 'jpeg', 'png', 'webp'):
+            raise forms.ValidationError(
+                'Only JPG, PNG, or WebP images are allowed.'
+            )
+
+        # 3. Magic-byte check — peek at the first 12 bytes without
+        #    consuming the stream (seek back afterwards)
+        img.seek(0)
+        header = img.read(12)
+        img.seek(0)
+
+        detected = None
+        for magic, mime in self._MAGIC.items():
+            if header[:len(magic)] == magic:
+                detected = mime
+                break
+
+        # WebP needs the extra "WEBP" marker at bytes 8-12
+        if detected == 'image/webp' and header[8:12] != b'WEBP':
+            detected = None
+
+        if detected not in self._ALLOWED_MIME:
+            raise forms.ValidationError(
+                'File does not appear to be a valid image. '
+                'Please upload a JPG, PNG, or WebP file.'
+            )
+
         return img
 
 

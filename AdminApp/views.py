@@ -451,19 +451,39 @@ def delete_user(request, user_id):
 
 @admin_required
 def serve_document(request, doc_id):
-    """Serve a caregiver document inline in the browser so it previews instead of downloading."""
+    """Serve a caregiver document inline in the browser so it previews instead of downloading.
+
+    Works with both local FileSystemStorage and cloud backends (e.g. ImageKit)
+    because it reads through the storage API instead of using .path directly.
+    """
     doc = get_object_or_404(CaregiverDocument, pk=doc_id)
-    file_path = doc.file.path
-    if not os.path.exists(file_path):
-        raise Http404('Document file not found.')
-    mime_type, _ = mimetypes.guess_type(file_path)
-    if not mime_type:
-        mime_type = 'application/octet-stream'
-    with open(file_path, 'rb') as f:
-        response = HttpResponse(f.read(), content_type=mime_type)
-    filename = os.path.basename(file_path)
-    response['Content-Disposition'] = f'inline; filename="{filename}"'
-    return response
+
+    if not doc.file:
+        raise Http404('No file attached to this document.')
+
+    # For cloud storage backends (ImageKit, S3, etc.) .path is not supported.
+    # Redirect to the file's public URL instead of trying to stream it ourselves.
+    storage_class = type(doc.file.storage).__name__  # noqa: F841 (kept for debugging)
+
+    # If the backend supports absolute paths it's local disk — stream the file.
+    # Otherwise redirect to the cloud URL.
+    try:
+        file_path = doc.file.path          # raises NotImplementedError on cloud backends
+        if not os.path.exists(file_path):
+            raise Http404('Document file not found.')
+        mime_type, _ = mimetypes.guess_type(file_path)
+        mime_type = mime_type or 'application/octet-stream'
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type=mime_type)
+        filename = os.path.basename(file_path)
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    except NotImplementedError:
+        # Cloud storage — redirect to the hosted URL
+        url = doc.file.url
+        if not url:
+            raise Http404('Document file not found.')
+        return redirect(url)
 
 
 @admin_required

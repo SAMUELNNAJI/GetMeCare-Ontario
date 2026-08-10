@@ -31,14 +31,23 @@ def _sidebar_context(user):
         caregiver=user, status=Shift.STATUS_COMPLETED,
     ).count()
     doc_types = set(CaregiverDocument.objects.filter(user=user).values_list('doc_type', flat=True))
+
+    is_verified = profile.status == CaregiverProfile.STATUS_ACTIVE
+    has_bank    = bool(profile.bank_account_number and profile.bank_transit_number)
+
     checklist = [
         {'label': 'Identity verified',        'done': 'government_id'           in doc_types},
         {'label': 'PSW certificate uploaded', 'done': 'psw_certificate'         in doc_types},
         {'label': 'Vulnerable sector check',  'done': 'vulnerable_sector_check' in doc_types},
-        {'label': 'Compliance interview',     'done': profile.status == 'active'},
-        {'label': 'Direct deposit details',   'done': False},
+        {'label': 'Compliance interview',     'done': is_verified},
+        {'label': 'Direct deposit details',   'done': has_bank},
     ]
-    onboarding_pct = int(sum(1 for c in checklist if c['done']) / len(checklist) * 100)
+
+    # Once admin has verified the caregiver, onboarding is complete regardless
+    if is_verified:
+        onboarding_pct = 100
+    else:
+        onboarding_pct = int(sum(1 for c in checklist if c['done']) / len(checklist) * 100)
     
     # Count upcoming shifts for badge
     today = timezone.now().date()

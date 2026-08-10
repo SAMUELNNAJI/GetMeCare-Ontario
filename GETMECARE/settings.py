@@ -14,7 +14,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 import dj_database_url
-from django.conf.urls.static import static
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -155,7 +154,7 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Whitenoise static file serving
+# Static file compression via whitenoise (also set in STORAGES below)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Custom user model
@@ -171,29 +170,22 @@ IMAGEKIT_PUBLIC_KEY   = os.getenv('IMAGEKIT_PUBLIC_KEY', '')
 IMAGEKIT_URL_ENDPOINT = os.getenv('IMAGEKIT_URL_ENDPOINT', '')
 IMAGEKIT_FOLDER       = os.getenv('IMAGEKIT_FOLDER', 'getmecare')
 
-USE_IMAGEKIT = (
-    os.getenv('USE_IMAGEKIT', '').lower() in ('true', '1', 'yes')
-    or os.getenv('IMAGEKIT', '').lower() in ('true', '1', 'yes')
-)
+USE_IMAGEKIT = False  # disabled — using local disk storage
 
-if IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT and (USE_IMAGEKIT or not DEBUG):
-    # Production / explicit-test mode — ImageKit cloud storage
-    DEFAULT_FILE_STORAGE = 'GETMECARE.imagekit_storage.ImageKitStorage'
-    MEDIA_URL = '/media/'
-else:
-    # Development — local disk
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Decide which media-file backend to use.
+# Django 5.1+ reads STORAGES['default'] — DEFAULT_FILE_STORAGE is ignored.
+_use_imagekit_storage = False  # always local disk
 
-# Django 5.1+ uses STORAGES instead of DEFAULT_FILE_STORAGE.
-# Mirror the conditional backend choice above so ImageKit is actually used.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Django 5.1+ canonical storage config (replaces DEFAULT_FILE_STORAGE)
 STORAGES = {
     'default': {
-        'BACKEND': DEFAULT_FILE_STORAGE,
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 

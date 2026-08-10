@@ -229,7 +229,9 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
             {% if profile.profile_image %}
             <img src="{{ profile.profile_image.url }}" alt="{{ profile.user.get_full_name }}" />
             {% else %}
-            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="{{ profile.user.get_full_name }}" />
+            <div style="width:72px;height:72px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#1b3a2d,#2d5a42);flex-shrink:0;">
+              {% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{{ profile.user.last_name|first|upper }}{% else %}{{ profile.user.username|slice:":2"|upper }}{% endif %}
+            </div>
             {% endif %}
             <span class="psw-verified-dot"><i class="fas fa-check"></i></span>
           </div>

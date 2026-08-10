@@ -420,18 +420,14 @@ GetMeCare{% endblock %} {% block extra_head %}
 <div class="ep-grid">
   <!-- ── LEFT: avatar + status card ── -->
   <div class="ep-avatar-card">
-    <!-- Profile image form -->
-    <form method="post" enctype="multipart/form-data" id="avatar-form">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="image" />
-      <input
-        type="file"
-        id="avatar-file-input"
-        name="profile_image"
-        accept="image/*"
-        style="display:none"
-      />
-    </form>
+    <!-- Hidden file input for avatar upload (JS-driven, no form submit) -->
+    <input
+      type="file"
+      id="avatar-file-input"
+      name="profile_image"
+      accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+      style="display:none"
+    />
 
     <div class="ep-av-upload-wrap" onclick="document.getElementById('avatar-file-input').click()" title="Change photo" id="avatar-upload-trigger">
       <div class="ep-big-av" id="ep-av-preview">
@@ -739,72 +735,125 @@ GetMeCare{% endblock %} {% block extra_head %}
 {% endblock %} {% block extra_scripts %}
 <script>
   (function () {
-    var fileInput = document.getElementById("avatar-file-input");
-    var imgEl = document.getElementById("ep-av-img");
-    var initials = document.getElementById("ep-av-initials");
-    var form = document.getElementById("avatar-form");
-    var avatarTrigger = document.getElementById("avatar-upload-trigger");
-    var progressDiv = document.getElementById("avatar-progress");
+    var fileInput  = document.getElementById("avatar-file-input");
+    var imgEl      = document.getElementById("ep-av-img");
+    var initials   = document.getElementById("ep-av-initials");
+    var trigger    = document.getElementById("avatar-upload-trigger");
+    var progressDiv  = document.getElementById("avatar-progress");
     var progressFill = document.getElementById("avatar-progress-fill");
     var progressText = document.getElementById("avatar-progress-text");
 
+    // URL is rendered server-side — no DOM lookup needed
+    var uploadUrl = "{% url 'Account:edit_profile' %}";
+    // CSRF token is read from the cookie (always present in Django)
+    function getCookie(name) {
+      var v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+    }
+
     if (!fileInput) return;
 
-    fileInput.addEventListener("change", function () {
-      if (fileInput.files && fileInput.files[0]) {
-        var file = fileInput.files[0];
-        
-        // Preview the image
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          if (imgEl) {
-            imgEl.src = e.target.result;
-            imgEl.style.display = "block";
-            if (initials) initials.style.display = "none";
-          }
-        };
-        reader.readAsDataURL(file);
+    var uploading = false;
 
-        // Upload with progress tracking
-        var formData = new FormData(form);
-        var xhr = new XMLHttpRequest();
-
-        // Show progress indicator
+    function setUploading(active) {
+      uploading = active;
+      if (trigger) trigger.style.pointerEvents = active ? "none" : "auto";
+      if (active) {
+        progressFill.style.width = "0%";
+        progressText.textContent = "Uploading\u2026 0%";
         progressDiv.classList.add("active");
-        if (avatarTrigger) avatarTrigger.style.pointerEvents = "none";
-
-        // Track upload progress
-        xhr.upload.addEventListener("progress", function (e) {
-          if (e.lengthComputable) {
-            var percentComplete = Math.round((e.loaded / e.total) * 100);
-            progressFill.style.width = percentComplete + "%";
-            progressText.textContent = "Uploading... " + percentComplete + "%";
-          }
-        });
-
-        xhr.addEventListener("load", function () {
-          if (xhr.status === 200 || xhr.status === 302) {
-            // Success - redirect to refresh page
-            window.location.href = window.location.href;
-          } else {
-            // Error
-            progressDiv.classList.remove("active");
-            if (avatarTrigger) avatarTrigger.style.pointerEvents = "auto";
-            alert("Upload failed. Please try again.");
-          }
-        });
-
-        xhr.addEventListener("error", function () {
-          progressDiv.classList.remove("active");
-          if (avatarTrigger) avatarTrigger.style.pointerEvents = "auto";
-          alert("Upload failed. Please try again.");
-        });
-
-        xhr.open("POST", form.action, true);
-        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-        xhr.send(formData);
       }
+    }
+
+    function showDone(msg) {
+      progressFill.style.width = "100%";
+      progressText.textContent = msg;
+      setTimeout(function () { progressDiv.classList.remove("active"); }, 2200);
+    }
+
+    function showError() {
+      progressDiv.classList.remove("active");
+      setUploading(false);
+    }
+
+    fileInput.addEventListener("change", function () {
+      if (uploading) return;
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      // Instant local preview
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        if (imgEl) {
+          imgEl.src = e.target.result;
+          imgEl.style.display = "block";
+        }
+        if (initials) initials.style.display = "none";
+      };
+      reader.readAsDataURL(file);
+
+      // Build FormData explicitly
+      var fd = new FormData();
+      fd.append("csrfmiddlewaretoken", getCookie("csrftoken"));
+      fd.append("action", "image");
+      fd.append("profile_image", file, file.name);
+
+      var xhr = new XMLHttpRequest();
+      setUploading(true);
+
+      xhr.upload.addEventListener("progress", function (e) {
+        if (e.lengthComputable) {
+          var pct = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = pct + "%";
+          progressText.textContent = "Uploading\u2026 " + pct + "%";
+        }
+      });
+
+      xhr.addEventListener("load", function () {
+        setUploading(false);
+        try {
+          var data = JSON.parse(xhr.responseText);
+          if (data.ok) {
+            if (data.url && imgEl) {
+              imgEl.src = data.url + "?t=" + Date.now(); // bust cache
+              imgEl.style.display = "block";
+              if (initials) initials.style.display = "none";
+            }
+            showDone("Photo updated!");
+          } else {
+            showError();
+            alert("Upload failed: " + (data.error || "Please try again."));
+          }
+        } catch (e) {
+          showError();
+          alert(xhr.status === 0
+            ? "Upload failed: could not reach the server."
+            : "Upload failed (server error " + xhr.status + "). Please try again.\n\nDetails: " + xhr.responseText.slice(0, 200));
+        }
+        fileInput.value = "";
+      });
+
+      xhr.addEventListener("error", function () {
+        showError();
+        alert("Network error \u2014 upload failed. Please check your connection.");
+        fileInput.value = "";
+      });
+
+      xhr.addEventListener("abort", function () {
+        showError();
+        fileInput.value = "";
+      });
+
+      xhr.open("POST", uploadUrl, true);
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+      // Do NOT set Content-Type — let the browser set it with the boundary
+      xhr.send(fd);
     });
+
+    // Store original server-side image URL for revert on failure
+    if (imgEl && imgEl.src && imgEl.style.display !== "none") {
+      imgEl.dataset.original = imgEl.src;
+    }
   })();
 </script>
 {% endblock %}
