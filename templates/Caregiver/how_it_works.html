@@ -53,7 +53,7 @@ Works – GetMeCare ONTARIO{% endblock %} {% block content %}
       <div class="hiw-step-num">01</div>
       <div class="hiw-step-img">
         <img
-          src="{% static 'Caregiver/images/image-1.avif' %}"
+          src="{% static 'Caregiver/images/Post Your Care Request.png' %}"
           alt="Post your care request"
         />
       </div>
@@ -390,62 +390,74 @@ Works – GetMeCare ONTARIO{% endblock %} {% block content %}
     </div>
     <div class="faq-grid">
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> How long does matching take?
+        </button>
+        <div class="faq-a">
+          <p>
+            Most families receive their first caregiver match within 48–72 hours
+            of posting their request.
+          </p>
         </div>
-        <p>
-          Most families receive their first caregiver match within 48–72 hours
-          of posting their request.
-        </p>
       </div>
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> Can I meet the caregiver before
           hiring?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. Once admin confirms compatibility, a brief intro call can be
+            arranged before the first shift is locked in.
+          </p>
         </div>
-        <p>
-          Yes. Once admin confirms compatibility, a brief intro call can be
-          arranged before the first shift is locked in.
-        </p>
       </div>
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> What if a caregiver cancels last
           minute?
+        </button>
+        <div class="faq-a">
+          <p>
+            Our admin team is notified immediately and will work to find a
+            replacement or rescheduled shift as quickly as possible.
+          </p>
         </div>
-        <p>
-          Our admin team is notified immediately and will work to find a
-          replacement or rescheduled shift as quickly as possible.
-        </p>
       </div>
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> Is my payment information safe?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. We never store raw card data. All payments are tokenized via our
+            PCI-DSS compliant processor and stored on Canada Central servers.
+          </p>
         </div>
-        <p>
-          Yes. We never store raw card data. All payments are tokenized via our
-          PCI-DSS compliant processor and stored on Canada Central servers.
-        </p>
       </div>
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> Can caregivers set their own
           rates?
+        </button>
+        <div class="faq-a">
+          <p>
+            Yes. Caregivers list their preferred hourly rate on their profile.
+            Families can filter by budget range when browsing.
+          </p>
         </div>
-        <p>
-          Yes. Caregivers list their preferred hourly rate on their profile.
-          Families can filter by budget range when browsing.
-        </p>
       </div>
       <div class="faq-item">
-        <div class="faq-q">
+        <button class="faq-q" aria-expanded="false">
           <i class="fas fa-chevron-right"></i> What is the $39 CAD vetting fee?
+        </button>
+        <div class="faq-a">
+          <p>
+            It's a one-time fee for employers that covers admin compliance review,
+            caregiver vetting, and publishing your care request to our network.
+            There are no recurring charges.
+          </p>
         </div>
-        <p>
-          It's a one-time fee for employers that covers admin compliance review,
-          caregiver vetting, and publishing your care request to our network.
-          There are no recurring charges.
-        </p>
       </div>
     </div>
   </div>
@@ -509,6 +521,27 @@ Works – GetMeCare ONTARIO{% endblock %} {% block content %}
       { threshold: 0.15 },
     );
     steps.forEach((s) => io.observe(s));
+
+    // ── FAQ accordion ─────────────────────────────────────────
+    document.querySelectorAll(".faq-q").forEach(function (btn) {
+      const answer = btn.nextElementSibling; // .faq-a
+      // Set initial height to 0 (collapsed)
+      answer.style.maxHeight = "0px";
+
+      btn.addEventListener("click", function () {
+        const isOpen = btn.getAttribute("aria-expanded") === "true";
+
+        if (isOpen) {
+          btn.setAttribute("aria-expanded", "false");
+          answer.style.maxHeight = "0px";
+          btn.closest(".faq-item").classList.remove("faq-open");
+        } else {
+          btn.setAttribute("aria-expanded", "true");
+          answer.style.maxHeight = answer.scrollHeight + "px";
+          btn.closest(".faq-item").classList.add("faq-open");
+        }
+      });
+    });
   })();
 </script>
 {% endblock %}
