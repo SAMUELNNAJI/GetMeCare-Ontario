@@ -29,12 +29,18 @@ load_dotenv(BASE_DIR / '.env', override=True)
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure--$rr@32q-e2p__*03@pcz8@i)@1s&mn8jmy^!ze46)m9@4w)i5')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'Flase') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-# Also allow any Render domain dynamically
-if not DEBUG:
-    ALLOWED_HOSTS.append('.onrender.com')
+SECURE_SSL_REDIRECT = False  # Turn this off until you have real SSL
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# keep this for later when you add SSL
+
+ALLOWED_HOSTS = ['getmecare-ontario.com', 'www.getmecare-ontario.com', '185.113.249.197', 'localhost', '127.0.0.1']
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 
 # Application definition
@@ -208,7 +214,6 @@ FINCRA_USD_TO_NGN_RATE = float(os.getenv('FINCRA_USD_TO_NGN_RATE', '1580'))
 
 # Security settings for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
@@ -217,3 +222,4 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+

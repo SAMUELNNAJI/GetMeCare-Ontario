@@ -46,7 +46,7 @@ def sidebar_context(request):
     Safe to call on every request — returns {} for anonymous users
     and for users that don't match either role.
     """
-    if not request.user.is_authenticated:
+    if not hasattr(request, 'user') or not request.user.is_authenticated:
         return {}
 
     role = getattr(request.user, 'role', None)
