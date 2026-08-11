@@ -60,6 +60,16 @@ class SignupForm(UserCreationForm):
             raise forms.ValidationError('An account with this email already exists.')
         return email
 
+    def clean_role(self):
+        """Ensure only the two public roles can be chosen via the signup form.
+        Admin accounts must be created through the Django admin or createsuperuser.
+        """
+        role = self.cleaned_data.get('role')
+        allowed = {choice[0] for choice in self.ROLE_CHOICES}
+        if role not in allowed:
+            raise forms.ValidationError('Invalid role selected.')
+        return role
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.username = self.cleaned_data['username']

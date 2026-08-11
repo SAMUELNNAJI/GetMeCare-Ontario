@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.conf import settings
 from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation
 from Account.models import CaregiverProfile, BookingProposal, EmployerProfile
+from .pii_filter import find_pii, pii_error_message
 import json
 import re
 import requests
@@ -490,6 +491,8 @@ def _chat_base(user):
     """Return the right base template for the current user's role."""
     if not user.is_authenticated:
         return 'base.html'
+    if user.is_admin:
+        return 'base.html'
     if user.role == 'caregiver':
         return 'CareGiverAcc/base_caregiver.html'
     if user.role == 'employer':
@@ -503,9 +506,17 @@ def _get_chat_block_reason(user):
     or None if they are permitted.
 
     Rules:
+      - Admin / staff users cannot use the chat at all
       - Caregiver must have CaregiverProfile.status == 'active'
       - Employer must have EmployerProfile.is_active == True
     """
+    # Admins (superuser / staff) are not participants in employer-caregiver chat
+    if user.is_admin:
+        return (
+            'AdminApp:dashboard',
+            "Admin accounts cannot send or receive messages through the chat system.",
+        )
+
     if user.role == 'caregiver':
         try:
             profile = user.caregiver_profile
@@ -654,6 +665,16 @@ def chat_send(request, conv_id):
     body = request.POST.get('body', '').strip()
     if not body:
         return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
+
+    # ── PII guard ─────────────────────────────────────────────
+    # Block messages that contain email addresses, phone numbers,
+    # or bank / account numbers.
+    pii_matches = find_pii(body)
+    if pii_matches:
+        return JsonResponse(
+            {'ok': False, 'error': pii_error_message(pii_matches), 'pii': True},
+            status=400,
+        )
 
     # ── Server-side duplicate guard ───────────────────────────
     # Reject if the same sender sent the identical body in the last 3 seconds

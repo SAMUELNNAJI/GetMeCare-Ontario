@@ -31,7 +31,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
       required.
     </p>
 
-    <form id="contactForm" novalidate>
+    <form id="contactForm" method="POST" action="{% url 'contact' %}" novalidate>
       {% csrf_token %}
       <div class="form-row">
         <div class="form-group">
@@ -70,7 +70,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
       </div>
       <div class="form-group">
         <label>I am a… <span>*</span></label>
-        <select id="role" required>
+        <select id="role" name="role" required>
           <option value="" disabled selected>Select your role</option>
           <option value="family">Family / Employer looking for care</option>
           <option value="psw">PSW / Caregiver looking to join</option>

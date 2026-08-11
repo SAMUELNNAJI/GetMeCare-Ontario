@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
+from django.core.mail import send_mail
+from django.conf import settings
 from Account.models import CaregiverProfile, JobPosting
 
 
@@ -151,6 +153,43 @@ def services(request):
 
 
 def contact(request):
+    if request.method == 'POST':
+        first_name = request.POST.get('firstName', '').strip()
+        last_name = request.POST.get('lastName', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        role = request.POST.get('role', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        if first_name and last_name and email and role and subject and message:
+            email_subject = f'Contact Form: {subject}'
+            email_body = f"""
+New contact form submission from GetMeCare Ontario website.
+
+Name: {first_name} {last_name}
+Email: {email}
+Phone: {phone if phone else 'Not provided'}
+Role: {dict(request.POST).get('role', [''])[0] if isinstance(request.POST.get('role'), list) else role}
+
+Subject: {subject}
+
+Message:
+{message}
+"""
+            try:
+                send_mail(
+                    email_subject,
+                    email_body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [settings.CONTACT_EMAIL],
+                    fail_silently=False,
+                )
+            except Exception:
+                pass
+
+        return render(request, 'Caregiver/contact.html')
+
     return render(request, 'Caregiver/contact.html')
 
 

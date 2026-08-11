@@ -24,12 +24,17 @@ class CustomUser(AbstractUser):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
 
     @property
+    def is_admin(self):
+        """True for superusers and staff — they are the platform admins."""
+        return self.is_superuser or self.is_staff
+
+    @property
     def is_employer(self):
-        return self.role == self.EMPLOYER
+        return self.role == self.EMPLOYER and not self.is_admin
 
     @property
     def is_caregiver(self):
-        return self.role == self.CAREGIVER
+        return self.role == self.CAREGIVER and not self.is_admin
 
 
 # ──────────────────────────────────────────────────────────────

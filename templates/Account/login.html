@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% load static %}
 
 {% block title %}Sign In — GetMeCare Ontario{% endblock %}
 
@@ -76,24 +76,7 @@
   <section class="auth-left" aria-label="GetMeCare introduction">
     <div class="auth-left-inner">
       <div class="auth-brand">
-        <svg
-          class="auth-brand-icon"
-          viewBox="0 0 44 44"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <circle cx="22" cy="22" r="22" fill="rgba(255,255,255,0.15)" />
-          <path
-            d="M22 10c-1.5 0-2.8.6-3.8 1.6-1-.9-2.3-1.6-3.8-1.6-3 0-5.4 2.4-5.4 5.4 0 4.2 4.6 8 12 12.6 7.4-4.6 12-8.4 12-12.6C33.4 12.4 31 10 28 10c-1.5 0-2.8.6-3.8 1.6C23.2 10.6 22.5 10 22 10z"
-            fill="#e5a550"
-          />
-          <path
-            d="M14 28c0-1.1.9-2 2-2h1.5l2.5-4 2.5 2 2-3 2.5 5H28c1.1 0 2 .9 2 2v2H14v-2z"
-            fill="#F57C00"
-          />
-          <path d="M11 30h22v1.5a1.5 1.5 0 01-1.5 1.5h-19A1.5 1.5 0 0111 31.5V30z" fill="#fff" />
-        </svg>
+        <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" class="auth-brand-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)" />
         <span class="auth-brand-name">GetMe<span>Care</span><em>Ontario</em></span>
       </div>
 
