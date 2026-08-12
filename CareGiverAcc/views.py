@@ -472,6 +472,30 @@ def serve_document(request, doc_id):
 
 @caregiver_required
 def dismiss_activation_modal(request):
-    """Dismiss the activation reminder modal and set a session flag."""
-    request.session['caregiver_activation_dismissed'] = True
+    """
+    Permanently dismiss the activation reminder modal.
+
+    Sets CaregiverProfile.activation_modal_dismissed = True in the DB
+    so the modal never shows again, even after session expiry or on a
+    different device.
+
+    Accepts an optional ?next= query param so the Upload Documents and
+    Edit Profile buttons can pass through here before redirecting onward.
+    """
+    try:
+        from Account.models import CaregiverProfile
+        profile, _ = CaregiverProfile.objects.get_or_create(user=request.user)
+        if not profile.activation_modal_dismissed:
+            profile.activation_modal_dismissed = True
+            profile.save(update_fields=['activation_modal_dismissed'])
+    except Exception:
+        pass
+
+    # Also clear the old session key for backwards compatibility
+    request.session.pop('caregiver_activation_dismissed', None)
+
+    next_url = request.GET.get('next', '')
+    # Safety check — only allow relative URLs (prevent open redirect)
+    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
     return redirect('CareGiverAcc:dashboard')

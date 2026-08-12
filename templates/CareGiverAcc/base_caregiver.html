@@ -500,10 +500,11 @@
       <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Priority support from admin</div>
     </div>
     <div class="ep-modal-actions">
-      <a href="{% url 'CareGiverAcc:documents' %}" class="ep-modal-pay-btn">
+      {# All three buttons go through dismiss_activation_modal first, then redirect onward #}
+      <a href="{% url 'CareGiverAcc:dismiss_activation_modal' %}?next={% url 'CareGiverAcc:documents' %}" class="ep-modal-pay-btn">
         <i class="fas fa-upload"></i> Upload Documents
       </a>
-      <a href="{% url 'Account:edit_profile' %}" class="ep-modal-pay-btn" style="background:#142e21;">
+      <a href="{% url 'CareGiverAcc:dismiss_activation_modal' %}?next={% url 'Account:edit_profile' %}" class="ep-modal-pay-btn" style="background:#142e21;">
         <i class="fas fa-user-edit"></i> Edit Profile
       </a>
       <a href="{% url 'CareGiverAcc:dismiss_activation_modal' %}" class="ep-modal-later" id="closeCaregiverModalBtn">Remind me later</a>
@@ -543,7 +544,6 @@
     });
   }
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSearch(); });
-  // Activation modal backdrop click to dismiss
   {% if show_activation_modal %}
   (function(){
     var m = document.getElementById('caregiverActivationModal');

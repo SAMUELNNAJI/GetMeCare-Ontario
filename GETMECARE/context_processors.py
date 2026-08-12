@@ -75,7 +75,8 @@ def sidebar_context(request):
                 from Account.forms import REQUIRED_DOC_TYPES
                 profile = ctx['profile']
                 if profile.status != CaregiverProfile.STATUS_ACTIVE:
-                    if not request.session.get('caregiver_activation_dismissed'):
+                    # Check permanent DB dismissal first — if set, never show again
+                    if not profile.activation_modal_dismissed:
                         user_doc_types = set(
                             request.user.documents.filter(
                                 doc_type__in=REQUIRED_DOC_TYPES

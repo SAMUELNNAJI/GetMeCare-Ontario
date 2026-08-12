@@ -115,6 +115,11 @@ class CaregiverProfile(models.Model):
         null=True, blank=True,
         help_text='Last time a "complete your profile" reminder email was sent',
     )
+    # One-time activation modal dismissal — once True, never show the modal again
+    activation_modal_dismissed = models.BooleanField(
+        default=False,
+        help_text='Set to True permanently when caregiver dismisses the activation modal',
+    )
 
     def __str__(self):
         return f"{self.user.get_full_name()} — {self.get_status_display()}"
