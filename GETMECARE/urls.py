@@ -27,15 +27,99 @@ from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap
 
 # ── Custom password-reset view — injects the real domain from the request
 # so the reset link never points to example.com regardless of the sites table.
+#
+# Root cause: Django's PasswordResetForm.save() calls get_context() which
+# reads domain from django.contrib.sites (defaults to "example.com").
+# Fix: subclass PasswordResetForm and override save() to pass domain/protocol
+# from the request, then inject a pre-built {{ reset_url }} into the template
+# context so the email template never needs {% url %} at render time.
+
+from django import forms as _dj_forms
+from django.contrib.auth.forms import PasswordResetForm as _BaseResetForm
+from django.contrib.auth.tokens import default_token_generator as _token_gen
+from django.utils.http import urlsafe_base64_encode as _b64enc
+from django.utils.encoding import force_bytes as _fbytes
+from django.core.mail import EmailMultiAlternatives as _EmailAlt
+from django.template import loader as _loader
+
+
+class _FixedDomainPasswordResetForm(_BaseResetForm):
+    """
+    Identical to Django's PasswordResetForm except it receives `domain` and
+    `protocol` as explicit kwargs (from the request) so the reset link is
+    always absolute and points to the real server, not example.com.
+    """
+
+    def save(
+        self,
+        domain_override=None,
+        subject_template_name='registration/password_reset_subject.txt',
+        email_template_name='registration/password_reset_email.html',
+        use_https=False,
+        token_generator=_token_gen,
+        from_email=None,
+        request=None,
+        html_email_template_name=None,
+        extra_email_context=None,
+    ):
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+        email_field_name = UserModel.get_email_field_name()
+
+        # Pull the real domain & protocol from extra_email_context if provided,
+        # fall back to domain_override, then finally to the request host.
+        protocol = 'http'
+        domain   = domain_override or 'getmecare-ontario.com'
+        if extra_email_context:
+            protocol = extra_email_context.get('protocol', protocol)
+            domain   = extra_email_context.get('domain', domain)
+        elif request:
+            protocol = 'https' if use_https else 'http'
+            domain   = request.get_host()
+
+        for user in self.get_users(self.cleaned_data['email']):
+            uid   = _b64enc(_fbytes(user.pk))
+            token = token_generator.make_token(user)
+
+            # Build the fully-qualified reset URL right here.
+            confirm_path = (
+                f'/password-reset/confirm/{uid}/{token}/'
+            )
+            reset_url = f'{protocol}://{domain}{confirm_path}'
+
+            ctx = {
+                'email':     getattr(user, email_field_name),
+                'domain':    domain,
+                'site_name': 'GetMeCare Ontario',
+                'uid':       uid,
+                'user':      user,
+                'token':     token,
+                'protocol':  protocol,
+                'reset_url': reset_url,   # ← the pre-built absolute URL
+            }
+            if extra_email_context:
+                ctx.update(extra_email_context)
+
+            subject = _loader.render_to_string(subject_template_name, ctx)
+            subject = ''.join(subject.splitlines())   # no newlines in subject
+            body    = _loader.render_to_string(email_template_name, ctx)
+
+            email_message = _EmailAlt(subject, body, from_email, [getattr(user, email_field_name)])
+            if html_email_template_name:
+                html = _loader.render_to_string(html_email_template_name, ctx)
+                email_message.attach_alternative(html, 'text/html')
+            email_message.send()
+
+
 class CorrectDomainPasswordResetView(auth_views.PasswordResetView):
     template_name             = 'registration/password_reset_form.html'
     email_template_name       = 'registration/password_reset_email.html'
     html_email_template_name  = 'registration/password_reset_email.html'
     subject_template_name     = 'registration/password_reset_subject.txt'
+    form_class                = _FixedDomainPasswordResetForm
 
     def get_extra_email_context(self):
         ctx = super().get_extra_email_context() or {}
-        # Override domain and protocol from the live request — always correct.
         ctx['domain']   = self.request.get_host()
         ctx['protocol'] = 'https' if self.request.is_secure() else 'http'
         return ctx
