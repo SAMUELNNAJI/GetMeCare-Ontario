@@ -79,7 +79,16 @@ def _strip_html(html: str) -> str:
 # ──────────────────────────────────────────────────────────────
 
 def _wrap(content: str) -> str:
-    """Wrap content in a simple, branded HTML email shell."""
+    """Wrap content in a branded HTML email shell with logo visible in Gmail.
+
+    Uses a hybrid approach:
+    - <style> block in <head> for email clients that support it (Outlook, Apple Mail)
+    - Inline styles on structural elements for Gmail which strips <style> blocks
+    - Logo rendered as a hosted absolute-URL image so it shows everywhere
+    """
+    year = timezone.now().year
+    logo_url = 'https://getmecare-ontario.com/static/Caregiver/images/sitelog.png'
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,36 +97,66 @@ def _wrap(content: str) -> str:
   <title>{SITE_NAME}</title>
   <style>
     body {{ margin:0; padding:0; background:#f4f6f9; font-family:Arial,sans-serif; }}
-    .wrapper {{ max-width:600px; margin:30px auto; background:#ffffff;
-                border-radius:8px; overflow:hidden;
-                box-shadow:0 2px 8px rgba(0,0,0,.08); }}
-    .header {{ background:#1a6b4a; padding:28px 32px; text-align:center; }}
-    .header h1 {{ margin:0; color:#ffffff; font-size:22px; letter-spacing:.5px; }}
-    .body {{ padding:32px; color:#333333; font-size:15px; line-height:1.7; }}
-    .body h2 {{ margin-top:0; color:#1a6b4a; font-size:18px; }}
+    h2   {{ margin-top:0; color:#1a6b4a; font-size:18px; }}
     .info-box {{ background:#f0f9f4; border-left:4px solid #1a6b4a;
                  padding:14px 18px; border-radius:4px; margin:20px 0; }}
     .info-box p {{ margin:4px 0; }}
     .btn {{ display:inline-block; margin-top:20px; padding:12px 28px;
             background:#1a6b4a; color:#ffffff !important; text-decoration:none;
             border-radius:5px; font-size:15px; font-weight:bold; }}
-    .footer {{ background:#f4f6f9; text-align:center; padding:18px 32px;
-               font-size:12px; color:#888888; }}
-    .footer a {{ color:#1a6b4a; text-decoration:none; }}
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="header"><h1>{SITE_NAME}</h1></div>
-    <div class="body">
-      {content}
-    </div>
-    <div class="footer">
-      &copy; {timezone.now().year} {SITE_NAME} &nbsp;|&nbsp;
-      <a href="{SITE_URL}">{SITE_URL}</a><br />
-      Questions? Email us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+
+          <!-- HEADER with logo -->
+          <tr>
+            <td style="background:#1a6b4a;padding:22px 32px;text-align:center;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle;padding-right:10px;">
+                    <img src="{logo_url}"
+                         alt="{SITE_NAME}"
+                         width="36" height="36"
+                         style="display:block;width:36px;height:36px;object-fit:contain;border:0;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:.4px;font-family:Arial,sans-serif;">
+                      GetMe<span style="color:#F0A040;">Care</span>
+                    </span>
+                    <div style="font-size:9px;letter-spacing:.14em;color:#8fbfaa;text-transform:uppercase;margin-top:2px;font-family:Arial,sans-serif;">
+                      Ontario
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:32px;color:#333333;font-size:15px;line-height:1.7;font-family:Arial,sans-serif;">
+              {content}
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f4f6f9;text-align:center;padding:18px 32px;font-size:12px;color:#888888;font-family:Arial,sans-serif;">
+              &copy; {year} {SITE_NAME} &nbsp;|&nbsp;
+              <a href="{SITE_URL}" style="color:#1a6b4a;text-decoration:none;">{SITE_URL}</a><br />
+              Questions? Email us at
+              <a href="mailto:{ADMIN_EMAIL}" style="color:#1a6b4a;text-decoration:none;">{ADMIN_EMAIL}</a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
 

@@ -38,6 +38,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
           <label>First Name <span>*</span></label>
           <input
             type="text"
+            name="firstName"
             placeholder="e.g. Sandra"
             id="firstName"
             required
@@ -47,6 +48,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
           <label>Last Name <span>*</span></label>
           <input
             type="text"
+            name="lastName"
             placeholder="e.g. Mitchell"
             id="lastName"
             required
@@ -58,6 +60,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
           <label>Email Address <span>*</span></label>
           <input
             type="email"
+            name="email"
             placeholder="you@example.com"
             id="email"
             required
@@ -65,7 +68,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" placeholder="+1 (647) 000-0000" id="phone" />
+          <input type="tel" name="phone" placeholder="+1 (647) 000-0000" id="phone" />
         </div>
       </div>
       <div class="form-group">
@@ -83,6 +86,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
         <label>Subject <span>*</span></label>
         <input
           type="text"
+          name="subject"
           placeholder="Brief subject of your message"
           id="subject"
           required
@@ -92,16 +96,32 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
         <label>Message <span>*</span></label>
         <textarea
           id="message"
+          name="message"
           placeholder="Tell us how we can help you…"
           required
         ></textarea>
       </div>
-      <button type="submit" class="btn-submit">
+      <button type="submit" class="btn-submit" id="contactSubmitBtn">
         <i class="fas fa-paper-plane"></i> Send Message
       </button>
     </form>
 
-    <div class="form-success" id="formSuccess">
+    {% if messages %}
+      {% for msg in messages %}
+        {% if 'error' in msg.tags %}
+        <div class="form-error-banner" style="background:#fdecea;color:#c62828;border:1px solid #ffcdd2;border-radius:9px;padding:14px 18px;margin-top:16px;font-size:.9rem;">
+          <i class="fas fa-exclamation-circle"></i> {{ msg }}
+        </div>
+        {% else %}
+        <div class="form-success" id="formSuccess" style="display:block;">
+          <div class="form-success-icon"><i class="fas fa-check"></i></div>
+          <h3>Message Sent!</h3>
+          <p>{{ msg }}</p>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+    <div class="form-success" id="formSuccess" style="display:none;">
       <div class="form-success-icon"><i class="fas fa-check"></i></div>
       <h3>Message Sent!</h3>
       <p>
@@ -109,6 +129,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
         reply within 1 business day.
       </p>
     </div>
+    {% endif %}
   </div>
 
   <!-- RIGHT: Sidebar -->
@@ -163,30 +184,45 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
   </div>
 </div>
 
-{% endblock %} {% block extra_js %}
+{% endblock %}
+
+{% block extra_js %}
 <script>
   (function () {
     const form = document.getElementById("contactForm");
-    const success = document.getElementById("formSuccess");
+    if (!form) return;
+
+    // If server returned a success message, hide the form and show the panel
+    {% if messages %}
+      {% for msg in messages %}
+        {% if 'error' not in msg.tags %}
+          form.style.display = "none";
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
     form.addEventListener("submit", function (e) {
-      e.preventDefault();
+      // Client-side required-field highlight (does NOT prevent submission)
       const required = form.querySelectorAll("[required]");
       let valid = true;
-      required.forEach((el) => {
+      required.forEach(function (el) {
         el.style.borderColor = "";
         if (!el.value.trim()) {
           el.style.borderColor = "#e53935";
           valid = false;
         }
       });
-      if (!valid) return;
-      const btn = form.querySelector(".btn-submit");
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
-      btn.disabled = true;
-      setTimeout(() => {
-        form.style.display = "none";
-        success.style.display = "block";
-      }, 1200);
+      if (!valid) {
+        e.preventDefault();   // stop only if invalid
+        return;
+      }
+      // Show a loading state while the real POST is in flight
+      const btn = document.getElementById("contactSubmitBtn");
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+        btn.disabled = true;
+      }
+      // Allow form to submit normally (no e.preventDefault() here)
     });
   })();
 </script>

@@ -155,38 +155,77 @@ def services(request):
 def contact(request):
     if request.method == 'POST':
         first_name = request.POST.get('firstName', '').strip()
-        last_name = request.POST.get('lastName', '').strip()
-        email = request.POST.get('email', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        role = request.POST.get('role', '').strip()
-        subject = request.POST.get('subject', '').strip()
-        message = request.POST.get('message', '').strip()
+        last_name  = request.POST.get('lastName', '').strip()
+        email      = request.POST.get('email', '').strip()
+        phone      = request.POST.get('phone', '').strip()
+        role       = request.POST.get('role', '').strip()
+        subject    = request.POST.get('subject', '').strip()
+        message    = request.POST.get('message', '').strip()
 
         if first_name and last_name and email and role and subject and message:
-            email_subject = f'Contact Form: {subject}'
-            email_body = f"""
-New contact form submission from GetMeCare Ontario website.
+            from GETMECARE.email_utils import send_transactional_email, _wrap, ADMIN_EMAIL, SITE_NAME
 
-Name: {first_name} {last_name}
-Email: {email}
-Phone: {phone if phone else 'Not provided'}
-Role: {dict(request.POST).get('role', [''])[0] if isinstance(request.POST.get('role'), list) else role}
+            # ── Branded HTML email to admin ───────────────────
+            html_content = f"""
+            <h2>New Contact Form Submission</h2>
+            <p>A visitor has submitted the contact form on <strong>{SITE_NAME}</strong>.</p>
+            <div class="info-box">
+              <p><strong>Name:</strong> {first_name} {last_name}</p>
+              <p><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
+              <p><strong>Phone:</strong> {phone if phone else 'Not provided'}</p>
+              <p><strong>Role:</strong> {role}</p>
+              <p><strong>Subject:</strong> {subject}</p>
+            </div>
+            <p><strong>Message:</strong></p>
+            <div class="info-box" style="white-space:pre-wrap;">{message}</div>
+            <p style="margin-top:16px;">
+              Reply directly to this email or write to
+              <a href="mailto:{email}">{email}</a> to respond.
+            </p>
+            """
 
-Subject: {subject}
+            ok = send_transactional_email(
+                subject   = f'[Contact Form] {subject} — {first_name} {last_name}',
+                to_email  = ADMIN_EMAIL,          # always info@getmecare-ontario.com
+                html_body = _wrap(html_content),
+                plain_body = (
+                    f"New contact form submission\n\n"
+                    f"Name: {first_name} {last_name}\n"
+                    f"Email: {email}\n"
+                    f"Phone: {phone or 'Not provided'}\n"
+                    f"Role: {role}\n\n"
+                    f"Subject: {subject}\n\n"
+                    f"Message:\n{message}"
+                ),
+            )
 
-Message:
-{message}
-"""
-            try:
-                send_mail(
-                    email_subject,
-                    email_body,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [settings.CONTACT_EMAIL],
-                    fail_silently=False,
-                )
-            except Exception:
-                pass
+            # ── Auto-reply to sender ──────────────────────────
+            reply_content = f"""
+            <h2>We received your message!</h2>
+            <p>Hi {first_name}, thank you for reaching out to {SITE_NAME}.</p>
+            <p>We have received your message and our team will get back to you
+               within <strong>1–2 business days</strong>.</p>
+            <div class="info-box">
+              <p><strong>Your subject:</strong> {subject}</p>
+            </div>
+            <p>If your matter is urgent, you can also email us directly at
+               <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+            """
+            send_transactional_email(
+                subject   = f'[{SITE_NAME}] We received your message — {subject}',
+                to_email  = email,
+                html_body = _wrap(reply_content),
+            )
+
+            if ok:
+                from django.contrib import messages as dj_messages
+                dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
+            else:
+                from django.contrib import messages as dj_messages
+                dj_messages.error(request, "Sorry, there was a problem sending your message. Please email us directly at info@getmecare-ontario.com.")
+        else:
+            from django.contrib import messages as dj_messages
+            dj_messages.error(request, 'Please fill in all required fields.')
 
         return render(request, 'Caregiver/contact.html')
 
