@@ -13,6 +13,13 @@ class Chatbot {
         this.createChatbotUI();
         this.attachEventListeners();
         this.loadConversations();
+        
+        // Set support chat URL
+        const supportBtn = document.getElementById('chatbot-support-btn');
+        if (supportBtn) {
+            supportBtn.href = this.getSupportChatUrl();
+            this.updateSupportBadge();
+        }
     }
 
     getUserId() {
@@ -29,6 +36,14 @@ class Chatbot {
         }
         
         return null;
+    }
+
+    getSupportChatUrl() {
+        const meta = document.querySelector('meta[name="support-chat-url"]');
+        if (meta) {
+            return meta.getAttribute('content');
+        }
+        return '/chatbot/support/';
     }
 
     createChatbotUI() {
@@ -54,6 +69,9 @@ class Chatbot {
                         <button class="chatbot-sidebar-toggle" id="chatbot-sidebar-toggle" title="Chat History">
                             <i class="fas fa-history"></i>
                         </button>
+                        <a href="" class="chatbot-support-btn" id="chatbot-support-btn" title="Talk to Support" style="background:rgba(255,255,255,0.2);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background 0.2s ease;">
+                            <i class="fas fa-headset"></i>
+                        </a>
                         <button class="chatbot-close" id="chatbot-close">
                             <i class="fas fa-times"></i>
                         </button>
@@ -380,6 +398,26 @@ class Chatbot {
     getCsrfToken() {
         const csrfCookie = document.cookie.split('; ').find(cookie => cookie.startsWith('csrftoken='));
         return csrfCookie ? csrfCookie.split('=')[1] : '';
+    }
+
+    updateSupportBadge() {
+        const supportBtn = document.getElementById('chatbot-support-btn');
+        if (!supportBtn) return;
+
+        const existingBadge = supportBtn.querySelector('.chatbot-support-badge');
+        if (existingBadge) existingBadge.remove();
+
+        const meta = document.querySelector('meta[name="support-chat-unread"]');
+        if (!meta) return;
+
+        const count = parseInt(meta.getAttribute('content') || '0', 10);
+        if (count > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'chatbot-support-badge';
+            badge.textContent = count > 99 ? '99+' : count;
+            supportBtn.style.position = 'relative';
+            supportBtn.appendChild(badge);
+        }
     }
 
     async loadChatHistory() {

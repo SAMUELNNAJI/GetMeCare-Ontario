@@ -235,6 +235,9 @@
       <i class="fas fa-user-nurse"></i> Caregivers
       {% if pending_profiles %}<span class="adm-nav-badge">{{ pending_profiles }}</span>{% endif %}
     </a>
+    <a href="{% url 'AdminApp:manage_employers' %}" {% if request.resolver_match.url_name == 'manage_employers' %}class="active"{% endif %}>
+      <i class="fas fa-user-tie"></i> Employers
+    </a>
     <a href="{% url 'AdminApp:review_documents' %}" {% if request.resolver_match.url_name == 'review_documents' %}class="active"{% endif %}>
       <i class="fas fa-file-alt"></i> Documents
       {% if pending_docs %}<span class="adm-nav-badge">{{ pending_docs }}</span>{% endif %}
@@ -260,6 +263,9 @@
     <a href="{% url 'admin_chat_monitor' %}" {% if request.resolver_match.url_name == 'admin_chat_monitor' %}class="active"{% endif %}>
       <i class="fas fa-comments"></i> Chat Monitor
     </a>
+    <a href="{% url 'admin_support' %}" {% if request.resolver_match.url_name == 'admin_support' %}class="active"{% endif %}>
+      <i class="fas fa-headset"></i> Support Chat
+    </a>
   </div>
 
   <div class="adm-signout">
@@ -272,10 +278,12 @@
   <button class="adm-hamburger" id="adm-hamburger" aria-label="Toggle menu">
     <span></span><span></span><span></span>
   </button>
-  <div class="adm-search">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search caregivers, shifts…">
-  </div>
+  <form method="get" action="" style="flex:1;max-width:320px;">
+    <div class="adm-search">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search caregivers, shifts…" value="{{ request.GET.q|default:'' }}">
+    </div>
+  </form>
   <a href="{% url 'home' %}" class="adm-back" style="margin-left:10px;">
     <i class="fas fa-arrow-left"></i> Go back to site
   </a>
@@ -301,6 +309,7 @@
   if(ov)  ov.addEventListener('click', closeSB);
 })();
 </script>
-{% block extra_scripts %}{% endblock %}
-</body>
+ {% block extra_scripts %}{% endblock %}
+    <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
+  </body>
 </html>

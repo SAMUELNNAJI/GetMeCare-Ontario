@@ -634,11 +634,17 @@ GetMeCare{% endblock %} {% block extra_head %}
 <div class="dash-bottom">
   <!-- Upcoming shifts -->
   <div class="section-card">
+{% if search_q %}
+<div id="search-results" style="background:#e8f0fe;border:1px solid #1a56c4;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span style="font-size:.82rem;color:#1a56c4"><i class="fas fa-search" style="margin-right:6px"></i>Shifts matching <strong>"{{ search_q }}"</strong> — {{ search_upcoming_count }} result{{ search_upcoming_count|pluralize }}</span>
+  <a href="{% url 'CareGiverAcc:dashboard' %}" style="font-size:.78rem;color:#1a56c4;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear</a>
+</div>
+{% endif %}
     <div class="section-head">
-      <h3>Upcoming shifts</h3>
-      <a href="{% url 'CareGiverAcc:my_schedule' %}" class="view-all"
+      <h3>{% if search_q %}Shift Search Results{% else %}Upcoming shifts{% endif %}</h3>
+      {% if not search_q %}<a href="{% url 'CareGiverAcc:my_schedule' %}" class="view-all"
         >View all <i class="fas fa-arrow-right" style="font-size: 0.6rem"></i
-      ></a>
+      ></a>{% endif %}
     </div>
     {% for shift in upcoming %}
     <div class="shift-row">
@@ -672,17 +678,23 @@ GetMeCare{% endblock %} {% block extra_head %}
       "
     >
       <i
-        class="fas fa-calendar-xmark"
+        class="fas fa-{% if search_q %}search{% else %}calendar-xmark{% endif %}"
         style="font-size: 1.6rem; display: block; margin-bottom: 8px"
       ></i>
-      No upcoming shifts scheduled
+      {% if search_q %}No shifts match "{{ search_q }}"{% else %}No upcoming shifts scheduled{% endif %}
     </div>
     {% endfor %}
   </div>
 
   <!-- Open jobs -->
   <div class="section-card">
-    <div class="section-head"><h3>Open jobs near you</h3></div>
+{% if search_q %}
+<div style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Jobs matching <strong>"{{ search_q }}"</strong> — {{ search_jobs_count }} result{{ search_jobs_count|pluralize }}</span>
+  <a href="{% url 'CareGiverAcc:dashboard' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear</a>
+</div>
+{% endif %}
+    <div class="section-head"><h3>{% if search_q %}Job Search Results{% else %}Open jobs near you{% endif %}</h3></div>
     {% for job in latest_jobs %}
     <div class="job-row">
       <div class="job-top">
@@ -694,7 +706,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       </div>
     </div>
     {% empty %}
-    <div style="text-align:center;padding:20px 0;color:#bbb;font-size:.83rem"><i class="fas fa-briefcase" style="display:block;font-size:1.4rem;margin-bottom:8px;color:#ddd"></i>No open jobs yet</div>
+    <div style="text-align:center;padding:20px 0;color:#bbb;font-size:.83rem"><i class="fas fa-{% if search_q %}search{% else %}briefcase{% endif %}" style="display:block;font-size:1.4rem;margin-bottom:8px;color:#ddd"></i>{% if search_q %}No jobs match "{{ search_q }}"{% else %}No open jobs yet{% endif %}</div>
     {% endfor %}
     <a href="{% url 'browse_jobs' %}" class="browse-btn">Browse all jobs</a>
   </div>
@@ -1070,8 +1082,8 @@ GetMeCare{% endblock %} {% block extra_head %}
           <i class="fas fa-stop" style="margin-right:6px"></i>Yes, Clock Out
         </button>
       </form>
-    </div>
   </div>
+</div>
 </div>
 
 <script>
@@ -1095,4 +1107,17 @@ GetMeCare{% endblock %} {% block extra_head %}
   {% endif %}
 </script>
 
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  (function(){
+    var q = new URLSearchParams(window.location.search).get('q');
+    if(q){
+      var el = document.getElementById('search-results');
+      if(el){
+        setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
+      }
+    }
+  })();
+</script>
 {% endblock %}

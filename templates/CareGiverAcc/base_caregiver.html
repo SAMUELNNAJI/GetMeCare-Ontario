@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  {% if user.is_authenticated %}<meta name="user-id" content="{{ user.id }}">{% endif %}
+  {% if user.is_authenticated %}<meta name="user-id" content="{{ user.id }}"><meta name="support-chat-unread" content="{{ support_unread_count|default:0 }}">{% endif %}
   <title>{% block title %}GetMeCare{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
   <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
@@ -194,24 +194,155 @@
   .scroll-table-wrap::-webkit-scrollbar-thumb{background:#c8d8c8;border-radius:4px}
   .scroll-table-wrap::-webkit-scrollbar-thumb:hover{background:#1b7d4f}
 
-  /* Sidebar unread badge */
-  .nav-unread-badge {
-    margin-left: auto;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
-    background: #e05252;
-    color: #fff;
-    font-size: .65rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 5px;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-</style>
+   /* Sidebar unread badge */
+   .nav-unread-badge {
+     margin-left: auto;
+     min-width: 18px;
+     height: 18px;
+     border-radius: 9px;
+     background: #e05252;
+     color: #fff;
+     font-size: .65rem;
+     font-weight: 700;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     padding: 0 5px;
+     line-height: 1;
+     flex-shrink: 0;
+   }
+
+   /* ═══════════════════════════════════════════
+      ACTIVATION REMINDER MODAL
+   ═══════════════════════════════════════════ */
+   .ep-modal-backdrop {
+     position: fixed;
+     inset: 0;
+     background: rgba(0, 0, 0, 0.55);
+     z-index: 500;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     padding: 20px;
+   }
+   .ep-modal {
+     background: #fff;
+     border-radius: 20px;
+     max-width: 460px;
+     width: 100%;
+     padding: 36px 32px 28px;
+     text-align: center;
+     position: relative;
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+     animation: modalIn 0.3s ease;
+   }
+   @keyframes modalIn {
+     from {
+       opacity: 0;
+       transform: translateY(20px);
+     }
+     to {
+       opacity: 1;
+       transform: translateY(0);
+     }
+   }
+   .ep-modal-icon {
+     width: 68px;
+     height: 68px;
+     border-radius: 50%;
+     background: linear-gradient(135deg, #1b3a2d, #2d7a50);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     margin: 0 auto 18px;
+     font-size: 1.6rem;
+     color: #fff;
+   }
+   .ep-modal h2 {
+     font-size: 1.25rem;
+     font-weight: 700;
+     color: #1a1a1a;
+     margin-bottom: 10px;
+   }
+   .ep-modal p {
+     font-size: 0.875rem;
+     color: #666;
+     line-height: 1.55;
+     margin-bottom: 20px;
+   }
+   .ep-modal-price {
+     background: #eef6f1;
+     border-radius: 12px;
+     padding: 14px;
+     margin-bottom: 22px;
+   }
+   .ep-modal-price .price {
+     font-size: 2rem;
+     font-weight: 800;
+     color: #1b3a2d;
+     line-height: 1;
+   }
+   .ep-modal-price .price-note {
+     font-size: 0.76rem;
+     color: #888;
+     margin-top: 4px;
+   }
+   .ep-modal-perks {
+     text-align: left;
+     margin-bottom: 22px;
+   }
+   .ep-modal-perk {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     font-size: 0.845rem;
+     color: #333;
+     padding: 5px 0;
+   }
+   .ep-modal-perk i {
+     color: #1b7d4f;
+     font-size: 0.85rem;
+     flex-shrink: 0;
+   }
+   .ep-modal-actions {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+   }
+   .ep-modal-pay-btn {
+     display: block;
+     width: 100%;
+     background: #1b3a2d;
+     color: #fff;
+     border: none;
+     border-radius: 10px;
+     padding: 13px;
+     font-size: 0.92rem;
+     font-weight: 700;
+     cursor: pointer;
+     font-family: inherit;
+     text-decoration: none;
+     transition: background 0.15s;
+     text-align: center;
+   }
+   .ep-modal-pay-btn:hover {
+     background: #142e21;
+     color: #fff;
+   }
+   .ep-modal-later {
+     background: none;
+     border: none;
+     color: #aaa;
+     font-size: 0.82rem;
+     cursor: pointer;
+     font-family: inherit;
+     padding: 4px;
+     text-decoration: none;
+   }
+   .ep-modal-later:hover {
+     color: #666;
+   }
+ </style>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -253,6 +384,7 @@
     <a href="{% url 'CareGiverAcc:my_schedule' %}" {% if request.resolver_match.url_name == 'my_schedule' %}class="active"{% endif %}><i class="fas fa-clock"></i> Shift tracker{% if upcoming_shifts_count %}<span class="nav-unread-badge">{{ upcoming_shifts_count }}</span>{% endif %}</a>
     <a href="{% url 'CareGiverAcc:earnings' %}"   {% if request.resolver_match.url_name == 'earnings'   %}class="active"{% endif %}><i class="fas fa-wallet"></i> Earnings</a>
     <a href="{% url 'chat_list' %}" {% if request.resolver_match.url_name == 'chat_list' or request.resolver_match.url_name == 'chat_room' %}class="active"{% endif %}><i class="fas fa-comments"></i> Messages{% if total_unread %}<span class="nav-unread-badge">{{ total_unread }}</span>{% endif %}</a>
+    <a href="{% url 'support_chat' %}" {% if request.resolver_match.url_name == 'support_chat' or request.resolver_match.url_name == 'support_chat_detail' %}class="active"{% endif %}><i class="fas fa-headset"></i> Support{% if support_unread_count %}<span class="nav-unread-badge">{{ support_unread_count }}</span>{% endif %}</a>
     <a href="{% url 'browse_jobs' %}" {% if request.resolver_match.url_name == 'browse_jobs' %}class="active"{% endif %}><i class="fas fa-briefcase"></i> Browse jobs</a>
   </nav>
 
@@ -270,10 +402,12 @@
   <button class="cg-hamburger" id="cg-hamburger" aria-label="Toggle menu">
     <span></span><span></span><span></span>
   </button>
-  <div class="cg-search">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search shifts, clients, jobs">
-  </div>
+  <form method="get" action="" style="flex:1;max-width:320px;">
+    <div class="cg-search">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search shifts, clients, jobs" value="{{ request.GET.q|default:'' }}">
+    </div>
+  </form>
   <a href="{% url 'home' %}" class="cg-back-link">
     <i class="fas fa-arrow-left"></i> Go back to site
   </a>
@@ -289,6 +423,37 @@
   </div>
 </main>
 
+  {% block extra_scripts %}{% endblock %}
+
+<!-- ── Activation Reminder Modal ─────────────────────── -->
+{% if show_activation_modal %}
+<div class="ep-modal-backdrop" id="caregiverActivationModal" style="display:flex;">
+  <div class="ep-modal">
+    <div class="ep-modal-icon"><i class="fas fa-file-circle-check"></i></div>
+    <h2>Complete Your Activation</h2>
+    <p>Upload your documents and complete your profile to get verified and start receiving shift offers.</p>
+    <div class="ep-modal-price">
+      <div class="price">2 Steps</div>
+      <div class="price-note">Documents &amp; Profile setup</div>
+    </div>
+    <div class="ep-modal-perks">
+      <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Receive shift bookings from employers</div>
+      <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Direct messaging with employers</div>
+      <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Priority support from admin</div>
+    </div>
+    <div class="ep-modal-actions">
+      <a href="{% url 'CareGiverAcc:documents' %}" class="ep-modal-pay-btn">
+        <i class="fas fa-upload"></i> Upload Documents
+      </a>
+      <a href="{% url 'Account:edit_profile' %}" class="ep-modal-pay-btn" style="background:#142e21;">
+        <i class="fas fa-user-edit"></i> Edit Profile
+      </a>
+      <a href="{% url 'CareGiverAcc:dismiss_activation_modal' %}" class="ep-modal-later" id="closeCaregiverModalBtn">Remind me later</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <script>
 (function(){
   var btn     = document.getElementById('cg-hamburger');
@@ -298,8 +463,19 @@
   function close() { sidebar.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow=''; }
   if(btn)     btn.addEventListener('click', function(){ sidebar.classList.contains('open') ? close() : open(); });
   if(overlay) overlay.addEventListener('click', close);
+  // Activation modal backdrop click to dismiss
+  {% if show_activation_modal %}
+  (function(){
+    var m = document.getElementById('caregiverActivationModal');
+    if(m){
+      m.addEventListener('click', function(e){
+        if(e.target === m) window.location.href = "{% url 'CareGiverAcc:dismiss_activation_modal' %}";
+      });
+    }
+  })();
+  {% endif %}
 })();
 </script>
-{% block extra_scripts %}{% endblock %}
-</body>
+    <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
+  </body>
 </html>

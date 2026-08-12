@@ -33,6 +33,8 @@
     
     {% if user.is_authenticated %}
     <meta name="user-id" content="{{ user.id }}">
+    <meta name="support-chat-url" content="{% url 'support_chat' %}">
+    <meta name="support-chat-unread" content="{{ support_unread_count|default:0 }}">
     {% endif %}
     <title>{% block title %}GetMeCare ONTARIO - Hire Trusted PSWs & Caregivers{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
@@ -220,7 +222,7 @@
         <div class="footer-col">
           <h5>FOR FAMILIES</h5>
           <ul>
-            <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.role == 'employer' %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" {% if user.is_authenticated and user.role != 'employer' %}onclick="handlePostCareRequest(); return false;"{% endif %}>Post a Care Request</a></li>
+            <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.is_employer %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" {% if user.is_authenticated and not user.is_employer %}onclick="handlePostCareRequest(); return false;"{% endif %}>Post a Care Request</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
           </ul>
@@ -320,5 +322,6 @@
     </script>
 
     {% block extra_js %}{% endblock %}
+    <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
   </body>
 </html>

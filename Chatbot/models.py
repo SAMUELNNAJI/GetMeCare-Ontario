@@ -132,3 +132,32 @@ class DirectMessage(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.body[:40]}"
+
+
+class SupportChat(models.Model):
+    """A live support chat between a user and admin(s)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_chats')
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Support: {self.user}"
+
+
+class SupportMessage(models.Model):
+    """A single message inside a SupportChat."""
+    chat = models.ForeignKey(SupportChat, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='support_messages')
+    body = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.sender}: {self.body[:40]}"

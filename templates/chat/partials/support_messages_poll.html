@@ -1,0 +1,3 @@
+{% for msg in messages %}
+  {% include "chat/partials/support_message.html" with msg=msg me=me %}
+{% endfor %}

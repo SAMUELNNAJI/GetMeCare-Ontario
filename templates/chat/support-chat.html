@@ -1,0 +1,383 @@
+{% extends base_template %}
+{% load static %}
+{% block title %}Support Chat — GetMeCare{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cg-content,
+  .ep-content {
+    padding: 0 !important;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+  .sc-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+  }
+  .sc-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .sc-back {
+    color: #1b7d4f;
+    font-size: 1.1rem;
+    text-decoration: none;
+    line-height: 1;
+  }
+  .sc-av {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b3a2d, #2d5a42);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .sc-hinfo { flex: 1; min-width: 0; }
+  .sc-hinfo h2 {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 2px;
+  }
+  .sc-online {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .72rem;
+    color: #1b7d4f;
+    font-weight: 600;
+  }
+  .sc-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #2ecc71;
+    animation: sc-blink 2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes sc-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .sc-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border: 1px solid #b2dfca;
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+  .sc-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #f8faf7;
+  }
+  .sc-messages::-webkit-scrollbar { width: 4px; }
+  .sc-messages::-webkit-scrollbar-thumb { background: #c8d8c8; border-radius: 4px; }
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+    animation: sc-fadein .22s ease;
+  }
+  @keyframes sc-fadein {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .msg-mine   { justify-content: flex-end; }
+  .msg-theirs { justify-content: flex-start; }
+  .msg-av {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b7d4f, #2d9966);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .62rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .msg-bubble {
+    max-width: 68%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: .87rem;
+    line-height: 1.5;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .msg-bubble p { margin: 0; }
+  .msg-bubble-mine {
+    background: #1b7d4f;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bubble-theirs {
+    background: #fff;
+    color: #1a1a1a;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .msg-time {
+    display: block;
+    font-size: .6rem;
+    margin-top: 4px;
+    opacity: .65;
+  }
+  .msg-mine  .msg-time { text-align: right; color: rgba(255,255,255,.75); }
+  .msg-theirs .msg-time { text-align: left; color: #aaa; }
+  .sc-empty {
+    text-align: center;
+    color: #ccc;
+    padding: 50px 20px;
+    font-size: .85rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .sc-empty i { font-size: 2.4rem; color: #ddd; }
+  .sc-empty strong { color: #999; font-size: .9rem; }
+  .sc-input-bar {
+    padding: 10px 14px;
+    border-top: 1px solid #eee;
+    background: #fff;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sc-form {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f2f4f0;
+    border: 1.5px solid #dde2d8;
+    border-radius: 26px;
+    padding: 4px 4px 4px 16px;
+    transition: border-color .15s, background .15s;
+  }
+  .sc-form:focus-within { border-color: #1b7d4f; background: #fff; }
+  #sc-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: .88rem;
+    font-family: inherit;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+    padding: 6px 0;
+    color: #1a1a1a;
+  }
+  #sc-input::placeholder { color: #aaa; }
+  .sc-send-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: .88rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .sc-send-btn:hover  { background: #145e3a; }
+  .sc-send-btn:disabled { background: #ccc; cursor: not-allowed; }
+  #sc-toast {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c62828;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: .84rem;
+    font-weight: 600;
+    z-index: 9999;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  #sc-toast.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sc-shell">
+  <div class="sc-header">
+    <a href="javascript:history.back()" class="sc-back" aria-label="Go back">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="sc-av"><i class="fas fa-headset"></i></div>
+    <div class="sc-hinfo">
+      <h2>GetMeCare Support</h2>
+      <div class="sc-online"><span class="sc-dot"></span> Admin Team</div>
+    </div>
+    <span class="sc-badge"><i class="fas fa-shield-alt" style="margin-right:4px"></i>Live Support</span>
+  </div>
+
+  <div class="sc-messages" id="sc-msg-list">
+    {% for msg in messages %}
+      {% include "chat/partials/support_message.html" with msg=msg me=request.user %}
+    {% empty %}
+      <div class="sc-empty" id="sc-empty">
+        <i class="fas fa-headset"></i>
+        <strong>Welcome to GetMeCare Support</strong>
+        <span>Send a message and our team will reply as soon as possible.</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="sc-input-bar">
+    <form class="sc-form" id="sc-form" autocomplete="off">
+      {% csrf_token %}
+      <textarea id="sc-input" name="body" placeholder="Type your message…" rows="1" aria-label="Type your support message"></textarea>
+      <button type="submit" class="sc-send-btn" aria-label="Send message">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div id="sc-toast" role="alert"></div>
+<span id="sc-chat-id" style="display:none">{{ chat.pk }}</span>
+<span id="sc-last-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+  var form       = document.getElementById('sc-form');
+  var input      = document.getElementById('sc-input');
+  var list       = document.getElementById('sc-msg-list');
+  var toast      = document.getElementById('sc-toast');
+  var chatId     = parseInt(document.getElementById('sc-chat-id').textContent.trim(), 10);
+  var lastPkEl   = document.getElementById('sc-last-pk');
+  var csrf       = document.querySelector('meta[name="csrf-token"]').content;
+  var lastPk     = parseInt(lastPkEl.textContent.trim() || '0', 10) || 0;
+  var sending    = false;
+  var pollActive = false;
+  var toastTimer = null;
+
+  list.scrollTop = list.scrollHeight;
+
+  function scrollBottom() { list.scrollTop = list.scrollHeight; }
+  function isNearBottom() { return list.scrollHeight - list.scrollTop - list.clientHeight < 80; }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 4000);
+  }
+
+  function syncLastPk() {
+    list.querySelectorAll('[id^="msg-"]').forEach(function (el) {
+      var pk = parseInt(el.id.replace('msg-', ''), 10);
+      if (Number.isFinite(pk) && pk > lastPk) lastPk = pk;
+    });
+    lastPkEl.textContent = String(lastPk);
+  }
+
+  function insertNew(html) {
+    if (!html || !html.trim()) return false;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var added = false;
+    Array.from(tmp.children).forEach(function (node) {
+      if (node.id && document.getElementById(node.id)) return;
+      list.appendChild(node);
+      added = true;
+    });
+    return added;
+  }
+
+  input.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+
+  function sendMessage() {
+    var body = input.value.trim();
+    if (!body || sending) return;
+    sending = true;
+    var btn = form.querySelector('.sc-send-btn');
+    if (btn) btn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+    var empty = document.getElementById('sc-empty');
+    if (empty) empty.remove();
+
+    var fd = new FormData();
+    fd.append('body', body);
+    fd.append('csrfmiddlewaretoken', csrf);
+
+    fetch('/chatbot/support/' + chatId + '/send/', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd,
+    })
+    .then(function (r) { return r.json().then(function (d) { d._status = r.status; return d; }); })
+    .then(function (data) {
+      if (!data.ok) {
+        input.value = body;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+        showToast(data.error || 'Failed to send. Please try again.');
+        return;
+      }
+      if (data.html && !document.getElementById('msg-' + data.pk)) {
+        insertNew(data.html);
+        syncLastPk();
+        scrollBottom();
+      }
+    })
+    .catch(function () { input.value = body; showToast('Network error — please try again.'); })
+    .finally(function () { sending = false; if (btn) btn.disabled = false; input.focus(); });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); sendMessage(); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function poll() {
+    if (pollActive) return;
+    pollActive = true;
+    var wasBottom = isNearBottom();
+    fetch('/chatbot/support/' + chatId + '/poll/?after=' + lastPk, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      if (!html || !html.trim()) return;
+      var added = insertNew(html);
+      if (added) { syncLastPk(); if (wasBottom) scrollBottom(); }
+    })
+    .catch(function () {})
+    .finally(function () { pollActive = false; });
+  }
+
+  setInterval(poll, 2000);
+})();
+</script>
+{% endblock %}

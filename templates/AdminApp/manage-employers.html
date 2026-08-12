@@ -1,0 +1,167 @@
+{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Employers —
+Admin{% endblock %} {% block extra_head %}
+<style>
+  .emp-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .emp-av-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2d5a42;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .emp-nm {
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .emp-em {
+    font-size: 0.72rem;
+    color: #aaa;
+  }
+  .act-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 900px) {
+    .adm-table th:nth-child(3),
+    .adm-table td:nth-child(3) {
+      display: none;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-user-tie" style="color: #1b7d4f; margin-right: 8px"></i>Manage Employers
+</div>
+
+{% for msg in messages %}
+<div
+  class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
+>
+  <i
+    class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"
+  ></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div
+      style="
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <i class="fas fa-list" style="color: #1b7d4f"></i> All Employer Profiles
+      <span
+        style="
+          margin-left: auto;
+          font-size: 0.72rem;
+          font-weight: 600;
+          background: #e6f5ee;
+          color: #1b7d4f;
+          border-radius: 20px;
+          padding: 3px 10px;
+        "
+        >{{ profiles|length }} total</span
+      >
+    </div>
+    <div class="scroll-table-wrap">
+<table class="adm-table">
+      <thead>
+        <tr>
+          <th>Employer</th>
+          <th>Email</th>
+          <th>Activated</th>
+          <th>Activation Date</th>
+          <th>Payment Ref</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in profiles %}
+        <tr>
+          <td>
+            <div class="emp-info">
+              <div class="emp-av-sm">
+                {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+              </div>
+              <div>
+                <div class="emp-nm">{{ p.user.get_full_name|default:p.user.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color: #555; font-size: 0.84rem">{{ p.user.email }}</td>
+          <td>
+            {% if p.is_active %}
+            <span class="badge badge-green"><i class="fas fa-check-circle"></i> Active</span>
+            {% else %}
+            <span class="badge badge-grey"><i class="fas fa-clock"></i> Inactive</span>
+            {% endif %}
+          </td>
+          <td style="color: #888; font-size: 0.82rem">
+            {% if p.activation_paid_at %}{{ p.activation_paid_at|date:"M d, Y" }}{% else %}—{% endif %}
+          </td>
+          <td style="color: #555; font-size: 0.84rem">
+            {{ p.payment_reference|default:"—" }}
+          </td>
+          <td>
+            <div class="act-cell">
+              {% if not p.is_active %}
+              <form
+                method="post"
+                action="{% url 'AdminApp:activate_employer' p.pk %}"
+              >
+                {% csrf_token %}
+                <button type="submit" class="adm-btn adm-btn-green">
+                  <i class="fas fa-check"></i> Activate
+                </button>
+              </form>
+              {% else %}
+              <span style="font-size: 0.75rem; color: #1b7d4f"
+                ><i class="fas fa-check-circle"></i> Active</span
+              >
+              {% endif %}
+              <a
+                href="{% url 'AdminApp:employer_payments' %}"
+                class="adm-btn adm-btn-ghost"
+                style="font-size: 0.74rem"
+              >
+                <i class="fas fa-credit-card"></i> Payments
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="adm-empty">
+              <i class="fas fa-user-slash"></i>No employer profiles found.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
+  </div>
+</div>
+{% endblock %}

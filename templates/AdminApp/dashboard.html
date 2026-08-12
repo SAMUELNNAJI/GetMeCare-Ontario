@@ -372,13 +372,19 @@ GetMeCare{% endblock %} {% block extra_head %}
 </div>
 
 <!-- Bottom: recent users table + live activity -->
+{% if search_q %}
+<div id="search-results" style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Search results for <strong>"{{ search_q }}"</strong> — {{ search_users_count }} user{{ search_users_count|pluralize }}</span>
+  <a href="{% url 'AdminApp:dashboard' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear search</a>
+</div>
+{% endif %}
 <div class="adm-bottom-row">
   <!-- Recent users -->
   <div class="adm-card">
     <div class="adm-card-pad">
       <div class="adm-section-head">
-        <i class="fas fa-user-clock" style="color: #1b7d4f"></i> Recently Joined
-        Users
+        <i class="fas fa-user-clock" style="color: #1b7d4f"></i>
+        {% if search_q %}Search Results{% else %}Recently Joined Users{% endif %}
       </div>
       <div class="scroll-table-wrap" style="overflow-x:auto;overflow-y:auto;max-height:380px;width:100%">
 <table class="adm-table" style="min-width:520px;width:100%">
@@ -418,7 +424,8 @@ GetMeCare{% endblock %} {% block extra_head %}
           <tr>
             <td colspan="5">
               <div class="adm-empty">
-                <i class="fas fa-users-slash"></i>No users yet.
+                <i class="fas fa-{% if search_q %}search{% else %}users-slash{% endif %}"></i>
+                {% if search_q %}No users match "{{ search_q }}"{% else %}No users yet.{% endif %}
               </div>
             </td>
           </tr>
@@ -533,6 +540,19 @@ GetMeCare{% endblock %} {% block extra_head %}
           }
         }
       });
+    }
+})();
+  </script>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  (function(){
+    var q = new URLSearchParams(window.location.search).get('q');
+    if(q){
+      var el = document.getElementById('search-results');
+      if(el){
+        setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
+      }
     }
   })();
 </script>

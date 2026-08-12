@@ -1,0 +1,506 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Support Chat — Admin{% endblock %}
+
+{% block content %}
+<style>
+  .asc-page-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .asc-page-title i { color: #1b7d4f; }
+  .asc-page-sub { font-size: .84rem; color: #888; margin-bottom: 16px; }
+  .asc-stats { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .asc-stat {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    font-size: .78rem;
+    color: #666;
+    min-width: 110px;
+  }
+  .asc-stat strong { display: block; font-size: 1.3rem; font-weight: 800; color: #1a1a1a; }
+  .asc-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    height: calc(100vh - 56px - 160px);
+    min-height: 400px;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  }
+  .asc-sidebar {
+    border-right: 1px solid #f0f0f0;
+    overflow-y: auto;
+    background: #fafafa;
+  }
+  .asc-sidebar::-webkit-scrollbar { width: 4px; }
+  .asc-sidebar::-webkit-scrollbar-thumb { background: #c8d8c8; border-radius: 4px; }
+  .asc-sidebar-header {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: .73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #aaa;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .asc-badge-count {
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: .7rem;
+    font-weight: 700;
+  }
+  .asc-conv-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background .12s;
+  }
+  .asc-conv-item:hover { background: #eef6f1; }
+  .asc-conv-item.active { background: #eef6f1; border-left: 3px solid #1b7d4f; }
+  .asc-conv-av {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #1b3a2d;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .asc-conv-info { flex: 1; min-width: 0; }
+  .asc-conv-name {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .asc-conv-preview {
+    font-size: .73rem;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .asc-main { display: flex; flex-direction: column; overflow: hidden; }
+  .asc-main-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .asc-main-header-info h3 { font-size: .95rem; font-weight: 700; color: #1a1a1a; margin: 0 0 2px; }
+  .asc-main-header-info p { font-size: .73rem; color: #aaa; margin: 0; }
+  .asc-resolve-btn {
+    background: #fff;
+    color: #1b7d4f;
+    border: 1.5px solid #b2dfca;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .asc-resolve-btn:hover { background: #eef6f1; }
+  .asc-resolved-badge {
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .asc-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 8px;
+    background: #f8faf7;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .asc-messages::-webkit-scrollbar { width: 4px; }
+  .asc-messages::-webkit-scrollbar-thumb { background: #c8d8c8; border-radius: 4px; }
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+    animation: asc-fadein .22s ease;
+  }
+  @keyframes asc-fadein { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  .msg-mine   { justify-content: flex-end; }
+  .msg-theirs { justify-content: flex-start; }
+  .msg-av {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #1b3a2d;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .62rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .msg-av.admin-av { background: linear-gradient(135deg, #1b7d4f, #2d9966); }
+  .msg-bubble {
+    max-width: 68%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: .87rem;
+    line-height: 1.5;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .msg-bubble p { margin: 0; }
+  .msg-bubble-mine { background: #1b7d4f; color: #fff; border-bottom-right-radius: 4px; }
+  .msg-bubble-theirs { background: #fff; color: #1a1a1a; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .msg-time { display: block; font-size: .6rem; margin-top: 4px; opacity: .65; }
+  .msg-mine .msg-time { text-align: right; color: rgba(255,255,255,.75); }
+  .msg-theirs .msg-time { text-align: left; color: #aaa; }
+  .asc-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #ccc;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .asc-empty i { font-size: 2.5rem; }
+  .asc-empty p { font-size: .85rem; margin: 0; }
+  .asc-input-bar {
+    padding: 10px 14px;
+    border-top: 1px solid #eee;
+    background: #fff;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .asc-form {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f2f4f0;
+    border: 1.5px solid #dde2d8;
+    border-radius: 26px;
+    padding: 4px 4px 4px 16px;
+    transition: border-color .15s, background .15s;
+  }
+  .asc-form:focus-within { border-color: #1b7d4f; background: #fff; }
+  #asc-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: .88rem;
+    font-family: inherit;
+    resize: none;
+    max-height: 100px;
+    line-height: 1.4;
+    padding: 6px 0;
+    color: #1a1a1a;
+  }
+  #asc-input::placeholder { color: #aaa; }
+  .asc-send-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: .88rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .asc-send-btn:hover  { background: #145e3a; }
+  .asc-send-btn:disabled { background: #ccc; cursor: not-allowed; }
+  @media (max-width: 900px) { .asc-grid { grid-template-columns: 260px 1fr; } }
+  @media (max-width: 700px) {
+    .asc-grid { grid-template-columns: 1fr; }
+    .asc-sidebar { display: none; }
+    .asc-main { display: flex; }
+    .msg-bubble { max-width: 85%; }
+  }
+</style>
+
+<div class="asc-page-title"><i class="fas fa-headset"></i> Support Chat</div>
+<p class="asc-page-sub">Reply to users in real time. Messages refresh automatically every 2 seconds.</p>
+
+<div class="asc-stats">
+  <div class="asc-stat"><strong>{{ chats|length }}</strong> Active Chats</div>
+  <div class="asc-stat"><strong>{{ resolved|length }}</strong> Resolved</div>
+</div>
+
+<div class="asc-grid">
+
+  <!-- Left sidebar -->
+  <div class="asc-sidebar">
+    <div class="asc-sidebar-header">
+      Active
+      {% if chats %}<span class="asc-badge-count">{{ chats|length }}</span>{% endif %}
+    </div>
+
+    {% for chat in chats %}
+    <a href="?chat={{ chat.pk }}"
+       class="asc-conv-item {% if selected_chat and selected_chat.pk == chat.pk %}active{% endif %}">
+      <div class="asc-conv-av">
+        {% if chat.user.first_name %}{{ chat.user.first_name|first|upper }}{% else %}{{ chat.user.username|first|upper }}{% endif %}
+      </div>
+      <div class="asc-conv-info">
+        <div class="asc-conv-name">{{ chat.user.get_full_name|default:chat.user.username }}</div>
+        <div class="asc-conv-preview">
+          {% with last=chat.messages.last %}
+            {% if last %}{{ last.body|truncatechars:38 }}{% else %}No messages yet{% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </a>
+    {% empty %}
+    <div style="padding:30px 18px;text-align:center;color:#ccc;font-size:.82rem">
+      <i class="fas fa-comment-slash" style="display:block;font-size:1.6rem;margin-bottom:8px;color:#ddd"></i>
+      No active support chats
+    </div>
+    {% endfor %}
+
+    {% if resolved %}
+    <div class="asc-sidebar-header" style="border-top:2px solid #f0f0f0;margin-top:4px;opacity:.7">Resolved</div>
+    {% for chat in resolved %}
+    <a href="?chat={{ chat.pk }}"
+       class="asc-conv-item {% if selected_chat and selected_chat.pk == chat.pk %}active{% endif %}"
+       style="opacity:.6">
+      <div class="asc-conv-av" style="background:#aaa">
+        {% if chat.user.first_name %}{{ chat.user.first_name|first|upper }}{% else %}{{ chat.user.username|first|upper }}{% endif %}
+      </div>
+      <div class="asc-conv-info">
+        <div class="asc-conv-name">{{ chat.user.get_full_name|default:chat.user.username }}</div>
+        <div class="asc-conv-preview">
+          {% with last=chat.messages.last %}
+            {% if last %}{{ last.body|truncatechars:38 }}{% else %}—{% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Right panel -->
+  <div class="asc-main">
+    {% if selected_chat %}
+
+    <div class="asc-main-header">
+      <div class="asc-main-header-info">
+        <h3>{{ selected_chat.user.get_full_name|default:selected_chat.user.username }}</h3>
+        <p>
+          {{ selected_chat.user.email }}
+          &nbsp;·&nbsp; Started {{ selected_chat.created_at|date:"M d, Y" }}
+          &nbsp;·&nbsp; {{ messages|length }} message{{ messages|length|pluralize }}
+        </p>
+      </div>
+      {% if not selected_chat.is_resolved %}
+      <form method="post" action="{% url 'admin_support_resolve' chat_id=selected_chat.pk %}"
+            onsubmit="return confirm('Mark this conversation as resolved?')">
+        {% csrf_token %}
+        <button type="submit" class="asc-resolve-btn">
+          <i class="fas fa-check-circle"></i> Resolve
+        </button>
+      </form>
+      {% else %}
+      <span class="asc-resolved-badge"><i class="fas fa-check-circle"></i> Resolved</span>
+      {% endif %}
+    </div>
+
+    <div class="asc-messages" id="asc-msg-list">
+      {% for msg in messages %}
+        {% include "chat/partials/support_message.html" with msg=msg me=request.user %}
+      {% empty %}
+        <div class="asc-empty" id="asc-no-msgs">
+          <i class="fas fa-comment-dots"></i>
+          <p>No messages in this conversation yet.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if not selected_chat.is_resolved %}
+    <div class="asc-input-bar">
+      <form class="asc-form" id="asc-form" autocomplete="off">
+        {% csrf_token %}
+        <textarea id="asc-input" name="body" placeholder="Reply as admin…" rows="1" aria-label="Type your reply"></textarea>
+        <button type="submit" class="asc-send-btn" aria-label="Send reply">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+    {% else %}
+    <div style="padding:12px 18px;background:#f8faf7;border-top:1px solid #eee;text-align:center;font-size:.82rem;color:#aaa">
+      <i class="fas fa-lock" style="margin-right:5px"></i>This conversation has been resolved.
+    </div>
+    {% endif %}
+
+    <span id="asc-chat-id" style="display:none">{{ selected_chat.pk }}</span>
+    <span id="asc-last-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+    <meta name="asc-csrf" content="{{ csrf_token }}">
+
+    {% else %}
+    <div class="asc-empty">
+      <i class="fas fa-comment-dots"></i>
+      <p>Select a conversation from the left to view messages and reply.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if selected_chat and not selected_chat.is_resolved %}
+<script>
+(function () {
+  'use strict';
+  var form       = document.getElementById('asc-form');
+  var input      = document.getElementById('asc-input');
+  var list       = document.getElementById('asc-msg-list');
+  var chatId     = parseInt(document.getElementById('asc-chat-id').textContent.trim(), 10);
+  var lastPkEl   = document.getElementById('asc-last-pk');
+  var csrf       = document.querySelector('meta[name="asc-csrf"]').content;
+  var lastPk     = parseInt(lastPkEl.textContent.trim() || '0', 10) || 0;
+  var sending    = false;
+  var pollActive = false;
+
+  list.scrollTop = list.scrollHeight;
+
+  function scrollBottom() { list.scrollTop = list.scrollHeight; }
+  function isNearBottom() { return list.scrollHeight - list.scrollTop - list.clientHeight < 80; }
+
+  function syncLastPk() {
+    list.querySelectorAll('[id^="msg-"]').forEach(function (el) {
+      var pk = parseInt(el.id.replace('msg-', ''), 10);
+      if (Number.isFinite(pk) && pk > lastPk) lastPk = pk;
+    });
+    lastPkEl.textContent = String(lastPk);
+  }
+
+  function insertNew(html) {
+    if (!html || !html.trim()) return false;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    var added = false;
+    Array.from(tmp.children).forEach(function (node) {
+      if (node.id && document.getElementById(node.id)) return;
+      var noMsgs = document.getElementById('asc-no-msgs');
+      if (noMsgs) noMsgs.remove();
+      list.appendChild(node);
+      added = true;
+    });
+    return added;
+  }
+
+  input.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+
+  function sendMessage() {
+    var body = input.value.trim();
+    if (!body || sending) return;
+    sending = true;
+    var btn = form.querySelector('.asc-send-btn');
+    if (btn) btn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    var fd = new FormData();
+    fd.append('body', body);
+    fd.append('csrfmiddlewaretoken', csrf);
+
+    fetch('/chatbot/admin/support/' + chatId + '/reply/', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd,
+    })
+    .then(function (r) { return r.json().then(function (d) { d._status = r.status; return d; }); })
+    .then(function (data) {
+      if (!data.ok) {
+        input.value = body;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+        alert(data.error || 'Failed to send. Please try again.');
+        return;
+      }
+      if (data.html && !document.getElementById('msg-' + data.pk)) {
+        insertNew(data.html);
+        syncLastPk();
+        scrollBottom();
+      }
+    })
+    .catch(function () { input.value = body; alert('Network error — reply failed.'); })
+    .finally(function () { sending = false; if (btn) btn.disabled = false; input.focus(); });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); sendMessage(); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function poll() {
+    if (pollActive) return;
+    pollActive = true;
+    var wasBottom = isNearBottom();
+    fetch('/chatbot/admin/support/' + chatId + '/poll/?after=' + lastPk, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      if (!html || !html.trim()) return;
+      var added = insertNew(html);
+      if (added) { syncLastPk(); if (wasBottom) scrollBottom(); }
+    })
+    .catch(function () {})
+    .finally(function () { pollActive = false; });
+  }
+
+  setInterval(poll, 2000);
+})();
+</script>
+{% endif %}
+{% endblock %}

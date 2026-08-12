@@ -476,7 +476,7 @@ Works – GetMeCare ONTARIO{% endblock %} {% block content %}
         </p>
       </div>
       <div class="hiw-cta-btns">
-        <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.role == 'employer' %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" class="hiw-btn-outline" {% if user.is_authenticated and user.role != 'employer' %}onclick="handlePostCareRequest(); return false;"{% endif %}
+        <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.is_employer %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" class="hiw-btn-outline" {% if user.is_authenticated and not user.is_employer %}onclick="handlePostCareRequest(); return false;"{% endif %}
           ><i class="fas fa-shield-alt"></i> Post a Care Request</a
         >
         <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% else %}#{% endif %}" class="hiw-btn-orange" {% if user.is_authenticated %}onclick="return false;"{% endif %}

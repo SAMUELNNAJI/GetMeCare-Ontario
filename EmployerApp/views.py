@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -55,21 +56,52 @@ def dashboard(request):
     user = request.user
     ctx  = _employer_ctx(user)
 
-    scheduled = Shift.objects.filter(
-        employer=user, status=Shift.STATUS_SCHEDULED
-    ).order_by('start_date', 'start_time').select_related('caregiver')
+    q = request.GET.get('q', '').strip()
 
-    active = Shift.objects.filter(
+    scheduled_qs = Shift.objects.filter(
+        employer=user, status=Shift.STATUS_SCHEDULED
+    ).select_related('caregiver')
+
+    active_qs = Shift.objects.filter(
         employer=user, status=Shift.STATUS_IN_PROGRESS
     ).select_related('caregiver')
 
-    recent = Shift.objects.filter(
+    recent_qs = Shift.objects.filter(
         employer=user, status=Shift.STATUS_COMPLETED
-    ).order_by('-start_date').select_related('caregiver')[:5]
+    ).select_related('caregiver')
 
-    recent_jobs = JobPosting.objects.filter(
+    recent_jobs_qs = JobPosting.objects.filter(
         employer=user, status=JobPosting.STATUS_OPEN
-    ).order_by('-created_at')[:4]
+    )
+
+    if q:
+        scheduled_qs = scheduled_qs.filter(
+            Q(caregiver__first_name__icontains=q) |
+            Q(caregiver__last_name__icontains=q) |
+            Q(city__icontains=q)
+        )
+        active_qs = active_qs.filter(
+            Q(caregiver__first_name__icontains=q) |
+            Q(caregiver__last_name__icontains=q) |
+            Q(city__icontains=q)
+        )
+        recent_qs = recent_qs.filter(
+            Q(caregiver__first_name__icontains=q) |
+            Q(caregiver__last_name__icontains=q) |
+            Q(city__icontains=q)
+        )
+        recent_jobs_qs = recent_jobs_qs.filter(
+            Q(title__icontains=q) |
+            Q(city__icontains=q)
+        )
+
+    search_shifts_count = scheduled_qs.count() + active_qs.count() + recent_qs.count()
+    search_jobs_count = recent_jobs_qs.count()
+
+    scheduled = scheduled_qs.order_by('start_date', 'start_time')
+    active = active_qs
+    recent = recent_qs.order_by('-start_date')[:5]
+    recent_jobs = recent_jobs_qs.order_by('-created_at')[:4]
 
     now   = timezone.localtime()
     hour  = now.hour
@@ -90,8 +122,10 @@ def dashboard(request):
         'greeting':          greeting,
         'today':             now.date(),
         'employer_profile':  ctx['emp_profile'],
-        # Show activation modal only if account not active and user hasn't dismissed it
         'show_modal': not ctx['is_activated'] and not request.session.get('modal_dismissed'),
+        'search_q':          q,
+        'search_shifts_count': search_shifts_count,
+        'search_jobs_count': search_jobs_count,
     })
     return render(request, 'EmployerApp/dashboard.html', ctx)
 

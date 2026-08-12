@@ -129,23 +129,35 @@
 </div>
 </div>
 <div class="dash-bottom">
-<div class="section-card">
-<div class="section-head"><h3>Upcoming Shifts</h3><a href="{% url 'EmployerApp:my_shifts' %}" class="view-all">View all <i class="fas fa-arrow-right" style="font-size:.6rem"></i></a></div>
+{% if search_q %}
+<div id="search-results" style="background:#e8f0fe;border:1px solid #1a56c4;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span style="font-size:.82rem;color:#1a56c4"><i class="fas fa-search" style="margin-right:6px"></i>Shifts matching <strong>"{{ search_q }}"</strong> — {{ search_shifts_count }} result{{ search_shifts_count|pluralize }}</span>
+  <a href="{% url 'EmployerApp:dashboard' %}" style="font-size:.78rem;color:#1a56c4;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear</a>
+</div>
+{% endif %}
+  <div class="section-card">
+<div class="section-head"><h3>{% if search_q %}Shift Search Results{% else %}Upcoming Shifts{% endif %}</h3><a href="{% url 'EmployerApp:my_shifts' %}" class="view-all">View all <i class="fas fa-arrow-right" style="font-size:.6rem"></i></a></div>
 {% if active_shifts %}{% for s in active_shifts %}
 <div class="shift-row"><div class="shift-av av-{{ forloop.counter }}">{{ s.caregiver.first_name|first|upper }}{{ s.caregiver.last_name|first|upper }}</div><div class="shift-info"><div class="shift-name">{{ s.caregiver.get_full_name|default:s.caregiver.username }}</div><div class="shift-type">Active shift</div><div class="shift-meta"><span><i class="fas fa-location-dot"></i> {{ s.city|default:"Ontario" }}</span></div></div><div class="shift-badge"><span class="badge badge-orange">In Progress</span></div></div>
 {% endfor %}{% endif %}
 {% for s in scheduled_shifts %}
 <div class="shift-row"><div class="shift-av av-{{ forloop.counter }}">{{ s.caregiver.first_name|first|upper }}{{ s.caregiver.last_name|first|upper }}</div><div class="shift-info"><div class="shift-name">{{ s.caregiver.get_full_name|default:s.caregiver.username }}</div><div class="shift-type">{% if s.city %}{{ s.city }}{% else %}Care shift{% endif %}</div><div class="shift-meta"><span><i class="fas fa-clock"></i> {% if s.start_date == today %}Today{% else %}{{ s.start_date|date:"D, M j" }}{% endif %} - {{ s.start_time|time:"g:i A" }} to {{ s.end_time|time:"g:i A" }}</span><span><i class="fas fa-dollar-sign"></i> ${{ s.hourly_rate }}/hr</span></div></div><div class="shift-badge"><span class="badge badge-blue">Scheduled</span></div></div>
 {% empty %}{% if not active_shifts %}
-<div style="text-align:center;padding:28px 0;color:#ccc;font-size:.85rem"><i class="fas fa-calendar-xmark" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>No upcoming shifts scheduled</div>
+<div style="text-align:center;padding:28px 0;color:#ccc;font-size:.85rem"><i class="fas fa-{% if search_q %}search{% else %}calendar-xmark{% endif %}" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>{% if search_q %}No shifts match "{{ search_q }}"{% else %}No upcoming shifts scheduled{% endif %}</div>
 {% endif %}{% endfor %}
 </div>
-<div class="section-card">
-<div class="section-head"><h3>My Open Jobs</h3><a href="{% url 'EmployerApp:my_jobs' %}" class="view-all">View all <i class="fas fa-arrow-right" style="font-size:.6rem"></i></a></div>
+  <div class="section-card">
+{% if search_q %}
+<div style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Jobs matching <strong>"{{ search_q }}"</strong> — {{ search_jobs_count }} result{{ search_jobs_count|pluralize }}</span>
+  <a href="{% url 'EmployerApp:dashboard' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear</a>
+</div>
+{% endif %}
+<div class="section-head"><h3>{% if search_q %}Job Search Results{% else %}My Open Jobs{% endif %}</h3><a href="{% url 'EmployerApp:my_jobs' %}" class="view-all">View all <i class="fas fa-arrow-right" style="font-size:.6rem"></i></a></div>
 {% for job in recent_jobs %}
 <div class="job-row"><div class="job-top"><div class="job-name">{{ job.title }}</div><span class="job-rate">${{ job.hourly_rate }}/hr</span></div><div class="job-meta"><i class="fas fa-location-dot"></i> {{ job.city|default:"Ontario" }} &nbsp;·&nbsp; {{ job.hours_per_week|default:"" }} hrs/wk</div></div>
 {% empty %}
-<div style="text-align:center;padding:28px 0;color:#ccc;font-size:.85rem"><i class="fas fa-briefcase" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>No open jobs yet</div>
+<div style="text-align:center;padding:28px 0;color:#ccc;font-size:.85rem"><i class="fas fa-{% if search_q %}search{% else %}briefcase{% endif %}" style="font-size:1.6rem;display:block;margin-bottom:8px"></i>{% if search_q %}No jobs match "{{ search_q }}"{% else %}No open jobs yet{% endif %}</div>
 {% endfor %}
 {% if is_activated %}<a href="{% url 'EmployerApp:post_job' %}" class="post-btn"><i class="fas fa-plus"></i> Post a new job</a>{% else %}<a href="{% url 'EmployerApp:activate_account' %}" class="post-btn"><i class="fas fa-bolt"></i> Activate to post jobs</a>{% endif %}
 </div>
@@ -177,4 +189,15 @@
 {% endblock %}
 {% block extra_scripts %}
 {% if show_modal %}<script>(function(){var m=document.getElementById("activationModal"),b=document.getElementById("closeModalBtn");if(b&&m){b.addEventListener("click",function(){m.style.display="none";});}})();</script>{% endif %}
+  <script>
+    (function(){
+      var q = new URLSearchParams(window.location.search).get('q');
+      if(q){
+        var el = document.getElementById('search-results');
+        if(el){
+          setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
+        }
+      }
+    })();
+  </script>
 {% endblock %}

@@ -4,7 +4,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.conf import settings
-from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation
+from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation, SupportChat, SupportMessage
 from Account.models import CaregiverProfile, BookingProposal, EmployerProfile
 from .pii_filter import find_pii, pii_error_message
 import json
@@ -493,9 +493,9 @@ def _chat_base(user):
         return 'base.html'
     if user.is_admin:
         return 'base.html'
-    if user.role == 'caregiver':
+    if user.is_caregiver:
         return 'CareGiverAcc/base_caregiver.html'
-    if user.role == 'employer':
+    if user.is_employer:
         return 'EmployerApp/base_employer.html'
     return 'base.html'
 
@@ -517,7 +517,7 @@ def _get_chat_block_reason(user):
             "Admin accounts cannot send or receive messages through the chat system.",
         )
 
-    if user.role == 'caregiver':
+    if user.is_caregiver:
         try:
             profile = user.caregiver_profile
         except CaregiverProfile.DoesNotExist:
@@ -529,7 +529,7 @@ def _get_chat_block_reason(user):
                     f"Your account is currently {status_label}. "
                     "You will be able to message employers once your account is activated by an admin.")
 
-    elif user.role == 'employer':
+    elif user.is_employer:
         try:
             profile = user.employer_profile
         except EmployerProfile.DoesNotExist:
@@ -785,7 +785,7 @@ from django.template.loader import render_to_string
 @require_POST
 def send_proposal(request, conv_id):
     """Caregiver sends a price proposal inside a chat thread."""
-    if request.user.role != 'caregiver':
+    if not request.user.is_caregiver:
         return JsonResponse({'error': 'Only caregivers can send proposals.'}, status=403)
 
     conv = get_object_or_404(
@@ -794,7 +794,7 @@ def send_proposal(request, conv_id):
         pk=conv_id,
     )
     employer = conv.other_participant(request.user)
-    if employer.role != 'employer':
+    if not employer.is_employer:
         return JsonResponse({'error': 'The other participant is not an employer.'}, status=400)
 
     try:
@@ -879,3 +879,197 @@ def decline_proposal(request, proposal_pk):
     proposal.status = BookingProposal.STATUS_DECLINED
     proposal.save(update_fields=['status', 'updated_at'])
     return redirect('chat_room', conv_id=proposal.conversation_id)
+
+
+# ─────────────────────────────────────────────────────────────
+# Live Support Chat (HTMX real-time)
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def support_chat(request):
+    """User-facing support chat page."""
+    chat = SupportChat.objects.filter(user=request.user, is_resolved=False).first()
+    if not chat:
+        chat = SupportChat.objects.create(user=request.user)
+    return redirect('support_chat_detail', chat_id=chat.pk)
+
+
+@login_required
+def support_chat_detail(request, chat_id):
+    """Show a specific support chat for the current user."""
+    chat = get_object_or_404(SupportChat, pk=chat_id, user=request.user)
+    messages_qs = chat.messages.select_related('sender').all()
+    return render(request, 'chat/support-chat.html', {
+        'chat': chat,
+        'messages': messages_qs,
+        'base_template': _chat_base(request.user),
+    })
+
+
+@login_required
+@require_POST
+def support_chat_send(request, chat_id):
+    """User sends a support message."""
+    chat = get_object_or_404(SupportChat, pk=chat_id, user=request.user)
+    body = request.POST.get('body', '').strip()
+    if not body:
+        return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
+
+    pii_matches = find_pii(body)
+    if pii_matches:
+        return JsonResponse(
+            {'ok': False, 'error': pii_error_message(pii_matches), 'pii': True},
+            status=400,
+        )
+
+    from django.utils import timezone as tz
+    cutoff = tz.now() - timezone.timedelta(seconds=3)
+    dup = chat.messages.filter(
+        sender=request.user,
+        body=body,
+        created_at__gte=cutoff,
+    ).order_by('-pk').first()
+    if dup:
+        html = render_to_string(
+            'chat/partials/support_message.html',
+            {'msg': dup, 'me': request.user},
+            request=request,
+        )
+        return JsonResponse({'ok': True, 'pk': dup.pk, 'html': html, 'duplicate': True})
+
+    msg = SupportMessage.objects.create(
+        chat=chat,
+        sender=request.user,
+        body=body,
+    )
+    SupportChat.objects.filter(pk=chat.pk).update(updated_at=timezone.now())
+
+    html = render_to_string(
+        'chat/partials/support_message.html',
+        {'msg': msg, 'me': request.user},
+        request=request,
+    )
+    return JsonResponse({'ok': True, 'pk': msg.pk, 'html': html, 'duplicate': False})
+
+
+@login_required
+def support_chat_poll(request, chat_id):
+    """HTMX poll endpoint — return any new messages after `after` pk."""
+    chat = get_object_or_404(SupportChat, pk=chat_id, user=request.user)
+    after_pk = request.GET.get('after', 0)
+    try:
+        after_pk = int(after_pk)
+    except (ValueError, TypeError):
+        after_pk = 0
+
+    new_msgs = chat.messages.filter(
+        pk__gt=after_pk
+    ).select_related('sender').order_by('pk')
+
+    new_msgs.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    return render(request, 'chat/partials/support_messages_poll.html', {
+        'messages': new_msgs,
+        'me': request.user,
+    })
+
+
+# ── Admin support views ──────────────────────────────────────
+
+@staff_member_required
+def admin_support(request):
+    """Admin dashboard — see all active support chats."""
+    chats = SupportChat.objects.filter(is_resolved=False).select_related('user').order_by('-updated_at')
+    resolved = SupportChat.objects.filter(is_resolved=True).select_related('user').order_by('-updated_at')[:50]
+
+    selected_chat = None
+    messages = []
+    chat_id = request.GET.get('chat')
+    if chat_id:
+        selected_chat = get_object_or_404(SupportChat, pk=chat_id)
+        messages = selected_chat.messages.select_related('sender').all()
+
+    return render(request, 'chat/admin-support.html', {
+        'chats': chats,
+        'resolved': resolved,
+        'selected_chat': selected_chat,
+        'messages': messages,
+    })
+
+
+@staff_member_required
+@require_POST
+def admin_support_reply(request, chat_id):
+    """Admin replies to a support chat."""
+    chat = get_object_or_404(SupportChat, pk=chat_id)
+    body = request.POST.get('body', '').strip()
+    if not body:
+        return JsonResponse({'ok': False, 'error': 'empty'}, status=400)
+
+    pii_matches = find_pii(body)
+    if pii_matches:
+        return JsonResponse(
+            {'ok': False, 'error': pii_error_message(pii_matches), 'pii': True},
+            status=400,
+        )
+
+    from django.utils import timezone as tz
+    cutoff = tz.now() - timezone.timedelta(seconds=3)
+    dup = chat.messages.filter(
+        sender=request.user,
+        body=body,
+        created_at__gte=cutoff,
+    ).order_by('-pk').first()
+    if dup:
+        html = render_to_string(
+            'chat/partials/support_message.html',
+            {'msg': dup, 'me': request.user},
+            request=request,
+        )
+        return JsonResponse({'ok': True, 'pk': dup.pk, 'html': html, 'duplicate': True})
+
+    msg = SupportMessage.objects.create(
+        chat=chat,
+        sender=request.user,
+        body=body,
+    )
+    SupportChat.objects.filter(pk=chat.pk).update(updated_at=timezone.now())
+
+    html = render_to_string(
+        'chat/partials/support_message.html',
+        {'msg': msg, 'me': request.user},
+        request=request,
+    )
+    return JsonResponse({'ok': True, 'pk': msg.pk, 'html': html, 'duplicate': False})
+
+
+@staff_member_required
+def admin_support_poll(request, chat_id):
+    """HTMX poll endpoint for admin — return any new messages after `after` pk."""
+    chat = get_object_or_404(SupportChat, pk=chat_id)
+    after_pk = request.GET.get('after', 0)
+    try:
+        after_pk = int(after_pk)
+    except (ValueError, TypeError):
+        after_pk = 0
+
+    new_msgs = chat.messages.filter(
+        pk__gt=after_pk
+    ).select_related('sender').order_by('pk')
+
+    new_msgs.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    return render(request, 'chat/partials/support_messages_poll.html', {
+        'messages': new_msgs,
+        'me': request.user,
+    })
+
+
+@staff_member_required
+@require_POST
+def admin_support_resolve(request, chat_id):
+    """Mark a support chat as resolved."""
+    chat = get_object_or_404(SupportChat, pk=chat_id)
+    chat.is_resolved = True
+    chat.save(update_fields=['is_resolved', 'updated_at'])
+    return redirect('admin_support')

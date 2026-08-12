@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerPayment, EmployerProfile, Dispute
 from Account.forms import REQUIRED_DOC_TYPES
+from django.db.models import Q
 
 
 def admin_required(view_func):
@@ -40,7 +41,7 @@ def _admin_sidebar():
 def dashboard(request):
     import json
     from datetime import timedelta
-    from django.db.models import Count
+    from django.db.models import Count, Q
     from django.db.models.functions import TruncDate
 
     today = timezone.now().date()
@@ -49,7 +50,20 @@ def dashboard(request):
     total_employers   = CustomUser.objects.filter(role=CustomUser.EMPLOYER).count()
     active_shifts     = Shift.objects.filter(status=Shift.STATUS_IN_PROGRESS).count()
     completed_shifts  = Shift.objects.filter(status=Shift.STATUS_COMPLETED).count()
-    recent_users      = CustomUser.objects.order_by('-date_joined')[:8]
+    recent_users = CustomUser.objects.order_by('-date_joined')[:8]
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        search_users_qs = CustomUser.objects.filter(
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(email__icontains=q) |
+            Q(role__icontains=q)
+        )
+        search_users_count = search_users_qs.count()
+        recent_users = search_users_qs.order_by('-date_joined')[:8]
+    else:
+        search_users_count = 0
 
     # ── Shifts per day — last 14 days (bar chart) ───────────────
     fourteen_days = [today - timedelta(days=i) for i in range(13, -1, -1)]
@@ -155,15 +169,26 @@ def dashboard(request):
         'users_chart_labels':  users_chart_labels,
         'users_chart_data':    users_chart_data,
         'activities':          activities,
+        'search_q':            q,
+        'search_users_count':  recent_users.count(),
     })
     return render(request, 'AdminApp/dashboard.html', ctx)
 
 
 @admin_required
 def manage_users(request):
+    q = request.GET.get('q', '').strip()
     users = CustomUser.objects.order_by('-date_joined')
+    if q:
+        users = users.filter(
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(email__icontains=q) |
+            Q(role__icontains=q)
+        )
     ctx = _admin_sidebar()
     ctx['users'] = users
+    ctx['search_q'] = q
     return render(request, 'AdminApp/manage-users.html', ctx)
 
 
@@ -174,6 +199,36 @@ def manage_caregivers(request):
     ctx['profiles'] = profiles
     ctx['doc_types'] = REQUIRED_DOC_TYPES
     return render(request, 'AdminApp/manage-caregivers.html', ctx)
+
+
+@admin_required
+def manage_employers(request):
+    from django.db.models import Q
+    profiles = EmployerProfile.objects.select_related('user').exclude(
+        Q(user__is_superuser=True) | Q(user__is_staff=True)
+    ).order_by('-created_at')
+    ctx = _admin_sidebar()
+    ctx['profiles'] = profiles
+    return render(request, 'AdminApp/manage-employers.html', ctx)
+
+
+@admin_required
+def activate_employer(request, profile_id):
+    """Manually activate an employer account without requiring payment."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_employers')
+
+    profile = get_object_or_404(EmployerProfile, pk=profile_id)
+    if not profile.is_active:
+        profile.is_active          = True
+        profile.activation_paid_at = timezone.now()
+        profile.payment_reference  = 'admin-activation'
+        profile.save()
+        messages.success(
+            request,
+            f'{profile.user.get_full_name()} has been activated as an employer.'
+        )
+    return redirect('AdminApp:manage_employers')
 
 
 @admin_required

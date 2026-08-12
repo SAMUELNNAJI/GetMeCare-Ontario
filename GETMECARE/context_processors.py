@@ -28,7 +28,7 @@ def _get_total_unread(user):
 
         # Count unread proposals (employer only — proposals are sent TO the employer)
         unread_proposals = 0
-        if getattr(user, 'role', None) == 'employer':
+        if getattr(user, 'is_employer', False):
             unread_proposals = BookingProposal.objects.filter(
                 employer=user,
                 status=BookingProposal.STATUS_PENDING,
@@ -36,6 +36,17 @@ def _get_total_unread(user):
             ).count()
 
         return unread_msgs + unread_proposals
+    except Exception:
+        return 0
+
+
+def _get_support_unread_count(user):
+    try:
+        from Chatbot.models import SupportMessage
+        return SupportMessage.objects.filter(
+            chat__user=user,
+            is_read=False,
+        ).exclude(sender=user).count()
     except Exception:
         return 0
 
@@ -49,18 +60,40 @@ def sidebar_context(request):
     if not hasattr(request, 'user') or not request.user.is_authenticated:
         return {}
 
-    role = getattr(request.user, 'role', None)
-
     ctx = {}
 
-    if role == 'caregiver':
+    if request.user.is_caregiver:
         try:
             from CareGiverAcc.views import _sidebar_context
             ctx = _sidebar_context(request.user)
         except Exception:
             pass
 
-    elif role == 'employer':
+        if ctx.get('profile'):
+            try:
+                from Account.models import CaregiverProfile
+                from Account.forms import REQUIRED_DOC_TYPES
+                profile = ctx['profile']
+                if profile.status != CaregiverProfile.STATUS_ACTIVE:
+                    if not request.session.get('caregiver_activation_dismissed'):
+                        user_doc_types = set(
+                            request.user.documents.filter(
+                                doc_type__in=REQUIRED_DOC_TYPES
+                            ).values_list('doc_type', flat=True).distinct()
+                        )
+                        all_docs_uploaded = len(user_doc_types) == len(REQUIRED_DOC_TYPES)
+                        profile_complete = bool(
+                            profile.care_type
+                            and profile.hourly_rate is not None
+                            and profile.city
+                            and profile.skills
+                        )
+                        if not all_docs_uploaded or not profile_complete:
+                            ctx['show_activation_modal'] = True
+            except Exception:
+                pass
+
+    elif request.user.is_employer:
         try:
             from EmployerApp.views import _employer_ctx
             ctx = _employer_ctx(request.user)
@@ -69,9 +102,10 @@ def sidebar_context(request):
 
     # Inject unread count for both roles
     ctx['total_unread'] = _get_total_unread(request.user)
+    ctx['support_unread_count'] = _get_support_unread_count(request.user)
 
     # Add upcoming shifts count for caregivers
-    if role == 'caregiver':
+    if request.user.is_caregiver:
         try:
             from Account.models import Shift
             from django.utils import timezone

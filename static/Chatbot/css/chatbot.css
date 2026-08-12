@@ -266,8 +266,29 @@
 }
 
 .chatbot-new-chat:hover,
-.chatbot-sidebar-toggle:hover {
+.chatbot-sidebar-toggle:hover,
+.chatbot-support-btn:hover {
     background: rgba(255, 255, 255, 0.3);
+}
+
+/* Chatbot Support Badge */
+.chatbot-support-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e53935;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+    animation: pulse 2s infinite;
 }
 
 /* Chatbot Sidebar */

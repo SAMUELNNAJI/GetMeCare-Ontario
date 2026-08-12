@@ -10,4 +10,5 @@ urlpatterns = [
     path('caregiver-acc/documents/',                    views.documents,          name='documents'),
     path('caregiver-acc/documents/<int:doc_id>/reupload/', views.reupload_document, name='reupload_document'),
     path('caregiver-acc/documents/<int:doc_id>/view/',    views.serve_document,     name='serve_document'),
+    path('caregiver-acc/dismiss-activation-modal/',       views.dismiss_activation_modal, name='dismiss_activation_modal'),
 ]

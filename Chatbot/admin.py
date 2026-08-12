@@ -1,5 +1,25 @@
 from django.contrib import admin
-from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation
+from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation, SupportChat, SupportMessage
+
+
+@admin.register(SupportChat)
+class SupportChatAdmin(admin.ModelAdmin):
+    list_display = ['user', 'is_resolved', 'created_at', 'updated_at']
+    list_filter = ['is_resolved', 'created_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(SupportMessage)
+class SupportMessageAdmin(admin.ModelAdmin):
+    list_display = ['chat', 'sender', 'body_preview', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
+    search_fields = ['body', 'sender__username']
+    readonly_fields = ['created_at']
+
+    def body_preview(self, obj):
+        return obj.body[:50] + '...' if len(obj.body) > 50 else obj.body
+    body_preview.short_description = 'Message'
 
 
 @admin.register(ChatConversation)

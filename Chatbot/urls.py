@@ -23,4 +23,16 @@ urlpatterns = [
 
     # Admin monitor
     path('admin/monitor/', views.admin_chat_monitor, name='admin_chat_monitor'),
+
+    # Live Support Chat (HTMX real-time)
+    path('support/', views.support_chat, name='support_chat'),
+    path('support/<int:chat_id>/', views.support_chat_detail, name='support_chat_detail'),
+    path('support/<int:chat_id>/send/', views.support_chat_send, name='support_chat_send'),
+    path('support/<int:chat_id>/poll/', views.support_chat_poll, name='support_chat_poll'),
+
+    # Admin support chat
+    path('admin/support/', views.admin_support, name='admin_support'),
+    path('admin/support/<int:chat_id>/reply/', views.admin_support_reply, name='admin_support_reply'),
+    path('admin/support/<int:chat_id>/poll/', views.admin_support_poll, name='admin_support_poll'),
+    path('admin/support/<int:chat_id>/resolve/', views.admin_support_resolve, name='admin_support_resolve'),
 ]

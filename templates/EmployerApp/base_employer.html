@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {% if user.is_authenticated %}<meta name="user-id" content="{{ user.id }}"><meta name="support-chat-unread" content="{{ support_unread_count|default:0 }}">{% endif %}
     <title>{% block title %}GetMeCare — Employer{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
   <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
@@ -751,6 +752,9 @@
         <a href="{% url 'chat_list' %}" data-nav="chat_list"
           ><i class="fas fa-comments"></i> Messages{% if total_unread %}<span class="nav-unread-badge">{{ total_unread }}</span>{% endif %}</a
         >
+        <a href="{% url 'support_chat' %}" data-nav="support_chat"
+          ><i class="fas fa-headset"></i> Support{% if support_unread_count %}<span class="nav-unread-badge">{{ support_unread_count }}</span>{% endif %}</a
+        >
         {% if not is_activated %}<a
           href="{% url 'EmployerApp:activate_account' %}"
           data-nav="activate_account"
@@ -777,10 +781,12 @@
       <button class="ep-hamburger" id="ep-hamburger" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
-      <div class="ep-search">
-        <i class="fas fa-search"></i
-        ><input type="text" placeholder="Search caregivers, shifts…" />
-      </div>
+      <form method="get" action="" style="flex:1;max-width:320px;">
+        <div class="ep-search">
+          <i class="fas fa-search"></i
+          ><input type="text" name="q" placeholder="Search caregivers, shifts…" value="{{ request.GET.q|default:'' }}" />
+        </div>
+      </form>
       <a href="{% url 'home' %}" class="ep-back" style="margin-left: 10px"
         ><i class="fas fa-arrow-left"></i> Back to site</a
       >
@@ -829,5 +835,6 @@
       })();
     </script>
     {% block extra_scripts %}{% endblock %}
+    <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
   </body>
 </html>

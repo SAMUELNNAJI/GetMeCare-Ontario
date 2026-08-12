@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from decimal import Decimal
 from django.utils import timezone
 
@@ -79,11 +79,31 @@ def dashboard(request):
     ctx = _sidebar_context(user)
     profile = ctx['profile']
 
-    upcoming = Shift.objects.filter(
+    q = request.GET.get('q', '').strip()
+
+    upcoming_qs = Shift.objects.filter(
         caregiver=user,
         status=Shift.STATUS_SCHEDULED,
         start_date__gte=today,
-    ).order_by('start_date', 'start_time')[:5]
+    ).select_related('employer')
+
+    latest_jobs_qs = JobPosting.objects.filter(status=JobPosting.STATUS_OPEN)
+
+    if q:
+        upcoming_qs = upcoming_qs.filter(
+            Q(employer__first_name__icontains=q) |
+            Q(employer__last_name__icontains=q) |
+            Q(city__icontains=q)
+        )
+        latest_jobs_qs = latest_jobs_qs.filter(
+            Q(title__icontains=q) |
+            Q(city__icontains=q)
+        )
+
+    search_upcoming_count = upcoming_qs.count()
+    search_jobs_count = latest_jobs_qs.count()
+
+    upcoming = upcoming_qs.order_by('start_date', 'start_time')[:5]
 
     # All schedulable shifts for the clock-in picker (no cap)
     clockable_shifts = Shift.objects.filter(
@@ -204,7 +224,10 @@ def dashboard(request):
         'weekly_data':       json.dumps(weekly_data),
         'weekly_total':      f"{weekly_total:,.2f}",
         'week_change_pct':   week_change_pct,
-        'latest_jobs':       JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).order_by('-created_at')[:3],
+        'latest_jobs':       latest_jobs_qs.order_by('-created_at')[:3],
+        'search_q':          q,
+        'search_upcoming_count': search_upcoming_count,
+        'search_jobs_count': search_jobs_count,
         # Tracker
         'tracker_state':          tracker_state,
         'tracker_shift_pk':       tracker_shift_pk,
@@ -445,3 +468,10 @@ def serve_document(request, doc_id):
         response = HttpResponse(f.read(), content_type=mime_type)
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
     return response
+
+
+@caregiver_required
+def dismiss_activation_modal(request):
+    """Dismiss the activation reminder modal and set a session flag."""
+    request.session['caregiver_activation_dismissed'] = True
+    return redirect('CareGiverAcc:dashboard')

@@ -484,7 +484,7 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
       </p>
     </div>
     <div class="cta-btns animate-fade-up stagger-2">
-      <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.role == 'employer' %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" class="btn-cta-outline glow-hover" {% if user.is_authenticated and user.role != 'employer' %}onclick="handlePostCareRequest(); return false;"{% endif %}
+      <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% elif user.is_employer %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" class="btn-cta-outline glow-hover" {% if user.is_authenticated and not user.is_employer %}onclick="handlePostCareRequest(); return false;"{% endif %}
         ><i class="fas fa-shield-alt"></i> Post a Care Request</a
       >
       <a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}{% else %}#{% endif %}" class="btn-cta-orange glow-hover" {% if user.is_authenticated %}onclick="return false;"{% endif %}

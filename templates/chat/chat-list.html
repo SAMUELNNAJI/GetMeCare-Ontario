@@ -145,7 +145,7 @@
     <a href="{% url 'chat_room' item.conv.pk %}" class="cl-item">
       <div class="cl-av">
         {% with other=item.other %}
-          {% if other.role == 'caregiver' and other.caregiver_profile.profile_image %}
+          {% if other.is_caregiver and other.caregiver_profile.profile_image %}
             <img src="{{ other.caregiver_profile.profile_image.url }}" alt="">
           {% else %}
             {% if other.first_name %}{{ other.first_name|first|upper }}{{ other.last_name|first|upper }}{% else %}{{ other.username|slice:":2"|upper }}{% endif %}
@@ -181,7 +181,7 @@
   <div class="cl-empty">
     <i class="fas fa-comment-slash"></i>
     <strong style="color:#555;font-size:1rem;display:block;margin-bottom:6px">No conversations yet</strong>
-    {% if request.user.role == 'caregiver' %}
+    {% if request.user.is_caregiver %}
     <p>Browse available jobs and reach out to employers.</p>
     <a href="{% url 'browse_jobs' %}" style="display:inline-block;margin-top:16px;background:#1b7d4f;color:#fff;padding:10px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">Browse Jobs</a>
     {% else %}
