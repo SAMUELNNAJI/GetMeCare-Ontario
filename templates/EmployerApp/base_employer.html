@@ -642,6 +642,69 @@
           padding: 16px 14px 40px;
         }
       }
+      /* ── Mobile search popup ── */
+      @media (max-width: 768px) {
+        .ep-search-bar-wrap { display: none !important; }
+        .ep-search-icon-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px; height: 34px;
+          border-radius: 50%;
+          background: #fff;
+          border: 1px solid #dde2d8;
+          color: #555;
+          font-size: .88rem;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+      }
+      @media (min-width: 769px) {
+        .ep-search-icon-btn { display: none !important; }
+      }
+      /* Overlay */
+      .ep-search-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        z-index: 600;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 60px;
+      }
+      .ep-search-overlay.open { display: flex; }
+      .ep-search-popup {
+        width: calc(100% - 32px);
+        max-width: 520px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.18);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .ep-search-popup input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 1rem;
+        font-family: inherit;
+        color: #333;
+      }
+      .ep-search-popup input::placeholder { color: #aaa; }
+      .ep-search-popup i { color: #1b7d4f; font-size: 1rem; flex-shrink: 0; }
+      .ep-search-popup-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #aaa;
+        font-size: 1.1rem;
+        padding: 2px 4px;
+        flex-shrink: 0;
+      }
+      .ep-search-popup-close:hover { color: #555; }
     
   /* scroll-table-wrap */
   .scroll-table-wrap{max-height:520px;overflow-y:auto;overflow-x:auto}
@@ -781,12 +844,17 @@
       <button class="ep-hamburger" id="ep-hamburger" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
-      <form method="get" action="" style="flex:1;max-width:320px;">
+      <!-- Desktop search (hidden on mobile) -->
+      <form method="get" action="" class="ep-search-bar-wrap" style="flex:1;max-width:320px;">
         <div class="ep-search">
           <i class="fas fa-search"></i
           ><input type="text" name="q" placeholder="Search caregivers, shifts…" value="{{ request.GET.q|default:'' }}" />
         </div>
       </form>
+      <!-- Mobile search icon (shows on mobile only) -->
+      <button class="ep-search-icon-btn" id="ep-search-icon-btn" aria-label="Open search">
+        <i class="fas fa-search"></i>
+      </button>
       <a href="{% url 'home' %}" class="ep-back" style="margin-left: 10px"
         ><i class="fas fa-arrow-left"></i> Back to site</a
       >
@@ -795,6 +863,16 @@
         <i class="fas fa-bell"></i><span class="ep-bell-dot"></span>
       </div>
       <div class="ep-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+    </div>
+    <!-- Mobile search overlay -->
+    <div class="ep-search-overlay" id="ep-search-overlay" role="dialog" aria-modal="true" aria-label="Search">
+      <div class="ep-search-popup">
+        <i class="fas fa-search"></i>
+        <form method="get" action="" style="flex:1;display:flex;">
+          <input type="text" name="q" placeholder="Search caregivers, shifts…" id="ep-search-popup-input" value="{{ request.GET.q|default:'' }}" autocomplete="off" />
+        </form>
+        <button class="ep-search-popup-close" id="ep-search-popup-close" aria-label="Close search"><i class="fas fa-times"></i></button>
+      </div>
     </div>
     <main class="ep-main">
       <div class="ep-content">
@@ -831,6 +909,30 @@
         var cur = window.location.pathname;
         document.querySelectorAll(".ep-nav a[data-nav]").forEach(function (a) {
           if (a.getAttribute("href") === cur) a.classList.add("active");
+        });
+        // ── Mobile search popup ──
+        var searchIconBtn   = document.getElementById("ep-search-icon-btn");
+        var searchOverlay   = document.getElementById("ep-search-overlay");
+        var searchPopupInput = document.getElementById("ep-search-popup-input");
+        var searchCloseBtn  = document.getElementById("ep-search-popup-close");
+        function openSearch() {
+          searchOverlay.classList.add("open");
+          document.body.style.overflow = "hidden";
+          if (searchPopupInput) { searchPopupInput.focus(); searchPopupInput.select(); }
+        }
+        function closeSearch() {
+          searchOverlay.classList.remove("open");
+          document.body.style.overflow = "";
+        }
+        if (searchIconBtn) searchIconBtn.addEventListener("click", openSearch);
+        if (searchCloseBtn) searchCloseBtn.addEventListener("click", closeSearch);
+        if (searchOverlay) {
+          searchOverlay.addEventListener("click", function (e) {
+            if (e.target === searchOverlay) closeSearch();
+          });
+        }
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeSearch();
         });
       })();
     </script>

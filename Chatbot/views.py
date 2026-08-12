@@ -7,6 +7,7 @@ from django.conf import settings
 from .models import ChatConversation, ChatMessage, SiteKnowledge, CaregiverRecommendation, SupportChat, SupportMessage
 from Account.models import CaregiverProfile, BookingProposal, EmployerProfile
 from .pii_filter import find_pii, pii_error_message
+from GETMECARE.email_utils import send_offline_chat_notification, send_support_offline_notification, send_support_resolved_email
 import json
 import re
 import requests
@@ -702,6 +703,28 @@ def chat_send(request, conv_id):
     )
     DirectConversation.objects.filter(pk=conv.pk).update(updated_at=timezone.now())
 
+    # ── Offline email notification ─────────────────────────────
+    # Notify the other participant if they have not been active recently.
+    # "Offline" = no session activity in the past 5 minutes (uses last_login
+    # as a lightweight proxy; replace with a proper last-seen tracker if needed).
+    try:
+        recipient = conv.other_participant(request.user)
+        _five_min_ago = timezone.now() - timezone.timedelta(minutes=5)
+        _is_offline = (
+            recipient.last_login is None
+            or recipient.last_login < _five_min_ago
+        )
+        if _is_offline and recipient.email:
+            send_offline_chat_notification(
+                recipient=recipient,
+                sender=request.user,
+                message_body=body,
+                conversation_id=conv.pk,
+            )
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Offline chat notification failed for conv %s', conv.pk)
+
     from django.template.loader import render_to_string
     html = render_to_string(
         'chat/partials/message_bubble.html',
@@ -944,6 +967,24 @@ def support_chat_send(request, chat_id):
     )
     SupportChat.objects.filter(pk=chat.pk).update(updated_at=timezone.now())
 
+    # Notify admin if offline (last_login > 5 min ago) — user sent this message
+    try:
+        from django.contrib.auth import get_user_model as _gum
+        _admins = _gum().objects.filter(is_staff=True, email__isnull=False).exclude(email='')
+        _five_min_ago = timezone.now() - timezone.timedelta(minutes=5)
+        for _admin in _admins:
+            if _admin.last_login is None or _admin.last_login < _five_min_ago:
+                send_support_offline_notification(
+                    recipient=_admin,
+                    sender=request.user,
+                    message_body=body,
+                    chat_id=chat.pk,
+                    is_admin=True,
+                )
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Support offline admin email failed for chat %s', chat.pk)
+
     html = render_to_string(
         'chat/partials/support_message.html',
         {'msg': msg, 'me': request.user},
@@ -1035,6 +1076,22 @@ def admin_support_reply(request, chat_id):
     )
     SupportChat.objects.filter(pk=chat.pk).update(updated_at=timezone.now())
 
+    # Notify the user if offline — admin just replied
+    try:
+        _five_min_ago = timezone.now() - timezone.timedelta(minutes=5)
+        _user = chat.user
+        if _user.last_login is None or _user.last_login < _five_min_ago:
+            send_support_offline_notification(
+                recipient=_user,
+                sender=request.user,
+                message_body=body,
+                chat_id=chat.pk,
+                is_admin=False,
+            )
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Support offline user email failed for chat %s', chat.pk)
+
     html = render_to_string(
         'chat/partials/support_message.html',
         {'msg': msg, 'me': request.user},
@@ -1072,4 +1129,10 @@ def admin_support_resolve(request, chat_id):
     chat = get_object_or_404(SupportChat, pk=chat_id)
     chat.is_resolved = True
     chat.save(update_fields=['is_resolved', 'updated_at'])
+    # Notify the user their support request has been resolved
+    try:
+        send_support_resolved_email(chat.user, chat)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Support resolved email failed for chat %s', chat_id)
     return redirect('admin_support')

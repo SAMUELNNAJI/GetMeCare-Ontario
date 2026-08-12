@@ -187,6 +187,49 @@
     .adm-search  { max-width: 200px; }
     .adm-content { padding: 16px 14px 40px; }
   }
+  /* ── Mobile search popup ── */
+  @media (max-width: 768px) {
+    .adm-search-bar-wrap { display: none !important; }
+    .adm-search-icon-btn {
+      display: flex;
+      align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: #fff; border: 1px solid #dde2d8;
+      color: #555; font-size: .88rem;
+      cursor: pointer; flex-shrink: 0;
+    }
+  }
+  @media (min-width: 769px) {
+    .adm-search-icon-btn { display: none !important; }
+  }
+  .adm-search-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 600;
+    align-items: flex-start; justify-content: center;
+    padding-top: 60px;
+  }
+  .adm-search-overlay.open { display: flex; }
+  .adm-search-popup {
+    width: calc(100% - 32px); max-width: 520px;
+    background: #fff; border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .adm-search-popup input {
+    flex: 1; border: none; outline: none;
+    font-size: 1rem; font-family: inherit; color: #333;
+  }
+  .adm-search-popup input::placeholder { color: #aaa; }
+  .adm-search-popup > i { color: #1b7d4f; font-size: 1rem; flex-shrink: 0; }
+  .adm-search-popup-close {
+    background: none; border: none; cursor: pointer;
+    color: #aaa; font-size: 1.1rem; padding: 2px 4px; flex-shrink: 0;
+  }
+  .adm-search-popup-close:hover { color: #555; }
   
   /* scroll-table-wrap */
   .scroll-table-wrap{max-height:520px;overflow-y:auto;overflow-x:auto}
@@ -278,17 +321,32 @@
   <button class="adm-hamburger" id="adm-hamburger" aria-label="Toggle menu">
     <span></span><span></span><span></span>
   </button>
-  <form method="get" action="" style="flex:1;max-width:320px;">
+  <!-- Desktop search (hidden on mobile) -->
+  <form method="get" action="" class="adm-search-bar-wrap" style="flex:1;max-width:320px;">
     <div class="adm-search">
       <i class="fas fa-search"></i>
       <input type="text" name="q" placeholder="Search caregivers, shifts…" value="{{ request.GET.q|default:'' }}">
     </div>
   </form>
+  <!-- Mobile search icon (shows on mobile only) -->
+  <button class="adm-search-icon-btn" id="adm-search-icon-btn" aria-label="Open search">
+    <i class="fas fa-search"></i>
+  </button>
   <a href="{% url 'home' %}" class="adm-back" style="margin-left:10px;">
     <i class="fas fa-arrow-left"></i> Go back to site
   </a>
   <div class="adm-topbar-space"></div>
   <div class="adm-topbar-av">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
+</div>
+<!-- Mobile search overlay -->
+<div class="adm-search-overlay" id="adm-search-overlay" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="adm-search-popup">
+    <i class="fas fa-search"></i>
+    <form method="get" action="" style="flex:1;display:flex;">
+      <input type="text" name="q" placeholder="Search caregivers, shifts…" id="adm-search-popup-input" value="{{ request.GET.q|default:'' }}" autocomplete="off" />
+    </form>
+    <button class="adm-search-popup-close" id="adm-search-popup-close" aria-label="Close search"><i class="fas fa-times"></i></button>
+  </div>
 </div>
 
 <!-- MAIN -->
@@ -307,6 +365,28 @@
   function closeSB() { sb.classList.remove('open'); ov.classList.remove('open'); document.body.style.overflow=''; }
   if(btn) btn.addEventListener('click', function(){ sb.classList.contains('open') ? closeSB() : openSB(); });
   if(ov)  ov.addEventListener('click', closeSB);
+  // ── Mobile search popup ──
+  var searchIconBtn    = document.getElementById('adm-search-icon-btn');
+  var searchOverlay    = document.getElementById('adm-search-overlay');
+  var searchPopupInput = document.getElementById('adm-search-popup-input');
+  var searchCloseBtn   = document.getElementById('adm-search-popup-close');
+  function openSearch() {
+    searchOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (searchPopupInput) { searchPopupInput.focus(); searchPopupInput.select(); }
+  }
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  if (searchIconBtn) searchIconBtn.addEventListener('click', openSearch);
+  if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+  if (searchOverlay) {
+    searchOverlay.addEventListener('click', function(e) {
+      if (e.target === searchOverlay) closeSearch();
+    });
+  }
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSearch(); });
 })();
 </script>
  {% block extra_scripts %}{% endblock %}

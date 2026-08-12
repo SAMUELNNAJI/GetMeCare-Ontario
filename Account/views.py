@@ -10,8 +10,14 @@ import logging
 
 from .forms import LoginForm, SignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm
 from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog
+from GETMECARE.email_utils import (
+    send_welcome_email,
+    send_clock_in_email,
+    send_clock_out_email,
+)
 
 _profile_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -66,6 +72,11 @@ def signup(request):
             if user.is_caregiver:
                 CaregiverProfile.objects.get_or_create(user=user)
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            # Send welcome email (non-blocking — failure won't break signup)
+            try:
+                send_welcome_email(user)
+            except Exception:
+                logger.exception('Welcome email failed for user %s', user.pk)
             return redirect_for_user(user)
     else:
         form = SignupForm()
@@ -129,6 +140,12 @@ def clock_in(request):
     shift.status = Shift.STATUS_IN_PROGRESS
     shift.save(update_fields=['status'])
 
+    # Email notification
+    try:
+        send_clock_in_email(request.user, shift)
+    except Exception:
+        logger.exception('Clock-in email failed for shift %s', shift.pk)
+
     messages.success(request, f'Clocked in for Shift #{shift.pk}. Have a great shift!')
     return redirect('CareGiverAcc:dashboard')
 
@@ -159,6 +176,12 @@ def clock_out(request):
 
     log.shift.status = Shift.STATUS_COMPLETED
     log.shift.save(update_fields=['status'])
+
+    # Email notification
+    try:
+        send_clock_out_email(request.user, log.shift, log)
+    except Exception:
+        logger.exception('Clock-out email failed for shift %s', log.shift.pk)
 
     messages.success(
         request,

@@ -9,6 +9,10 @@ from django.utils import timezone
 from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerPayment, EmployerProfile, Dispute
 from Account.forms import REQUIRED_DOC_TYPES
 from django.db.models import Q
+from GETMECARE.email_utils import (
+    send_payout_notification_email,
+    send_dispute_resolved_employer_email,
+)
 
 
 def admin_required(view_func):
@@ -341,6 +345,12 @@ def mark_paid(request, log_pk):
     log = get_object_or_404(ShiftLog, pk=log_pk)
     log.payment_status = ShiftLog.PAY_PAID
     log.save(update_fields=['payment_status'])
+    # Notify caregiver their money has been sent
+    try:
+        send_payout_notification_email(log.shift.caregiver, log)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Payout email failed for log %s', log.pk)
     messages.success(
         request,
         f'Payout for {log.shift.caregiver.get_full_name()} '
@@ -639,6 +649,15 @@ def dispute_detail(request, dispute_pk):
             else:
                 dispute.resolved_at = None
             dispute.save()
+            # Notify employer when dispute is closed
+            if new_status in (Dispute.STATUS_RESOLVED, Dispute.STATUS_DISMISSED):
+                try:
+                    send_dispute_resolved_employer_email(dispute)
+                except Exception:
+                    import logging as _log
+                    _log.getLogger(__name__).exception(
+                        'Dispute resolved email failed for dispute %s', dispute.pk
+                    )
             messages.success(
                 request,
                 f'Dispute #{dispute.pk} updated to "{dispute.get_status_display()}".'

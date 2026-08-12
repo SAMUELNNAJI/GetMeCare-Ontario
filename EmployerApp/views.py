@@ -13,6 +13,14 @@ from decimal import Decimal
 from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute
 from Account.forms import JobPostingForm
 from EmployerApp import fincra_payments
+from GETMECARE.email_utils import (
+    send_shift_payment_employer_email,
+    send_shift_payment_caregiver_email,
+    send_activation_confirmation_email,
+    send_dispute_submitted_admin_email,
+    send_dispute_resolved_employer_email,
+    send_job_posted_caregivers_email,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +209,11 @@ def post_job(request):
             job = form.save(commit=False)
             job.employer = request.user
             job.save()
+            # Broadcast job alert to all active caregivers
+            try:
+                send_job_posted_caregivers_email(job)
+            except Exception:
+                logger.exception('Job-post broadcast email failed for job %s', job.pk)
             messages.success(request, f'Job "{job.title}" posted successfully.')
             return redirect('EmployerApp:my_jobs')
     else:
@@ -329,6 +342,16 @@ def fincra_activation_callback(request):
             payment_reference = reference,
             description       = 'One-time account activation fee (Fincra)',
         )
+
+        # Send activation confirmation email
+        try:
+            _act_payment = EmployerPayment.objects.filter(
+                payment_reference=reference
+            ).first()
+            if _act_payment:
+                send_activation_confirmation_email(request.user, _act_payment)
+        except Exception:
+            logger.exception('Activation email failed for user %s', request.user.pk)
 
     # Clean up session flag
     request.session.pop('fincra_activation_ref', None)
@@ -581,6 +604,18 @@ def fincra_booking_callback(request, shift_pk):
             ),
         )
 
+    # ── Send payment confirmation emails ──────────────────────────────────────
+    # Retrieve or reconstruct the payment record for the email helper
+    try:
+        _payment_record = EmployerPayment.objects.filter(
+            payment_reference=reference
+        ).first()
+        if _payment_record:
+            send_shift_payment_employer_email(request.user, shift, _payment_record)
+            send_shift_payment_caregiver_email(shift.caregiver, shift)
+    except Exception:
+        logger.exception('Shift payment emails failed for shift %s', shift.pk)
+
     # Clean up session
     request.session.pop('fincra_booking_ref', None)
     request.session.pop('fincra_booking_shift', None)
@@ -680,6 +715,17 @@ def submit_dispute(request):
         description = description,
         status      = Dispute.STATUS_OPEN,
     )
+
+    # Notify admin of the new complaint
+    try:
+        _new_dispute = Dispute.objects.filter(
+            employer=request.user,
+            description=description,
+        ).order_by('-pk').first()
+        if _new_dispute:
+            send_dispute_submitted_admin_email(_new_dispute)
+    except Exception:
+        logger.exception('Dispute submitted email failed for employer %s', request.user.pk)
 
     messages.success(
         request,
