@@ -106,6 +106,15 @@ class CaregiverProfile(models.Model):
                               help_text='3-digit institution number')
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+    # Reminder email tracking — updated each time a reminder is sent
+    last_doc_reminder_sent     = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time a "complete your documents" reminder email was sent',
+    )
+    last_profile_reminder_sent = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time a "complete your profile" reminder email was sent',
+    )
 
     def __str__(self):
         return f"{self.user.get_full_name()} — {self.get_status_display()}"
@@ -405,6 +414,11 @@ class EmployerProfile(models.Model):
     payment_reference  = models.CharField(max_length=200, blank=True)
     created_at         = models.DateTimeField(auto_now_add=True)
     updated_at         = models.DateTimeField(auto_now=True)
+    # Reminder email tracking
+    last_activation_reminder_sent = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time an "activate your account" reminder was sent',
+    )
 
     def __str__(self):
         status = 'Active' if self.is_active else 'Inactive'

@@ -619,3 +619,151 @@ def send_job_posted_caregivers_email(job) -> int:
 
     logger.info('Job-post broadcast: sent=%d for job_pk=%s', sent_count, job.pk)
     return sent_count
+
+
+# ──────────────────────────────────────────────────────────────
+# 14. Document upload reminder  (every 2 days until all 5 uploaded)
+# ──────────────────────────────────────────────────────────────
+
+def send_document_reminder_email(user, uploaded_count: int, required_count: int) -> bool:
+    docs_url    = f'{SITE_URL}/caregiver/documents/'
+    remaining   = required_count - uploaded_count
+
+    content = f"""
+    <h2>Don't forget — upload your documents</h2>
+    <p>Hi {user.first_name or user.username}, your GetMeCare Ontario caregiver account
+       is almost ready, but you still have <strong>{remaining} required document(s)</strong>
+       to upload before your profile can be verified.</p>
+    <div class="info-box">
+      <p><strong>Documents uploaded:</strong> {uploaded_count} of {required_count}</p>
+      <p><strong>Still needed:</strong> {remaining} document(s)</p>
+    </div>
+    <p>Required documents:</p>
+    <ul style="padding-left:20px;line-height:2.2;font-size:14px;">
+      <li>PSW Certificate</li>
+      <li>Vulnerable Sector Check</li>
+      <li>Government-issued ID</li>
+      <li>First Aid / CPR Certificate</li>
+      <li>Resume / CV</li>
+    </ul>
+    <p>Once all documents are uploaded and approved by our team, your profile will be
+       activated and you'll start receiving shift offers from employers.</p>
+    <a class="btn" href="{docs_url}">Upload Documents Now</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You're receiving this reminder because your document submission is incomplete.
+      Contact us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a> if you need help.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Action required — {remaining} document(s) still needed',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 15. Profile completion reminder  (every 2 days until complete)
+# ──────────────────────────────────────────────────────────────
+
+def send_profile_reminder_email(user, missing_fields: list[str]) -> bool:
+    profile_url = f'{SITE_URL}/edit-profile/'
+
+    missing_html = ''.join(f'<li>{f}</li>' for f in missing_fields)
+
+    content = f"""
+    <h2>Complete your caregiver profile</h2>
+    <p>Hi {user.first_name or user.username}, employers on {SITE_NAME} look at
+       your profile before reaching out. A complete profile significantly increases
+       your chances of getting booked for shifts.</p>
+    <div class="info-box">
+      <p><strong>Missing information:</strong></p>
+      <ul style="padding-left:20px;line-height:2;margin-top:6px;">
+        {missing_html}
+      </ul>
+    </div>
+    <p>It only takes a few minutes to fill in the missing details.</p>
+    <a class="btn" href="{profile_url}">Complete My Profile</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You're receiving this reminder because your caregiver profile is incomplete.
+      Contact us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a> if you need help.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your profile is incomplete — employers are waiting',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 16. Employer activation reminder  (every 2 days while inactive)
+# ──────────────────────────────────────────────────────────────
+
+def send_employer_activation_reminder_email(employer) -> bool:
+    activate_url  = f'{SITE_URL}/employer/activate/'
+    activation_fee = '49.99'   # mirrors EmployerProfile.ACTIVATION_FEE
+
+    content = f"""
+    <h2>Your employer account is not yet activated</h2>
+    <p>Hi {employer.first_name or employer.username}, you signed up on {SITE_NAME}
+       but your account is still <strong>inactive</strong>.</p>
+    <p>Without activating, you cannot:</p>
+    <ul style="padding-left:20px;line-height:2.2;font-size:14px;">
+      <li>Post job offers visible to verified caregivers</li>
+      <li>Book a caregiver for a shift</li>
+      <li>Send direct messages to caregivers</li>
+    </ul>
+    <div class="info-box">
+      <p><strong>One-time activation fee:</strong>
+         <strong style="color:#1a6b4a;">${activation_fee} CAD</strong></p>
+      <p>This is a single payment — no monthly subscription. Once activated,
+         your account remains active permanently.</p>
+    </div>
+    <a class="btn" href="{activate_url}">Activate My Account Now</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You're receiving this reminder because your account has not been activated yet.
+      Questions? Contact us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Activate your account to start hiring caregivers',
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 17. Document rejected — notify caregiver to re-upload
+# ──────────────────────────────────────────────────────────────
+
+def send_document_rejected_email(user, doc) -> bool:
+    """
+    Notify a caregiver that a specific document was rejected by the admin
+    and ask them to re-upload it.
+    """
+    docs_url    = f'{SITE_URL}/caregiver/documents/'
+    doc_label   = doc.get_doc_type_display()
+    admin_note  = doc.note.strip() if doc.note else ''
+
+    content = f"""
+    <h2>Document rejected — action required</h2>
+    <p>Hi {user.first_name or user.username}, our admin team has reviewed one of
+       your uploaded documents and it could not be approved.</p>
+    <div class="info-box">
+      <p><strong>Document:</strong> {doc_label}</p>
+      <p><strong>Status:</strong> <span style="color:#c62828;font-weight:700;">Rejected</span></p>
+      {('<p><strong>Reason:</strong> ' + admin_note + '</p>') if admin_note else ''}
+    </div>
+    <p>Please re-upload a valid copy of your <strong>{doc_label}</strong> as soon as
+       possible. Your profile cannot be fully verified until all required documents
+       are approved.</p>
+    <a class="btn" href="{docs_url}">Re-upload Document</a>
+    <p style="margin-top:20px;">If you have questions about why your document was
+       rejected or need guidance on what is accepted, please contact us at
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your {doc_label} was rejected — please re-upload',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )

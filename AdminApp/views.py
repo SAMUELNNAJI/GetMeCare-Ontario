@@ -12,6 +12,7 @@ from django.db.models import Q
 from GETMECARE.email_utils import (
     send_payout_notification_email,
     send_dispute_resolved_employer_email,
+    send_document_rejected_email,
 )
 
 
@@ -418,6 +419,13 @@ def reject_document(request, doc_id):
     doc.reviewed_at = timezone.now()
     doc.save()
 
+    # Notify caregiver their document was rejected and ask them to re-upload
+    try:
+        send_document_rejected_email(doc.user, doc)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Doc rejected email failed for doc %s', doc.pk)
+
     messages.warning(
         request,
         f'{doc.get_doc_type_display()} rejected for {doc.user.get_full_name()}.'
@@ -439,6 +447,13 @@ def revoke_document(request, doc_id):
     doc.note = note or 'Approval revoked by admin.'
     doc.reviewed_at = timezone.now()
     doc.save()
+
+    # Notify caregiver their previously-approved document was revoked
+    try:
+        send_document_rejected_email(doc.user, doc)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception('Doc revoke email failed for doc %s', doc.pk)
 
     # Drop caregiver back to pending review so they must re-upload
     profile = CaregiverProfile.objects.filter(user=doc.user).first()

@@ -24,6 +24,22 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap
 
+
+# ── Custom password-reset view — injects the real domain from the request
+# so the reset link never points to example.com regardless of the sites table.
+class CorrectDomainPasswordResetView(auth_views.PasswordResetView):
+    template_name             = 'registration/password_reset_form.html'
+    email_template_name       = 'registration/password_reset_email.html'
+    html_email_template_name  = 'registration/password_reset_email.html'
+    subject_template_name     = 'registration/password_reset_subject.txt'
+
+    def get_extra_email_context(self):
+        ctx = super().get_extra_email_context() or {}
+        # Override domain and protocol from the live request — always correct.
+        ctx['domain']   = self.request.get_host()
+        ctx['protocol'] = 'https' if self.request.is_secure() else 'http'
+        return ctx
+
 # ── Custom error handler views ────────────────────────────────
 def custom_bad_request(request, exception=None):
     return render(request, '400.html', status=400)
@@ -60,12 +76,7 @@ urlpatterns = [
     # ── Password reset (ZeptoMail) ────────────────────────────
     path(
         'password-reset/',
-        auth_views.PasswordResetView.as_view(
-            template_name='registration/password_reset_form.html',
-            email_template_name='registration/password_reset_email.html',
-            html_email_template_name='registration/password_reset_email.html',
-            subject_template_name='registration/password_reset_subject.txt',
-        ),
+        CorrectDomainPasswordResetView.as_view(),
         name='password_reset',
     ),
     path(
