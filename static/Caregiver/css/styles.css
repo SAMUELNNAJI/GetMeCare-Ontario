@@ -4065,15 +4065,16 @@ img {
   display: flex;
   flex-direction: column;
   transition:
-    box-shadow 0.25s ease,
-    transform 0.25s ease;
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 }
 .svc-card:hover {
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-  transform: translateY(-6px);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px) scale(1.01);
 }
 .svc-card-img {
   height: 180px;
+  width: 100%;
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
@@ -4133,6 +4134,30 @@ img {
   line-height: 1.7;
   margin-bottom: 16px;
 }
+.svc-desc-html {
+  font-size: 13px;
+  color: #3d4a58;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.svc-desc-html ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.svc-desc-html ul li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+.svc-desc-html ul li i {
+  color: var(--teal);
+  margin-top: 3px;
+}
 .svc-list {
   list-style: none;
   display: flex;
@@ -4165,9 +4190,14 @@ img {
 }
 .svc-rate {
   font-size: 14px;
-  color: var(--grey);
+  color: var(--orange);
 }
-.svc-rate strong {
+
+.rate-from {
+  color: #000;
+}
+
+.rate-amount {
   font-size: 16px;
   font-weight: 800;
   color: var(--orange);

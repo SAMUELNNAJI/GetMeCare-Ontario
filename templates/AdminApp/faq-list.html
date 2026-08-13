@@ -1,0 +1,120 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}FAQs — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .faq-q { font-weight: 600; font-size: .86rem; color: #1a1a1a; }
+  .faq-a { font-size: .78rem; color: #666; line-height: 1.4; margin-top: 2px; display: block; }
+  .faq-cat { font-size: .72rem; color: #555; text-transform: uppercase; letter-spacing: .04em; }
+  .adm-btn-danger { background: #e05252; color: #fff; }
+  @media (max-width: 1024px) {
+    .adm-table .faq-a { display: none; }
+    .adm-table th:nth-child(4), .adm-table td:nth-child(4),
+    .adm-table th:nth-child(5), .adm-table td:nth-child(5) { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <h1 class="adm-page-title" style="margin-bottom:6px">
+    <i class="fas fa-question-circle" style="color:#1b7d4f;margin-right:8px"></i>FAQs
+  </h1>
+  <p style="font-size:.85rem;color:#888">Manage all frequently asked questions shown on the site.</p>
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div style="font-size:.92rem;font-weight:700;color:#1a1a1a;margin-bottom:16px;
+                display:flex;align-items:center;gap:8px">
+      <i class="fas fa-list" style="color:#1b7d4f"></i> All FAQs
+      <span style="margin-left:auto;font-size:.72rem;font-weight:600;
+                   background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:3px 10px">
+        {% if search_q %}{{ faqs|length }} result{{ faqs|length|pluralize }}{% else %}{{ faqs|length }} total{% endif %}
+      </span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <form method="get" action="" style="flex:1;min-width:200px">
+        <div class="adm-search">
+          <i class="fas fa-search"></i>
+          <input type="text" name="q" placeholder="Search FAQs by question or answer…" value="{{ request.GET.q|default:'' }}">
+        </div>
+      </form>
+      <a href="{% url 'AdminApp:faq_add' %}" class="adm-btn adm-btn-green" style="flex-shrink:0">
+        <i class="fas fa-plus"></i> Add FAQ
+      </a>
+    </div>
+
+    {% if search_q %}
+    <div style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Search results for <strong>"{{ search_q }}"</strong> — {{ faqs|length }} item{{ faqs|length|pluralize }}</span>
+      <a href="{% url 'AdminApp:faq_list' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear search</a>
+    </div>
+    {% endif %}
+
+    <div class="scroll-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Category</th>
+            <th>Active</th>
+            <th>Order</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in faqs %}
+          <tr>
+            <td style="color:#aaa;font-size:.78rem">{{ f.pk }}</td>
+            <td>
+              <div class="faq-q">{{ f.question }}</div>
+              <div class="faq-a">{{ f.answer|truncatechars:120 }}</div>
+            </td>
+            <td><span class="faq-cat">{{ f.get_category_display }}</span></td>
+            <td>
+              {% if f.is_active %}<span class="badge badge-green">Yes</span>
+              {% else %}<span class="badge badge-grey">No</span>{% endif %}
+            </td>
+            <td style="color:#888;font-size:.82rem">{{ f.order }}</td>
+            <td style="color:#888;font-size:.82rem">{{ f.updated_at|date:"M d, Y" }}</td>
+            <td>
+              <div style="display:flex;gap:6px;align-items:center">
+                <a href="{% url 'AdminApp:faq_edit' f.pk %}" class="adm-btn adm-btn-view" style="font-size:.74rem">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'AdminApp:faq_delete' f.pk %}" style="display:inline" onsubmit="return confirm('Delete FAQ “{{ f.question|escapejs }}”? This cannot be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" class="adm-btn adm-btn-danger" style="font-size:.74rem;padding:6px 12px">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="adm-empty">
+                <i class="fas fa-question-circle" style="font-size:1.8rem;display:block;margin-bottom:10px;color:#ddd"></i>
+                {% if search_q %}No FAQs match your search.{% else %}No FAQs found.{% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

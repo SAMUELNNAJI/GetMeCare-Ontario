@@ -25,4 +25,16 @@ urlpatterns = [
     # Disputes
     path('admin-panel/disputes/',                             views.dispute_list,       name='dispute_list'),
     path('admin-panel/disputes/<int:dispute_pk>/',            views.dispute_detail,     name='dispute_detail'),
+    # FAQs
+    path('admin-panel/faqs/',                                 views.faq_list,       name='faq_list'),
+    path('admin-panel/faqs/add/',                             views.faq_edit,       name='faq_add'),
+    path('admin-panel/faqs/<int:faq_id>/edit/',               views.faq_edit,       name='faq_edit'),
+    path('admin-panel/faqs/<int:faq_id>/delete/',              views.faq_delete,     name='faq_delete'),
+    path('faqs/api/',                                         views.public_faqs,    name='public_faqs'),
+    # Services
+    path('admin-panel/services/',                             views.service_list,   name='service_list'),
+    path('admin-panel/services/add/',                         views.service_edit,   name='service_add'),
+    path('admin-panel/services/<int:service_id>/edit/',       views.service_edit,   name='service_edit'),
+    path('admin-panel/services/<int:service_id>/delete/',     views.service_delete, name='service_delete'),
+    path('services/api/',                                      views.public_services, name='public_services'),
 ]

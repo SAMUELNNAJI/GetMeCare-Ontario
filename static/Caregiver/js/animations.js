@@ -279,7 +279,7 @@ document.addEventListener("DOMContentLoaded", function () {
   ═══════════════════════════════════════════════════════ */
   document
     .querySelectorAll(
-      ".psw-card, .care-card, .testimonial-card, .bc-card, .svc-card, .contact-info-card, .contact-response-card, .contact-faq-card",
+      ".psw-card, .svc-card, .care-card, .testimonial-card, .bc-card, .contact-info-card, .contact-response-card, .contact-faq-card",
     )
     .forEach((card) => {
       card.addEventListener("mousemove", (e) => {

@@ -1,0 +1,132 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Services — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .svc-title  { font-weight: 600; font-size: .86rem; color: #1a1a1a; }
+  .svc-sub    { font-size: .76rem; color: #666; line-height: 1.4; margin-top: 2px; display: block; }
+  .svc-tag    { font-size: .7rem; font-weight: 600; color: #f5c540; }
+  .svc-rate   { font-size: .78rem; color: #555; }
+  @media (max-width: 1024px) {
+    .adm-table .svc-sub { display: none; }
+    .adm-table th:nth-child(4), .adm-table td:nth-child(4),
+    .adm-table th:nth-child(5), .adm-table td:nth-child(5),
+    .adm-table th:nth-child(6), .adm-table td:nth-child(6) { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px">
+  <h1 class="adm-page-title" style="margin-bottom:6px">
+    <i class="fas fa-hand-holding-heart" style="color:#1b7d4f;margin-right:8px"></i>Services
+  </h1>
+  <p style="font-size:.85rem;color:#888">Manage all care services offered on the site.</p>
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div style="font-size:.92rem;font-weight:700;color:#1a1a1a;margin-bottom:16px;
+                display:flex;align-items:center;gap:8px">
+      <i class="fas fa-list" style="color:#1b7d4f"></i> All Services
+      <span style="margin-left:auto;font-size:.72rem;font-weight:600;
+                   background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:3px 10px">
+        {% if search_q %}{{ services|length }} result{{ services|length|pluralize }}{% else %}{{ services|length }} total{% endif %}
+      </span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <form method="get" action="" style="flex:1;min-width:200px">
+        <div class="adm-search">
+          <i class="fas fa-search"></i>
+          <input type="text" name="q" placeholder="Search services by title or description…" value="{{ request.GET.q|default:'' }}">
+        </div>
+      </form>
+      <a href="{% url 'AdminApp:service_add' %}" class="adm-btn adm-btn-green" style="flex-shrink:0">
+        <i class="fas fa-plus"></i> Add Service
+      </a>
+    </div>
+
+    {% if search_q %}
+    <div style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Search results for <strong>"{{ search_q }}"</strong> — {{ services|length }} item{{ services|length|pluralize }}</span>
+      <a href="{% url 'AdminApp:service_list' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear search</a>
+    </div>
+    {% endif %}
+
+    <div class="scroll-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Service</th>
+            <th>Image</th>
+            <th>Tag</th>
+            <th>Rate</th>
+            <th>Active</th>
+            <th>Order</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in services %}
+          <tr>
+            <td style="color:#aaa;font-size:.78rem">{{ s.pk }}</td>
+            <td>
+              <div class="svc-title">{{ s.title }}</div>
+              <div class="svc-sub">{{ s.short_description|truncatechars:100 }}</div>
+            </td>
+            <td>
+              {% if s.image %}
+                <img src="{{ s.image.url }}" alt="{{ s.title }}" style="height:40px;border-radius:6px;border:1px solid #ddd;object-fit:cover">
+              {% else %}
+                <span style="color:#ccc;font-size:.78rem">No image</span>
+              {% endif %}
+            </td>
+            <td style="color:#888;font-size:.82rem">{{ s.tag|default:"" }}
+              {% if not s.tag %}<span style="color:#ccc">—</span>{% endif %}</td>
+            <td class="svc-rate">{{ s.rate|default:"—" }}</td>
+            <td>
+              {% if s.is_active %}<span class="badge badge-green">Yes</span>
+              {% else %}<span class="badge badge-grey">No</span>{% endif %}
+            </td>
+            <td style="color:#888;font-size:.82rem">{{ s.order }}</td>
+            <td style="color:#888;font-size:.82rem">{{ s.updated_at|date:"M d, Y" }}</td>
+            <td>
+              <div style="display:flex;gap:6px;align-items:center">
+                <a href="{% url 'AdminApp:service_edit' s.pk %}" class="adm-btn adm-btn-view" style="font-size:.74rem">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'AdminApp:service_delete' s.pk %}" style="display:inline" onsubmit="return confirm('Delete service “{{ s.title|escapejs }}”? This cannot be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" class="adm-btn adm-btn-danger" style="font-size:.74rem;padding:6px 12px">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">
+              <div class="adm-empty">
+                <i class="fas fa-hand-holding-heart" style="font-size:1.8rem;display:block;margin-bottom:10px;color:#ddd"></i>
+                {% if search_q %}No services match your search.{% else %}No services found.{% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

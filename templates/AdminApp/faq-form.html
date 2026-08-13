@@ -1,0 +1,111 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}{{ faq|yesno:"Edit FAQ,Add FAQ" }} — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .adm-form-control {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size: .86rem;
+    font-family: inherit;
+    outline: none;
+    color: #1a1a1a;
+    box-sizing: border-box;
+  }
+  .adm-form-control:focus { border-color: #1b7d4f; box-shadow: 0 0 0 3px rgba(27,125,79,.15); }
+  .adm-form-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  .adm-form-check-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: .82rem; color: #333; }
+  .adm-form-hint { font-size: .7rem; color: #aaa; margin-top: 2px; display: block; }
+  .adm-form-errors { color: #c62828; font-size: .78rem; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <a href="{% url 'AdminApp:faq_list' %}"
+     style="font-size:.8rem;font-weight:600;color:#1b7d4f;text-decoration:none">
+    <i class="fas fa-arrow-left"></i> All FAQs
+  </a>
+  <h1 class="adm-page-title" style="margin:0">
+    <i class="fas fa-question-circle" style="color:#1b7d4f;margin-right:8px"></i>
+    {{ faq|yesno:"Edit FAQ,Add FAQ" }}
+  </h1>
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <form method="post" style="display:grid;gap:18px">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="adm-form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div>
+        <label class="adm-form-label" for="{{ form.question.id_for_label }}">Question</label>
+        {{ form.question }}
+        {% if form.question.help_text %}<span class="adm-form-hint">{{ form.question.help_text }}</span>{% endif %}
+        {% if form.question.errors %}
+        <div class="adm-form-errors">{{ form.question.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="adm-form-label" for="{{ form.answer.id_for_label }}">Answer</label>
+        {{ form.answer }}
+        {% if form.answer.help_text %}<span class="adm-form-hint">{{ form.answer.help_text }}</span>{% endif %}
+        {% if form.answer.errors %}
+        <div class="adm-form-errors">{{ form.answer.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div>
+          <label class="adm-form-label" for="{{ form.category.id_for_label }}">Category</label>
+          {{ form.category }}
+          {% if form.category.help_text %}<span class="adm-form-hint">{{ form.category.help_text }}</span>{% endif %}
+          {% if form.category.errors %}
+          <div class="adm-form-errors">{{ form.category.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.order.id_for_label }}">Display Order</label>
+          {{ form.order }}
+          <span class="adm-form-hint">Lower numbers appear first.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="adm-form-check-wrap">
+          {{ form.is_active }}
+          <label class="adm-form-label" for="{{ form.is_active.id_for_label }}" style="margin-bottom:0">Active (visible on the site)</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center;pt:12px;border-top:1px solid #f2f4f0; margin-top: 12px">
+        <button type="submit" class="adm-btn adm-btn-green" style="font-size:.84rem;padding:10px 22px">
+          <i class="fas fa-save"></i> {{ faq|yesno:"Update,Save FAQ" }}
+        </button>
+        <a href="{% url 'AdminApp:faq_list' %}" class="adm-btn adm-btn-ghost" style="font-size:.84rem">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

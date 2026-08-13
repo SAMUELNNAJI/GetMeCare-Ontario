@@ -1,0 +1,200 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}{{ service|yesno:"Edit Service,Add Service" }} — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .adm-form-control {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size: .86rem;
+    font-family: inherit;
+    outline: none;
+    color: #1a1a1a;
+    box-sizing: border-box;
+  }
+  .adm-form-control:focus { border-color: #1b7d4f; box-shadow: 0 0 0 3px rgba(27,125,79,.15); }
+  .adm-form-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  .adm-form-check-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: .82rem; color: #333; }
+  .adm-form-hint { font-size: .7rem; color: #aaa; margin-top: 2px; display: block; }
+  .adm-form-errors { color: #c62828; font-size: .78rem; margin-bottom: 12px; }
+
+  .svc-img-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1.5px dashed #c5cdc0;
+    background: #fafcf9;
+    color: #333;
+    font-size: .84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: fit-content;
+  }
+  .svc-img-upload-btn:hover {
+    border-color: #1b7d4f;
+    background: #f0faf4;
+    color: #1b7d4f;
+  }
+  .svc-img-upload-btn input[type="file"] {
+    display: none;
+  }
+  .svc-img-upload-btn.has-image {
+    border-color: #1b7d4f;
+    background: #e6f5ee;
+    color: #1b7d4f;
+  }
+
+  @media (max-width: 1024px) {
+    .adm-card-pad { padding: 18px !important; }
+    .adm-content { padding: 16px 14px 40px; }
+  }
+  @media (max-width: 640px) {
+    .svc-form-grid-responsive { grid-template-columns: 1fr !important; }
+    .adm-card-pad { padding: 14px !important; }
+    .svc-img-upload-btn { width: 100%; justify-content: center; }
+    .adm-form-label { font-size: .74rem; }
+    .adm-form-control { font-size: .82rem; padding: 8px 10px; }
+    .adm-btn { font-size: .72rem; padding: 8px 12px; }
+    .adm-page-title { font-size: 1.1rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <a href="{% url 'AdminApp:service_list' %}"
+     style="font-size:.8rem;font-weight:600;color:#1b7d4f;text-decoration:none">
+    <i class="fas fa-arrow-left"></i> All Services
+  </a>
+  <h1 class="adm-page-title" style="margin:0">
+    <i class="fas fa-hand-holding-heart" style="color:#1b7d4f;margin-right:8px"></i>
+    {{ service|yesno:"Edit Service,Add Service" }}
+  </h1>
+</div>
+
+{% for msg in messages %}
+<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
+  {{ msg }}
+</div>
+{% endfor %}
+
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <form method="post" enctype="multipart/form-data" style="display:grid;gap:18px">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="adm-form-errors">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div style="display:grid;grid-template-columns:1fr;gap:18px">
+        <div>
+          <label class="adm-form-label" for="{{ form.title.id_for_label }}">Title</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+          <div class="adm-form-errors">{{ form.title.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.slug.id_for_label }}">Slug (URL)</label>
+          {{ form.slug }}
+          <span class="adm-form-hint">Used in links — leave blank to auto-generate from the title.</span>
+          {% if form.slug.errors %}
+          <div class="adm-form-errors">{{ form.slug.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="adm-form-label" for="{{ form.short_description.id_for_label }}">Short Description</label>
+        {{ form.short_description }}
+        {% if form.short_description.help_text %}<span class="adm-form-hint">{{ form.short_description.help_text }}</span>{% endif %}
+        {% if form.short_description.errors %}
+        <div class="adm-form-errors">{{ form.short_description.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="adm-form-label" for="{{ form.description.id_for_label }}">Full Description</label>
+        {{ form.description }}
+        {% if form.description.help_text %}<span class="adm-form-hint">{{ form.description.help_text }}</span>{% endif %}
+        {% if form.description.errors %}
+        <div class="adm-form-errors">{{ form.description.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="svc-form-grid-responsive" style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div>
+          <label class="adm-form-label">Card Image</label>
+          <label class="svc-img-upload-btn {% if service and service.image %}has-image{% endif %}" for="{{ form.image.id_for_label }}">
+            <i class="fas {% if service and service.image %}fa-check-circle{% else %}fa-cloud-arrow-up{% endif %}"></i>
+            <span>{% if service and service.image %}Image uploaded{% else %}Choose image…{% endif %}</span>
+            {{ form.image }}
+          </label>
+          <span class="adm-form-hint">Upload an image for the service card (optional).</span>
+          {% if form.image.errors %}
+          <div class="adm-form-errors">{{ form.image.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.icon.id_for_label }}">Icon (Font Awesome)</label>
+          {{ form.icon }}
+          <span class="adm-form-hint">e.g. fa-heartbeat, fa-baby, fa-brain</span>
+          {% if form.icon.errors %}
+          <div class="adm-form-errors">{{ form.icon.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.rate.id_for_label }}">Rate</label>
+          {{ form.rate }}
+          <span class="adm-form-hint">e.g. From $28 CAD/hr</span>
+          {% if form.rate.errors %}
+          <div class="adm-form-errors">{{ form.rate.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.tag.id_for_label }}">Tag / Badge</label>
+          {{ form.tag }}
+          <span class="adm-form-hint">e.g. Most Popular, Specialist (optional)</span>
+          {% if form.tag.errors %}
+          <div class="adm-form-errors">{{ form.tag.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label class="adm-form-label" for="{{ form.order.id_for_label }}">Display Order</label>
+          {{ form.order }}
+          <span class="adm-form-hint">Lower numbers appear first.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="adm-form-check-wrap">
+          {{ form.is_active }}
+          <label class="adm-form-label" for="{{ form.is_active.id_for_label }}" style="margin-bottom:0">Active (visible on the site)</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center;padding-top:12px;border-top:1px solid #f2f4f0;flex-wrap:wrap">
+        <button type="submit" class="adm-btn adm-btn-green" style="font-size:.84rem;padding:10px 22px">
+          <i class="fas fa-save"></i> {{ service|yesno:"Update,Save Service" }}
+        </button>
+        <a href="{% url 'AdminApp:service_list' %}" class="adm-btn adm-btn-ghost" style="font-size:.84rem">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

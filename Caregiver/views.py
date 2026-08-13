@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
 from Account.models import CaregiverProfile, JobPosting
+from AdminApp.models import Faq, Service
 
 
 def home(request):
@@ -145,11 +146,13 @@ def browse_jobs(request):
 
 
 def how_it_works(request):
-    return render(request, 'Caregiver/how_it_works.html')
+    faqs = Faq.objects.filter(is_active=True).order_by('order', 'category', 'question')
+    return render(request, 'Caregiver/how_it_works.html', {'faqs': faqs})
 
 
 def services(request):
-    return render(request, 'Caregiver/services.html')
+    services = Service.objects.filter(is_active=True).order_by('order', 'title')
+    return render(request, 'Caregiver/services.html', {'services': services})
 
 
 def contact(request):

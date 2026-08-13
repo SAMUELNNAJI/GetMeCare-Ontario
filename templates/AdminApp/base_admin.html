@@ -161,6 +161,7 @@
   .adm-btn:hover { opacity: .85; }
   .adm-btn-green  { background: #1b7d4f; color: #fff; }
   .adm-btn-red    { background: #e05252; color: #fff; }
+  .adm-btn-danger { background: #e05252; color: #fff; }
   .adm-btn-orange { background: #e07b00; color: #fff; }
   .adm-btn-ghost  { background: #f0f2ee; color: #333; border: 1px solid #dde2d8; }
   .adm-btn-view   { background: #e6f5ee; color: #1b7d4f; }
@@ -302,6 +303,13 @@
     </a>
     <a href="{% url 'AdminApp:manage_users' %}" {% if request.resolver_match.url_name == 'manage_users' %}class="active"{% endif %}>
       <i class="fas fa-users"></i> All Users
+    </a>
+    <div class="adm-nav-section">Content</div>
+    <a href="{% url 'AdminApp:faq_list' %}" {% if request.resolver_match.url_name == 'faq_list' or request.resolver_match.url_name == 'faq_add' or request.resolver_match.url_name == 'faq_edit' %}class="active"{% endif %}>
+      <i class="fas fa-question-circle"></i> FAQs
+    </a>
+    <a href="{% url 'AdminApp:service_list' %}" {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_add' or request.resolver_match.url_name == 'service_edit' %}class="active"{% endif %}>
+      <i class="fas fa-hand-holding-heart"></i> Services
     </a>
     <a href="{% url 'admin_chat_monitor' %}" {% if request.resolver_match.url_name == 'admin_chat_monitor' %}class="active"{% endif %}>
       <i class="fas fa-comments"></i> Chat Monitor

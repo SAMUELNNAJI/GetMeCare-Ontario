@@ -1,6 +1,6 @@
 import mimetypes
 import os
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -9,6 +9,8 @@ from django.utils import timezone
 from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerPayment, EmployerProfile, Dispute
 from Account.forms import REQUIRED_DOC_TYPES
 from django.db.models import Q
+from .models import Faq, Service
+from .forms import FaqForm, ServiceForm
 from GETMECARE.email_utils import (
     send_payout_notification_email,
     send_dispute_resolved_employer_email,
@@ -685,3 +687,157 @@ def dispute_detail(request, dispute_pk):
         'status_choices': Dispute.STATUS_CHOICES,
     })
     return render(request, 'AdminApp/dispute-detail.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────
+# FAQ management
+# ──────────────────────────────────────────────────────────────
+@admin_required
+def faq_list(request):
+    """List every FAQ with an optional search filter."""
+    q = request.GET.get('q', '').strip()
+    faqs = Faq.objects.all().order_by('order', 'category', 'question')
+    if q:
+        faqs = faqs.filter(
+            Q(question__icontains=q) | Q(answer__icontains=q)
+        )
+    ctx = _admin_sidebar()
+    ctx['faqs'] = faqs
+    ctx['search_q'] = q
+    return render(request, 'AdminApp/faq-list.html', ctx)
+
+
+@admin_required
+def faq_edit(request, faq_id=None):
+    """Create or update an FAQ.  ``faq_id=None`` → create."""
+    if faq_id is not None:
+        faq = get_object_or_404(Faq, pk=faq_id)
+    else:
+        faq = None
+
+    if request.method == 'POST':
+        form = FaqForm(request.POST, instance=faq)
+        if form.is_valid():
+            form.save()
+            if faq:
+                messages.success(request, 'FAQ updated successfully.')
+            else:
+                messages.success(request, 'FAQ added successfully.')
+            return redirect('AdminApp:faq_list')
+        messages.error(request, 'Please correct the errors below.')
+    else:
+        form = FaqForm(instance=faq)
+
+    ctx = _admin_sidebar()
+    ctx['form'] = form
+    ctx['faq'] = faq
+    return render(request, 'AdminApp/faq-form.html', ctx)
+
+
+@admin_required
+def faq_delete(request, faq_id):
+    """Delete an FAQ (POST only)."""
+    if request.method != 'POST':
+        return redirect('AdminApp:faq_list')
+    faq = get_object_or_404(Faq, pk=faq_id)
+    faq.delete()
+    messages.success(request, f'FAQ "{faq.question[:50]}" deleted.')
+    return redirect('AdminApp:faq_list')
+
+
+def public_faqs(request):
+    """Return active FAQs as JSON for public consumption."""
+    from django.utils.html import escape
+    faqs = Faq.objects.filter(is_active=True).order_by('order', 'category', 'question')
+    data = [
+        {
+            'id': faq.id,
+            'question': escape(faq.question),
+            'answer': escape(faq.answer),
+            'category': faq.category,
+            'order': faq.order,
+        }
+        for faq in faqs
+    ]
+    return JsonResponse({'faqs': data})
+
+
+# ──────────────────────────────────────────────────────────────
+# Service management
+# ──────────────────────────────────────────────────────────────
+@admin_required
+def service_list(request):
+    """List every service with an optional search filter."""
+    q = request.GET.get('q', '').strip()
+    services = Service.objects.all().order_by('order', 'title')
+    if q:
+        services = services.filter(
+            Q(title__icontains=q) | Q(description__icontains=q) | Q(slug__icontains=q)
+        )
+    ctx = _admin_sidebar()
+    ctx['services'] = services
+    ctx['search_q'] = q
+    return render(request, 'AdminApp/service-list.html', ctx)
+
+
+@admin_required
+def service_edit(request, service_id=None):
+    """Create or update a service.  ``service_id=None`` → create."""
+    if service_id is not None:
+        service = get_object_or_404(Service, pk=service_id)
+    else:
+        service = None
+
+    if request.method == 'POST':
+        form = ServiceForm(request.POST, request.FILES, instance=service)
+        if form.is_valid():
+            form.save()
+            if service:
+                messages.success(request, 'Service updated successfully.')
+            else:
+                messages.success(request, 'Service added successfully.')
+            return redirect('AdminApp:service_list')
+        messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ServiceForm(instance=service)
+
+    ctx = _admin_sidebar()
+    ctx['form'] = form
+    ctx['service'] = service
+    return render(request, 'AdminApp/service-form.html', ctx)
+
+
+@admin_required
+def service_delete(request, service_id):
+    """Delete a service (POST only)."""
+    if request.method != 'POST':
+        return redirect('AdminApp:service_list')
+    service = get_object_or_404(Service, pk=service_id)
+    service.delete()
+    messages.success(request, f'Service "{service.title}" deleted.')
+    return redirect('AdminApp:service_list')
+
+
+def public_services(request):
+    """Return active services as JSON for public consumption."""
+    from django.utils.html import escape
+    services = Service.objects.filter(is_active=True).order_by('order', 'title')
+    data = []
+    for s in services:
+        item = {
+            'id': s.id,
+            'title': escape(s.title),
+            'slug': s.slug,
+            'short_description': escape(s.short_description),
+            'description': s.description,
+            'icon': s.icon or 'fa-hand-holding-heart',
+            'rate': escape(s.rate) if s.rate else '',
+            'rate_from': escape(s.rate_from) if s.rate_from else '',
+            'rate_amount': escape(s.rate_amount) if s.rate_amount else '',
+            'tag': escape(s.tag) if s.tag else '',
+            'tag_color': s.tag_color,
+            'order': s.order,
+            'image_url': s.image.url if s.image else '',
+        }
+        data.append(item)
+    return JsonResponse({'services': data})

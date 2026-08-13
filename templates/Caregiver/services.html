@@ -43,322 +43,38 @@ Services – GetMeCare ONTARIO{% endblock %} {% block content %}
       or companionship for a loved one — our vetted caregivers are here.
     </p>
 
-    <div class="svc-grid stagger-children">
-      <!-- 1 – PSW -->
-      <div class="svc-card reveal hover-lift" id="psw">
-        <div
-          class="svc-card-img"
-          style="
-            background-image: url({% static 'Caregiver/images/hero-image.png' %});
-          "
-        ></div>
+    <div class="svc-grid stagger-children" id="svc-grid">
+      {% for s in services %}
+      <div class="svc-card reveal hover-lift" id="svc-{{ s.slug }}">
+        {% if s.image %}
+        <div class="svc-card-img" style="background-image: url('{{ s.image.url }}');"></div>
+        {% else %}
+        <div class="svc-card-img" style="background: linear-gradient(135deg, #e0f2f1, #b2dfdb); display: flex; align-items: center; justify-content: center; font-size: 64px;">
+          <i class="fas {{ s.icon|default:'fa-hand-holding-heart' }}"></i>
+        </div>
+        {% endif %}
         <div class="svc-card-body">
-          <span class="svc-icon blue"><i class="fas fa-heartbeat"></i></span>
-          <h3>Personal Support Worker (PSW)</h3>
-          <p>
-            Certified PSWs provide hands-on daily care — bathing, grooming,
-            dressing, medication reminders, mobility support, and more.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Personal hygiene &amp; grooming
-            </li>
-            <li><i class="fas fa-check"></i> Medication reminders</li>
-            <li>
-              <i class="fas fa-check"></i> Mobility &amp; transfer assistance
-            </li>
-            <li><i class="fas fa-check"></i> Meal preparation &amp; feeding</li>
-            <li><i class="fas fa-check"></i> Bowel &amp; bladder care</li>
-          </ul>
+          <span class="svc-icon {{ s.tag_color }}"><i class="fas {{ s.icon|default:'fa-hand-holding-heart' }}"></i></span>
+          <h3>{{ s.title|escape }}</h3>
+          <p>{{ s.short_description|escape }}</p>
+          {% if s.description %}
+          <div class="svc-desc-html">{{ s.description|safe }}</div>
+          {% endif %}
           <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$28 CAD/hr</strong></span>
-            <span class="tag teal">Most Popular</span>
+            {% if s.rate %}
+            <span class="svc-rate">
+              {% if s.rate_from %}<span class="rate-from">{{ s.rate_from }}</span>{% endif %}
+              <strong class="rate-amount">{{ s.rate_amount }}</strong>
+            </span>
+            {% endif %}
+            {% if s.tag %}<span class="tag {{ s.tag_color }}">{{ s.tag|escape }}</span>{% endif %}
           </div>
           <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a PSW <i class="fas fa-arrow-right"></i
+            >Find a {{ s.title|truncatechars:20 }} <i class="fas fa-arrow-right"></i
           ></a>
         </div>
       </div>
-      <!-- 2 – Senior Care -->
-      <div class="svc-card reveal hover-lift" id="senior">
-        <div
-          class="svc-card-img"
-          style="
-            background-image: url({% static 'Caregiver/images/image-2.png' %});
-          "
-        ></div>
-        <div class="svc-card-body">
-          <span class="svc-icon yellow"><i class="fas fa-user-nurse"></i></span>
-          <h3>In-Home Senior Care</h3>
-          <p>
-            Compassionate, respectful care for aging parents and seniors living
-            independently — companionship, light housekeeping, and assistance
-            with daily routines.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Companionship &amp; social engagement
-            </li>
-            <li>
-              <i class="fas fa-check"></i> Cognitive stimulation activities
-            </li>
-            <li>
-              <i class="fas fa-check"></i> Light housekeeping &amp; laundry
-            </li>
-            <li><i class="fas fa-check"></i> Grocery shopping &amp; errands</li>
-            <li><i class="fas fa-check"></i> Transportation to appointments</li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$26 CAD/hr</strong></span>
-            <span class="tag yellow">Senior Care</span>
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Senior Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 3 – Dementia -->
-      <div class="svc-card reveal hover-lift" id="dementia">
-        <div
-          class="svc-card-img"
-          style="
-            background-image: url({% static 'Caregiver/images/image-3.jpg' %});
-          "
-        ></div>
-        <div class="svc-card-body">
-          <span class="svc-icon purple"><i class="fas fa-brain"></i></span>
-          <h3>Dementia &amp; Alzheimer Care</h3>
-          <p>
-            Specialist caregivers trained in dementia-specific communication,
-            safety protocols, and behaviour management.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Dementia-friendly communication
-            </li>
-            <li>
-              <i class="fas fa-check"></i> Wandering &amp; safety monitoring
-            </li>
-            <li><i class="fas fa-check"></i> Routine-based daily structure</li>
-            <li><i class="fas fa-check"></i> Sundowning management</li>
-            <li><i class="fas fa-check"></i> Family update &amp; reporting</li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$32 CAD/hr</strong></span>
-            <span class="tag" style="background: #f3e5f5; color: #6a1b9a"
-              >Specialist</span
-            >
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Dementia Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 4 – Postpartum -->
-      <div class="svc-card reveal hover-lift" id="postpartum">
-        <div
-          class="svc-card-img"
-          style="
-            background-image: url({% static 'Caregiver/images/image-4.jpg' %});
-          "
-        ></div>
-        <div class="svc-card-body">
-          <span class="svc-icon pink"><i class="fas fa-baby"></i></span>
-          <h3>Postpartum &amp; Newborn Care</h3>
-          <p>
-            Trained postpartum caregivers support new mothers during recovery —
-            infant care, feeding support, and emotional reassurance.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Newborn feeding &amp; latching
-              support
-            </li>
-            <li><i class="fas fa-check"></i> Safe sleep guidance</li>
-            <li><i class="fas fa-check"></i> Overnight newborn care</li>
-            <li><i class="fas fa-check"></i> Postpartum maternal support</li>
-            <li>
-              <i class="fas fa-check"></i> Light housekeeping &amp; meal prep
-            </li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$30 CAD/hr</strong></span>
-            <span class="tag pink">Postpartum</span>
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Postpartum Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 5 – Palliative -->
-      <div class="svc-card reveal hover-lift" id="palliative">
-        <div
-          class="svc-card-img"
-          style="
-            background: linear-gradient(135deg, #e0f2f1, #b2dfdb);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-          "
-        >
-          🕊️
-        </div>
-        <div class="svc-card-body">
-          <span class="svc-icon green"><i class="fas fa-heart"></i></span>
-          <h3>Palliative &amp; End-of-Life Care</h3>
-          <p>
-            Compassionate caregivers providing comfort-focused support for
-            clients in their final stages of life.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Comfort &amp; dignity-focused care
-            </li>
-            <li><i class="fas fa-check"></i> Pain &amp; symptom observation</li>
-            <li><i class="fas fa-check"></i> Emotional support for family</li>
-            <li><i class="fas fa-check"></i> Coordination with health teams</li>
-            <li><i class="fas fa-check"></i> 24/7 shift availability</li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$34 CAD/hr</strong></span>
-            <span class="tag green">Palliative</span>
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Palliative Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 6 – Post-Surgery -->
-      <div class="svc-card reveal hover-lift" id="post-surgery">
-        <div
-          class="svc-card-img"
-          style="
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-          "
-        >
-          🏥
-        </div>
-        <div class="svc-card-body">
-          <span class="svc-icon blue"><i class="fas fa-procedures"></i></span>
-          <h3>Post-Surgery Recovery Care</h3>
-          <p>
-            Short-term intensive support following hospital discharge — wound
-            care reminders, physiotherapy exercises, and medication schedules.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Wound care observation &amp;
-              reminders
-            </li>
-            <li><i class="fas fa-check"></i> Physiotherapy exercise support</li>
-            <li><i class="fas fa-check"></i> Medication schedule management</li>
-            <li><i class="fas fa-check"></i> Mobility &amp; fall prevention</li>
-            <li><i class="fas fa-check"></i> Appointment transport</li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$30 CAD/hr</strong></span>
-            <span class="tag" style="background: #e3f2fd; color: #1565c0"
-              >Recovery</span
-            >
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Recovery Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 7 – Companionship -->
-      <div class="svc-card reveal hover-lift" id="companion">
-        <div
-          class="svc-card-img"
-          style="
-            background: linear-gradient(135deg, #fff8e1, #ffecb3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-          "
-        >
-          ☀️
-        </div>
-        <div class="svc-card-body">
-          <span class="svc-icon orange"><i class="fas fa-smile"></i></span>
-          <h3>Companionship &amp; Wellbeing</h3>
-          <p>
-            Friendly, vetted caregivers who provide regular social interaction,
-            light activity support, and emotional wellbeing for seniors living
-            alone.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> Conversation &amp; social activities
-            </li>
-            <li><i class="fas fa-check"></i> Games, reading &amp; hobbies</li>
-            <li><i class="fas fa-check"></i> Outdoor walks &amp; outings</li>
-            <li><i class="fas fa-check"></i> Light errands &amp; shopping</li>
-            <li>
-              <i class="fas fa-check"></i> Wellbeing check-ins &amp; reporting
-            </li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$24 CAD/hr</strong></span>
-            <span class="tag yellow">Companionship</span>
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Companion Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
-      <!-- 8 – Live-In -->
-      <div class="svc-card reveal hover-lift" id="live-in">
-        <div
-          class="svc-card-img"
-          style="
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-          "
-        >
-          🏡
-        </div>
-        <div class="svc-card-body">
-          <span class="svc-icon green"><i class="fas fa-home"></i></span>
-          <h3>Live-In Caregiver</h3>
-          <p>
-            Around-the-clock in-home care for clients who need continuous
-            support — consistent, familiar, and responsive care throughout the
-            day and night.
-          </p>
-          <ul class="svc-list">
-            <li>
-              <i class="fas fa-check"></i> 24-hour presence &amp; oversight
-            </li>
-            <li>
-              <i class="fas fa-check"></i> Night-time care &amp; monitoring
-            </li>
-            <li>
-              <i class="fas fa-check"></i> Full daily personal care routine
-            </li>
-            <li><i class="fas fa-check"></i> Household management</li>
-            <li>
-              <i class="fas fa-check"></i> Consistent schedule &amp; familiarity
-            </li>
-          </ul>
-          <div class="svc-card-meta">
-            <span class="svc-rate">From <strong>$220 CAD/day</strong></span>
-            <span class="tag teal">Live-In</span>
-          </div>
-          <a href="{% url 'browse' %}" class="svc-btn"
-            >Find a Live-In Caregiver <i class="fas fa-arrow-right"></i
-          ></a>
-        </div>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -460,4 +176,99 @@ Services – GetMeCare ONTARIO{% endblock %} {% block content %}
   </div>
 </section>
 
+{% endblock %} {% block extra_js %}
+<script>
+  (function () {
+    const svcGrid = document.getElementById("svc-grid");
+    const svcApiUrl = "{% url 'AdminApp:public_services' %}";
+    let lastSvcJson = "";
+    let pollActive = false;
+
+    function renderServices(services) {
+      let html = "";
+      services.forEach(function (s) {
+        html += '<div class="svc-card hover-lift" id="svc-' + s.slug + '">';
+        if (s.image_url) {
+          html += '<div class="svc-card-img" style="background-image: url(' + "'" + s.image_url + "'" + ');"></div>';
+        } else {
+          html += '<div class="svc-card-img" style="background: linear-gradient(135deg, #e0f2f1, #b2dfdb); display: flex; align-items: center; justify-content: center; font-size: 64px;">';
+          html += '<i class="fas ' + (s.icon || 'fa-hand-holding-heart') + '"></i>';
+          html += '</div>';
+        }
+        html += '<div class="svc-card-body">';
+          html += '<span class="svc-icon ' + s.tag_color + '"><i class="fas ' + (s.icon || 'fa-hand-holding-heart') + '"></i></span>';
+        html += '<h3>' + s.title + '</h3>';
+        html += '<p>' + s.short_description + '</p>';
+        if (s.description) {
+          html += '<div class="svc-desc-html">' + s.description + '</div>';
+        }
+        html += '<div class="svc-card-meta">';
+        if (s.rate) {
+          html += '<span class="svc-rate">';
+          if (s.rate_from) {
+            html += '<span class="rate-from">' + s.rate_from + '</span>';
+          }
+          html += '<strong class="rate-amount">' + s.rate_amount + '</strong>';
+          html += '</span>';
+        }
+        if (s.tag) {
+          html += '<span class="tag ' + s.tag_color + '">' + s.tag + '</span>';
+        }
+        html += '</div>';
+        html += '<a href="/browse/" class="svc-btn">Find a ' + s.title.replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 20) + ' <i class="fas fa-arrow-right"></i></a>';
+        html += '</div>';
+        html += '</div>';
+      });
+      svcGrid.innerHTML = html;
+    }
+
+    function pollServices() {
+      if (pollActive) return;
+      pollActive = true;
+      fetch(svcApiUrl, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            data._status = r.status;
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (data.services) {
+            const newJson = JSON.stringify(data.services);
+            if (newJson !== lastSvcJson) {
+              lastSvcJson = newJson;
+              renderServices(data.services);
+            }
+          }
+        })
+        .catch(function () {})
+        .finally(function () {
+          pollActive = false;
+        });
+    }
+
+    const initialServices = [];
+    {% for s in services %}
+      initialServices.push({
+        id: {{ s.id }},
+        title: "{{ s.title|escapejs }}",
+        slug: "{{ s.slug|escapejs }}",
+        short_description: "{{ s.short_description|escapejs }}",
+        description: "{{ s.description|escapejs }}",
+        icon: "{{ s.icon|default:''|escapejs }}",
+        rate: "{{ s.rate|default:''|escapejs }}",
+        rate_from: "{{ s.rate_from|default:''|escapejs }}",
+        rate_amount: "{{ s.rate_amount|default:''|escapejs }}",
+        tag: "{{ s.tag|default:''|escapejs }}",
+        tag_color: "{{ s.tag_color|escapejs }}",
+        image_url: "{% if s.image %}{{ s.image.url|escapejs }}{% else %}{% endif %}"
+      });
+    {% endfor %}
+    lastSvcJson = JSON.stringify(initialServices);
+
+    setInterval(pollServices, 3000);
+  })();
+</script>
 {% endblock %}
