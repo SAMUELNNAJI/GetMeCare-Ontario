@@ -214,6 +214,29 @@
     align-items: center;
     gap: 8px;
   }
+  .asc-tabs {
+    display: none;
+    background: #fff;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 1;
+  }
+  .asc-tab-btn {
+    flex: 1;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    font-size: .84rem;
+    font-weight: 600;
+    color: #aaa;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .asc-tab-btn.active { color: #1b7d4f; border-bottom-color: #1b7d4f; }
   .asc-form {
     flex: 1;
     display: flex;
@@ -257,8 +280,11 @@
   @media (max-width: 900px) { .asc-grid { grid-template-columns: 260px 1fr; } }
   @media (max-width: 700px) {
     .asc-grid { grid-template-columns: 1fr; }
-    .asc-sidebar { display: none; }
-    .asc-main { display: flex; }
+    .asc-tabs { display: flex; }
+    .asc-sidebar { display: none; border-right: none; }
+    .asc-sidebar.tab-active { display: block; }
+    .asc-main { display: none; }
+    .asc-main.tab-active { display: flex; }
     .msg-bubble { max-width: 85%; }
   }
 </style>
@@ -271,10 +297,15 @@
   <div class="asc-stat"><strong>{{ resolved|length }}</strong> Resolved</div>
 </div>
 
+<div class="asc-tabs" id="asc-tabs">
+  <button class="asc-tab-btn active" data-target="asc-sidebar" onclick="ascTab(this)"><i class="fas fa-list"></i> All Conversations</button>
+  <button class="asc-tab-btn" data-target="asc-main" onclick="ascTab(this)"><i class="fas fa-comment-dots"></i> Messages</button>
+</div>
+
 <div class="asc-grid">
 
   <!-- Left sidebar -->
-  <div class="asc-sidebar">
+  <div class="asc-sidebar tab-active" id="asc-sidebar">
     <div class="asc-sidebar-header">
       Active
       {% if chats %}<span class="asc-badge-count">{{ chats|length }}</span>{% endif %}
@@ -325,7 +356,7 @@
   </div>
 
   <!-- Right panel -->
-  <div class="asc-main">
+  <div class="asc-main tab-active" id="asc-main">
     {% if selected_chat %}
 
     <div class="asc-main-header">
@@ -503,4 +534,30 @@
 })();
 </script>
 {% endif %}
+
+<script>
+function ascTab(btn) {
+  var targetId = btn.getAttribute('data-target');
+  document.querySelectorAll('.asc-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  ['asc-sidebar','asc-main'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.classList.toggle('tab-active', id === targetId); }
+  });
+}
+document.querySelectorAll('.asc-conv-item').forEach(function(a){
+  a.addEventListener('click', function(){
+    if(window.innerWidth <= 700){
+      var msgBtn = document.querySelector('.asc-tab-btn[data-target="asc-main"]');
+      if(msgBtn) ascTab(msgBtn);
+    }
+  });
+});
+{% if selected_chat %}
+if(window.innerWidth <= 700){
+  var msgBtn = document.querySelector('.asc-tab-btn[data-target="asc-main"]');
+  if(msgBtn) ascTab(msgBtn);
+}
+{% endif %}
+</script>
 {% endblock %}
