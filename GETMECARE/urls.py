@@ -155,7 +155,9 @@ urlpatterns = [
             'static': StaticViewSitemap,
             'caregivers': CaregiverSitemap,
             'jobs': JobSitemap,
-        }
+        },
+        'domain': 'getmecare-ontario.com',
+        'protocol': 'https',
     }, name='django.contrib.sitemaps.views.sitemap'),
     # ── Password reset (ZeptoMail) ────────────────────────────
     path(

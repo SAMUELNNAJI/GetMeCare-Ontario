@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://getmecare.ca/sitemap.xml
+Sitemap: https://getmecare-ontario.com/sitemap.xml
 
 # Disallow admin areas
 Disallow: /admin/
