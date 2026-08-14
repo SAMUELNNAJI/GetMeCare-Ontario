@@ -124,6 +124,26 @@ class CorrectDomainPasswordResetView(auth_views.PasswordResetView):
         ctx['protocol'] = 'https' if self.request.is_secure() else 'http'
         return ctx
 
+
+class _PasswordChangedConfirmView(auth_views.PasswordResetConfirmView):
+    """
+    Extends Django's PasswordResetConfirmView to send a confirmation email
+    after the user successfully sets a new password via the reset link.
+    """
+    template_name        = 'registration/password_reset_confirm.html'
+    success_url          = 'password_reset_complete'
+    token_generator      = _token_gen
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = form.user
+        try:
+            from GETMECARE.email_utils import send_password_changed_email
+            send_password_changed_email(user)
+        except Exception:
+            logger.exception('Password-changed email failed for user %s', user.pk)
+        return response
+
 # ── Custom error handler views ────────────────────────────────
 def custom_bad_request(request, exception=None):
     return render(request, '400.html', status=400)
@@ -172,7 +192,7 @@ urlpatterns = [
     ),
     path(
         'password-reset/confirm/<uidb64>/<token>/',
-        auth_views.PasswordResetConfirmView.as_view(
+        _PasswordChangedConfirmView.as_view(
             template_name='registration/password_reset_confirm.html',
         ),
         name='password_reset_confirm',

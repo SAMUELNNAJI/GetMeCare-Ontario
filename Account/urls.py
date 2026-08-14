@@ -13,4 +13,5 @@ urlpatterns = [
     path('clock-out/',           views.clock_out,           name='clock_out'),
     path('edit-profile/',        views.edit_profile,        name='edit_profile'),
     path('documents/',           views.documents,           name='documents'),
+    path('change-password/',     views.password_change,     name='password_change'),
 ]

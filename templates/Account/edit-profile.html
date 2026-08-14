@@ -734,6 +734,9 @@ GetMeCare{% endblock %} {% block extra_head %}
       {% endif %}
 
       <div class="ep-actions" style="margin-bottom: 22px">
+        <a href="{% url 'Account:password_change' %}" class="btn-cancel" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          <i class="fas fa-key"></i> Change Password
+        </a>
         <button type="submit" class="btn-save">
           <i class="fas fa-check"></i> Save Changes
         </button>

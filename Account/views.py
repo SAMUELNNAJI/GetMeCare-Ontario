@@ -8,12 +8,13 @@ from django.http import JsonResponse
 from decimal import Decimal
 import logging
 
-from .forms import LoginForm, SignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm
+from .forms import LoginForm, SignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm, PasswordChangeForm
 from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog
 from GETMECARE.email_utils import (
     send_welcome_email,
     send_clock_in_email,
     send_clock_out_email,
+    send_password_changed_email,
 )
 
 _profile_logger = logging.getLogger(__name__)
@@ -351,3 +352,26 @@ def documents(request):
 def logout_view(request):
     logout(request)
     return redirect('Account:login')
+
+
+# ──────────────────────────────────────────────────────────────
+# Password Change
+# ──────────────────────────────────────────────────────────────
+@login_required(login_url='Account:login')
+def password_change(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your password has been changed successfully.')
+            try:
+                send_password_changed_email(request.user)
+            except Exception:
+                logger.exception('Password changed email failed for user %s', request.user.pk)
+            return redirect('Account:password_change')
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'Account/password_change_form.html', {
+        'form': form,
+    })

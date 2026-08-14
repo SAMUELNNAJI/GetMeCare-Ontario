@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm as DjangoPasswordChangeForm
 from .models import CustomUser, CaregiverProfile, CaregiverDocument
 
 
@@ -345,3 +345,17 @@ class JobPostingForm(forms.ModelForm):
             'care_type': forms.Select(),
             'schedule':  forms.Select(),
         }
+
+
+class PasswordChangeForm(DjangoPasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].widget.attrs.update({
+            'placeholder': 'Enter your current password',
+        })
+        self.fields['new_password1'].widget.attrs.update({
+            'placeholder': 'At least 8 characters',
+        })
+        self.fields['new_password2'].widget.attrs.update({
+            'placeholder': 'Repeat your new password',
+        })

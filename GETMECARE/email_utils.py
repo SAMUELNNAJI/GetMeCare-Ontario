@@ -5,12 +5,13 @@ All outbound mail goes through send_transactional_email() which uses
 Django's built-in SMTP backend configured for ZeptoMail.
 
 Trigger points
---------------
+-------------
 • signup                       → send_welcome_email()
+• password changed             → send_password_changed_email()
 • clock-in                     → send_clock_in_email()
 • clock-out                    → send_clock_out_email()
 • shift payment confirmed       → send_shift_payment_employer_email()
-                                  send_shift_payment_caregiver_email()
+                                   send_shift_payment_caregiver_email()
 • employer activation payment  → send_activation_confirmation_email()
 • direct chat (offline)        → send_offline_chat_notification()
 • support chat (offline)       → send_support_offline_notification()
@@ -19,6 +20,7 @@ Trigger points
 • employer submits dispute     → send_dispute_submitted_admin_email()
 • admin resolves/dismisses     → send_dispute_resolved_employer_email()
 • (password reset uses Django's built-in PasswordResetView — no helper needed)
+• password changed successfully   → send_password_changed_email()
 """
 
 from __future__ import annotations
@@ -188,6 +190,40 @@ def send_welcome_email(user) -> bool:
     """
     return send_transactional_email(
         subject=f'Welcome to {SITE_NAME} — Your account is ready',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 1a. Password changed confirmation
+#      (fired after user successfully changes password)
+# ──────────────────────────────────────────────────────────────
+
+def send_password_changed_email(user) -> bool:
+    profile_url = f'{SITE_URL}/edit-profile/'
+    changed_str = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2>Your password has been changed</h2>
+    <p>Hi {user.first_name or user.username}, this is a confirmation that your
+       {SITE_NAME} account password was successfully changed.</p>
+    <div class="info-box">
+      <p><strong>Account:</strong> {user.get_full_name() or user.username}</p>
+      <p><strong>Email:</strong> {user.email}</p>
+      <p><strong>Changed on:</strong> {changed_str}</p>
+    </div>
+    <p>If you made this change, no further action is needed.</p>
+    <p>If you did <strong>not</strong> change your password, your account may have
+       been compromised. Please secure your account immediately by:</p>
+    <ul style="padding-left:20px;line-height:2;">
+      <li>Contacting us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a></li>
+      <li>Reviewing any recent account activity</li>
+    </ul>
+    <a class="btn" href="{profile_url}">Go to My Profile</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your password has been changed',
         to_email=user.email,
         html_body=_wrap(content),
     )
@@ -803,6 +839,37 @@ def send_document_rejected_email(user, doc) -> bool:
     """
     return send_transactional_email(
         subject=f'[{SITE_NAME}] Your {doc_label} was rejected — please re-upload',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 18. Password changed successfully
+#     (fired after a user successfully resets their password)
+# ──────────────────────────────────────────────────────────────
+
+def send_password_changed_email(user) -> bool:
+    login_url = f'{SITE_URL}/login/'
+
+    content = f"""
+    <h2>Your password has been changed</h2>
+    <p>Hi {user.first_name or user.username}, this is a confirmation that your
+       {SITE_NAME} password was changed successfully.</p>
+    <div class="info-box">
+      <p><strong>Account:</strong> {user.get_full_name() or user.username}</p>
+      <p><strong>Email:</strong> {user.email}</p>
+      <p><strong>Changed on:</strong>
+         {timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')}</p>
+    </div>
+    <p>If you made this change, no further action is needed.</p>
+    <p>If you did <strong>not</strong> change your password, your account may have been
+       compromised. Please contact us immediately at
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a> and reset your password again.</p>
+    <a class="btn" href="{login_url}">Sign In</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your password has been changed',
         to_email=user.email,
         html_body=_wrap(content),
     )
