@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import path, include
+from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
@@ -41,6 +41,9 @@ from django.utils.http import urlsafe_base64_encode as _b64enc
 from django.utils.encoding import force_bytes as _fbytes
 from django.core.mail import EmailMultiAlternatives as _EmailAlt
 from django.template import loader as _loader
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class _FixedDomainPasswordResetForm(_BaseResetForm):
@@ -131,7 +134,7 @@ class _PasswordChangedConfirmView(auth_views.PasswordResetConfirmView):
     after the user successfully sets a new password via the reset link.
     """
     template_name        = 'registration/password_reset_confirm.html'
-    success_url          = 'password_reset_complete'
+    success_url          = reverse_lazy('Account:login')
     token_generator      = _token_gen
 
     def form_valid(self, form):

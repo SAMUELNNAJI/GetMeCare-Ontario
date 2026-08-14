@@ -322,6 +322,12 @@
     </script>
 
     {% block extra_js %}{% endblock %}
-    <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
+    {% if not user.is_authenticated %}
+      {% with current_url_name=request.resolver_match.url_name %}
+        {% if current_url_name not in "login,signup,password_reset,password_reset_done,password_reset_confirm,password_reset_complete" %}
+          <script src="https://pl30805714.effectivecpmnetwork.com/0c/d1/c8/0cd1c854461fcff0e36c72db4232a1dd.js"></script>
+        {% endif %}
+      {% endwith %}
+    {% endif %}
   </body>
 </html>
