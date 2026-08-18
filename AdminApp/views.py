@@ -201,10 +201,22 @@ def manage_users(request):
 
 @admin_required
 def manage_caregivers(request):
+    q = request.GET.get('q', '').strip()
     profiles = CaregiverProfile.objects.select_related('user').order_by('-created_at')
+    if q:
+        profiles = profiles.filter(
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__username__icontains=q) |
+            Q(user__email__icontains=q) |
+            Q(city__icontains=q) |
+            Q(skills__icontains=q) |
+            Q(status__icontains=q)
+        )
     ctx = _admin_sidebar()
     ctx['profiles'] = profiles
     ctx['doc_types'] = REQUIRED_DOC_TYPES
+    ctx['search_q'] = q
     return render(request, 'AdminApp/manage-caregivers.html', ctx)
 
 
