@@ -115,6 +115,10 @@ class CaregiverProfile(models.Model):
         null=True, blank=True,
         help_text='Last time a "complete your profile" reminder email was sent',
     )
+    last_profile_photo_reminder_sent = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time a "upload your profile photo" reminder email was sent',
+    )
     # One-time activation modal dismissal — once True, never show the modal again
     activation_modal_dismissed = models.BooleanField(
         default=False,

@@ -771,6 +771,37 @@ def send_profile_reminder_email(user, missing_fields: list[str]) -> bool:
 
 
 # ──────────────────────────────────────────────────────────────
+# 15b. Profile photo upload reminder  (every 24 h until photo added)
+# ──────────────────────────────────────────────────────────────
+
+def send_profile_photo_reminder_email(user) -> bool:
+    profile_url = f'{SITE_URL}/edit-profile/'
+
+    content = f"""
+    <h2>Add your profile photo — it's your selling point</h2>
+    <p>Hi {user.first_name or user.username}, on {SITE_NAME} employers look at a
+       caregiver's profile photo <strong>before</strong> deciding who to reach out to.
+       Right now your profile has no photo, which makes employers less likely to
+       contact you for shifts.</p>
+    <div class="info-box">
+      <p><strong>Status:</strong> Profile photo missing</p>
+      <p>A clear, friendly photo builds trust and makes you stand out to employers.</p>
+    </div>
+    <p>Uploading one takes less than a minute — you can add or change it any time
+       from your edit profile page.</p>
+    <a class="btn" href="{profile_url}">Upload My Photo Now</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You're receiving this reminder because your caregiver profile has no photo yet.
+      Contact us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a> if you need help.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Add your photo — employers reach out to profiles with photos',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+# ──────────────────────────────────────────────────────────────
 # 16. Employer activation reminder  (every 2 days while inactive)
 # ──────────────────────────────────────────────────────────────
 

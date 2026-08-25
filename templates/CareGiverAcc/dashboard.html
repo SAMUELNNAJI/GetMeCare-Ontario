@@ -1086,6 +1086,35 @@ GetMeCare{% endblock %} {% block extra_head %}
 </div>
 </div>
 
+<!-- ── Profile Photo Reminder Modal ─────────────────────── -->
+{# Shown every time the caregiver enters the dashboard until they upload a
+   profile photo. Suppressed while the activation modal is showing so the two
+   never stack. #}
+{% if show_profile_photo_reminder and not show_activation_modal %}
+<div class="ep-modal-backdrop" id="profilePhotoModal" style="display:flex;">
+  <div class="ep-modal">
+    <div class="ep-modal-icon"><i class="fas fa-camera"></i></div>
+    <h2>Add Your Profile Photo</h2>
+    <p>Employers look at your photo <strong>before</strong> deciding who to reach out to.
+       A clear, friendly photo is your <strong>selling point</strong> — it builds trust
+       and gets you contacted for shifts.</p>
+    <div class="ep-modal-price">
+      <div class="price">1 Step</div>
+      <div class="price-note">Upload it once — it works for you every day</div>
+    </div>
+    <div class="ep-modal-perks">
+      <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Employers reach out to profiles with photos</div>
+      <div class="ep-modal-perk"><i class="fas fa-check-circle"></i> Boosts your chances of being booked for shifts</div>
+    </div>
+    <div class="ep-modal-actions">
+      <a href="{% url 'Account:edit_profile' %}" class="ep-modal-pay-btn">
+        <i class="fas fa-camera"></i> Upload Photo Now
+      </a>
+      <button type="button" class="ep-modal-later" id="closeProfilePhotoModalBtn">Maybe later</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 <script>
   // Close modal when clicking the backdrop
   document.getElementById('clockout-modal').addEventListener('click', function(e) {
@@ -1120,4 +1149,20 @@ GetMeCare{% endblock %} {% block extra_head %}
     }
   })();
 </script>
+
+{% if show_profile_photo_reminder and not show_activation_modal %}
+<script>
+  // Profile-photo reminder modal — close/later only hides it for this page load.
+  // It reappears on the next dashboard visit until a photo is uploaded.
+  (function(){
+    var m = document.getElementById('profilePhotoModal');
+    if(!m) return;
+    function hide(){ m.style.display = 'none'; }
+    var closeBtn = document.getElementById('closeProfilePhotoModalBtn');
+    if(closeBtn) closeBtn.addEventListener('click', hide);
+    m.addEventListener('click', function(e){ if(e.target === m) hide(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') hide(); });
+  })();
+</script>
+{% endif %}
 {% endblock %}

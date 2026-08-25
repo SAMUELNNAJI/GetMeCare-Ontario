@@ -237,6 +237,9 @@ def dashboard(request):
         # Clock-in picker
         'clockable_shifts':       clockable_shifts,
         'clockable_count':        clockable_shifts.count(),
+        # Profile-photo reminder — shows a popup on the dashboard until the
+        # caregiver uploads a photo (their selling point to employers).
+        'show_profile_photo_reminder': not bool(profile.profile_image),
     })
     return render(request, 'CareGiverAcc/dashboard.html', ctx)
 
