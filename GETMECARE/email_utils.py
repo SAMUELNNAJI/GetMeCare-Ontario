@@ -456,6 +456,45 @@ def send_activation_confirmation_email(employer, payment) -> bool:
 
 
 # ──────────────────────────────────────────────────────────────
+# 7b. Caregiver account activation confirmation
+#     (fired when the admin activates a caregiver, either
+#      automatically once all required docs are approved, or
+#      manually from the manage-caregivers panel)
+# ──────────────────────────────────────────────────────────────
+
+def send_caregiver_activation_email(user) -> bool:
+    dashboard_url = f'{SITE_URL}/caregiver-acc/'
+    profile_url   = f'{SITE_URL}/edit-profile/'
+
+    content = f"""
+    <h2>Congratulations — your caregiver account is now active!</h2>
+    <p>Hi {user.first_name or user.username}, great news — your {SITE_NAME}
+       caregiver profile has been <strong>verified and activated</strong>.</p>
+    <p>You are now searchable by employers and can start receiving job
+       opportunities and shift bookings.</p>
+    <div class="info-box">
+      <p><strong>Status:</strong> Active &amp; Verified</p>
+      <p><strong>Activated on:</strong>
+         {timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')}</p>
+    </div>
+    <p>To help employers find you, make sure your profile is complete and
+       includes a <strong>profile photo</strong> — profiles with photos get
+       the most contact requests.</p>
+    <a class="btn" href="{dashboard_url}">Go to My Dashboard</a>
+    <p style="margin-top:16px;">
+      <a class="btn" href="{profile_url}" style="background:#142e21;">Complete My Profile</a>
+    </p>
+    <p style="margin-top:24px;">Questions? Contact us at
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your caregiver account has been activated!',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
 # 8. Support chat resolved  (fired when admin marks chat resolved)
 # ──────────────────────────────────────────────────────────────
 

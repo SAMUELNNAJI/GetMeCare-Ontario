@@ -15,6 +15,7 @@ from GETMECARE.email_utils import (
     send_payout_notification_email,
     send_dispute_resolved_employer_email,
     send_document_rejected_email,
+    send_caregiver_activation_email,
 )
 
 
@@ -408,6 +409,15 @@ def approve_document(request, doc_id):
         if profile.status not in (CaregiverProfile.STATUS_ACTIVE, CaregiverProfile.STATUS_REJECTED):
             profile.status = CaregiverProfile.STATUS_ACTIVE
             profile.save()
+
+            # Notify the caregiver their account has been activated
+            try:
+                send_caregiver_activation_email(caregiver)
+            except Exception:
+                import logging as _log
+                _log.getLogger(__name__).exception(
+                    'Caregiver activation email failed for user %s', caregiver.pk
+                )
         messages.success(
             request,
             f'{doc.get_doc_type_display()} approved. '
@@ -510,8 +520,21 @@ def activate_caregiver(request, profile_id):
         )
         return redirect('AdminApp:manage_caregivers')
 
+    was_active = profile.status == CaregiverProfile.STATUS_ACTIVE
     profile.status = CaregiverProfile.STATUS_ACTIVE
     profile.save()
+
+    # Notify the caregiver their account has been activated — only when this
+    # click actually changed the status (avoids duplicate emails on re-clicks).
+    if not was_active:
+        try:
+            send_caregiver_activation_email(profile.user)
+        except Exception:
+            import logging as _log
+            _log.getLogger(__name__).exception(
+                'Caregiver activation email failed for user %s', profile.user.pk
+            )
+
     messages.success(
         request,
         f'{profile.user.get_full_name()} has been activated as a verified caregiver.'
