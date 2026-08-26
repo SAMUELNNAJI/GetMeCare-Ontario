@@ -97,8 +97,98 @@
     color: #999;
     text-decoration: none;
   }
-  .ep-cancel-link:hover {
+    .ep-cancel-link:hover {
     color: #666;
+  }
+
+  /* Interac e-Transfer option */
+  .ep-method-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .ep-method-option {
+    flex: 1;
+    border: 2px solid #e4e4e4;
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all .2s;
+    font-size: 0.85rem;
+  }
+  .ep-method-option:hover {
+    border-color: #1b7d4f;
+    background: #f0faf7;
+  }
+  .ep-method-option.active {
+    border-color: #1b7d4f;
+    background: #fff;
+  }
+  .ep-method-option i {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    display: block;
+    color: #1b7d4f;
+  }
+  .ep-interac-info {
+    background: linear-gradient(135deg, #e8f5f0, #d4f7e3);
+    border-radius: 14px;
+    padding: 22px;
+    margin: 20px 0;
+    text-align: left;
+    border: 1px solid #b2dfca;
+  }
+  .ep-interac-info h3 {
+    font-size: 1rem;
+    color: #0d6b3d;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ep-interac-email {
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    word-break: break-all;
+    margin-bottom: 10px;
+  }
+  .ep-interac-ref {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 14px;
+  }
+  .ep-interac-instructions {
+    font-size: 0.82rem;
+    color: #555;
+    line-height: 1.6;
+    margin-top: 10px;
+  }
+  .ep-interac-instructions ol {
+    margin: 6px 0 0 18px;
+    padding: 0;
+  }
+  .ep-interac-instructions li {
+    margin-bottom: 4px;
+  }
+  .ep-copy-btn {
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .ep-copy-btn:hover {
+    background: #0d6b3d;
   }
 </style>
 {% endblock %}
@@ -125,14 +215,91 @@
       <div class="ep-feature"><i class="fas fa-check-circle"></i> Full shift management tools</div>
     </div>
 
+    {% if interac_info %}
+    <!-- Payment method selector -->
+    <div class="ep-method-selector">
+      <label class="ep-method-option" onclick="selectMethod('card')">
+        <input type="radio" name="method" value="card" checked style="display:none">
+        <i class="fas fa-credit-card"></i>
+        <span>Credit Card</span>
+      </label>
+      <label class="ep-method-option active" onclick="selectMethod('interac')">
+        <input type="radio" name="method" value="interac" checked style="display:none">
+        <i class="fas fa-university"></i>
+        <span>Interac e-Transfer (CAD)</span>
+      </label>
+    </div>
+
+    <!-- Interac e-Transfer instructions (shown when interac is selected) -->
+    <div id="ep-interac-panel" style="display:block">
+      <div class="ep-interac-info">
+        <h3><i class="fas fa-university"></i> Send Interac e-Transfer</h3>
+        <p style="font-size:0.85rem;color:#555;margin:8px 0 0">Send exactly <strong>${{ interac_info.amount }} CAD</strong> from your Canadian bank app to:</p>
+        <div class="ep-interac-email" id="ep-interac-email">
+          {{ interac_info.alias }}
+          <button class="ep-copy-btn" onclick="copyEmail()">Copy</button>
+        </div>
+        <div class="ep-interac-ref">
+          <strong>Reference:</strong> {{ interac_info.reference }}
+          <button class="ep-copy-btn" onclick="copyRef()">Copy</button>
+        </div>
+        <div class="ep-interac-instructions">
+          <p style="font-size:0.8rem;color:#555;margin:8px 0"><strong>Instructions:</strong></p>
+          <ol>
+            <li>Open your bank's mobile app or online banking</li>
+            <li>Send an INTERAC e-Transfer (not a bill payment) to the email above</li>
+            <li>Include the reference code above in the message field</li>
+            <li>Send exactly <strong>${{ interac_info.amount }} CAD</strong></li>
+            <li>Your account activates automatically once the transfer is received</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:#888;text-align:center">
+        The Interac e-Transfer option appears instantly after your bank processes the transfer.
+        No extra steps needed.
+      </p>
+    </div>
+    <div id="ep-card-panel" style="display:none">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="ep-activate-btn">
+          <i class="fas fa-lock"></i> Pay Now & Activate via Fincra
+        </button>
+      </form>
+    </div>
+{% else %}
     <form method="post">
       {% csrf_token %}
       <button type="submit" class="ep-activate-btn">
         <i class="fas fa-lock"></i> Pay Now & Activate via Fincra
       </button>
     </form>
+{% endif %}
 
-    <a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
+<script>
+function selectMethod(method) {
+  document.querySelectorAll('.ep-method-option').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  if (method === 'interac') {
+    document.querySelector('.ep-method-option[onclick*="interac"]').classList.add('active');
+    document.getElementById('ep-interac-panel').style.display = 'block';
+    document.getElementById('ep-card-panel').style.display = 'none';
+  } else {
+    document.querySelector('.ep-method-option[onclick*="card"]').classList.add('active');
+    document.getElementById('ep-interac-panel').style.display = 'none';
+    document.getElementById('ep-card-panel').style.display = 'block';
+  }
+}
+function copyEmail() {
+  navigator.clipboard.writeText('{{ interac_info.alias }}').then(function() {});
+}
+function copyRef() {
+  navigator.clipboard.writeText('{{ interac_info.reference }}').then(function() {});
+}
+</script>
+
+<a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
     <p style="margin-top:12px;font-size:.75rem;color:#bbb">
       Payments are securely processed by <strong>Fincra</strong>.<br>
       GetMeCare never stores your card details.

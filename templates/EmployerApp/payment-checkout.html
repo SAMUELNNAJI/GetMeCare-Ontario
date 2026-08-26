@@ -94,7 +94,87 @@
   }
   .co-cg-av img { width:100%; height:100%; object-fit:cover; }
   .co-cg-name { font-size:.85rem; font-weight:700; color:#1a1a1a; }
-  .co-cg-sub  { font-size:.72rem; color:#888; margin-top:1px; }
+    .co-cg-sub  { font-size:.72rem; color:#888; margin-top:1px; }
+
+  /* Interac e-Transfer option */
+  .co-method-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .co-method-option {
+    flex: 1;
+    border: 2px solid #e4e4e4;
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all .2s;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .co-method-option:hover {
+    border-color: #1b7d4f;
+    background: #f0faf7;
+  }
+  .co-method-option.active {
+    border-color: #1b7d4f;
+    background: #fff;
+  }
+  .co-method-option i {
+    font-size: 1.4rem;
+    color: #1b7d4f;
+  }
+  .co-interac-info {
+    background: linear-gradient(135deg, #e8f5f0, #d4f7e3);
+    border-radius: 14px;
+    padding: 22px;
+    margin: 20px 0;
+    text-align: left;
+    border: 1px solid #b2dfca;
+  }
+  .co-interac-info h3 {
+    font-size: 1rem;
+    color: #0d6b3d;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .co-interac-email {
+    font-family: 'Courier New', monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    word-break: break-all;
+    margin-bottom: 10px;
+  }
+  .co-interac-ref {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 14px;
+  }
+  .co-copy-btn {
+    background: #1b7d4f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .co-copy-btn:hover {
+    background: #0d6b3d;
+  }
+  .co-interac-instructions ol { margin: 6px 0 0 18px; padding: 0; }
+  .co-interac-instructions li { margin-bottom: 4px; font-size: 0.82rem; color: #555; }
 </style>
 {% endblock %}
 
@@ -162,15 +242,67 @@
         <span class="co-total-val">${{ total_charge }}</span>
       </div>
 
-      <!-- Fincra payment info -->
-      <div class="stripe-placeholder">
+            <!-- Fincra payment info -->
+      <div class="stripe-placeholder" id="ep-card-panel">
         <i class="fas fa-credit-card" style="color:#1b7d4f;font-size:2.5rem"></i>
         <strong>Secure Payment via Fincra</strong>
         <p>Click "Pay Now" below to be redirected to Fincra's secure<br>
            checkout page to complete your card payment.</p>
       </div>
 
-      <!-- Pay button — POST triggers Fincra checkout redirect -->
+      {% if interac_info %}
+      <!-- Payment method selector -->
+      <div class="co-method-selector">
+        <label class="co-method-option active" onclick="selectMethod('card')">
+          <i class="fas fa-credit-card"></i>
+          <span>Credit Card</span>
+        </label>
+        <label class="co-method-option" onclick="selectMethod('interac')">
+          <i class="fas fa-university"></i>
+          <span>Interac e-Transfer (CAD)</span>
+        </label>
+      </div>
+
+      <!-- Interac e-Transfer instructions (hidden by default, shown when interac selected) -->
+      <div id="ep-interac-panel" style="display:none">
+        <div class="co-interac-info">
+          <h3><i class="fas fa-university"></i> Send Interac e-Transfer</h3>
+          <p style="font-size:0.85rem;color:#555;margin:8px 0 0">Send exactly <strong>${{ interac_info.amount }} CAD</strong> from your Canadian bank app to:</p>
+          <div class="co-interac-email" id="co-interac-email">
+            {{ interac_info.alias }}
+            <button class="co-copy-btn" onclick="copyCoEmail()">Copy</button>
+          </div>
+          <div class="co-interac-ref">
+            <strong>Reference:</strong> {{ interac_info.reference }}
+            <button class="co-copy-btn" onclick="copyCoRef()">Copy</button>
+          </div>
+          <div class="co-interac-instructions">
+            <p style="font-size:0.8rem;color:#555;margin:8px 0"><strong>Instructions:</strong></p>
+            <ol>
+              <li>Open your bank's mobile app or online banking</li>
+              <li>Send an INTERAC e-Transfer (not a bill payment) to the email above</li>
+              <li>Include the reference code above in the message field</li>
+              <li>Send exactly <strong>${{ interac_info.amount }} CAD</strong></li>
+              <li>Your booking confirms automatically once the transfer is received</li>
+            </ol>
+          </div>
+        </div>
+        <p style="font-size:0.8rem;color:#888;text-align:center">
+          The booking confirms instantly after your bank processes the transfer.
+        </p>
+      </div>
+
+      <!-- Pay button (card, shown by default) -->
+      <form method="post" action="{% url 'EmployerApp:payment_checkout' shift.pk %}" id="ep-card-form">
+        {% csrf_token %}
+        <input type="hidden" name="method" value="card">
+        <button type="submit" class="co-pay-btn">
+          <i class="fas fa-lock lock-icon"></i>
+          Pay Now — ${{ total_charge }}
+        </button>
+      </form>
+      {% else %}
+      <!-- Pay button (no interac available, card only) -->
       <form method="post" action="{% url 'EmployerApp:payment_checkout' shift.pk %}">
         {% csrf_token %}
         <button type="submit" class="co-pay-btn">
@@ -178,16 +310,32 @@
           Pay Now — ${{ total_charge }}
         </button>
       </form>
-
-      <a href="{% url 'EmployerApp:book_caregiver' shift.booking_proposal.pk %}" class="co-back-link">
-        <i class="fas fa-arrow-left"></i> Go back and edit booking
-      </a>
-
-      <div class="co-secure-note">
-        <i class="fas fa-shield-alt"></i>
-        Payments are secured by Fincra. GetMeCare never stores card details.
-      </div>
+            {% endif %}
     </div>
   </div>
 </div>
+<script>
+function selectMethod(method) {
+  document.querySelectorAll('.co-method-option').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  if (method === 'interac') {
+    document.querySelector('.co-method-option[onclick*="interac"]').classList.add('active');
+    document.getElementById('ep-interac-panel').style.display = 'block';
+    document.getElementById('ep-card-panel').style.display = 'none';
+    document.getElementById('ep-card-form').style.display = 'none';
+  } else {
+    document.querySelector('.co-method-option[onclick*="card"]').classList.add('active');
+    document.getElementById('ep-interac-panel').style.display = 'none';
+    document.getElementById('ep-card-panel').style.display = 'block';
+    document.getElementById('ep-card-form').style.display = 'block';
+  }
+}
+function copyCoEmail() {
+  navigator.clipboard.writeText('{{ interac_info.alias }}');
+}
+function copyCoRef() {
+  navigator.clipboard.writeText('{{ interac_info.reference }}');
+}
+</script>
 {% endblock %}

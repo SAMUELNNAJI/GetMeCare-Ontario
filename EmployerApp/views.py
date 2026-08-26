@@ -10,9 +10,10 @@ import json
 import logging
 from decimal import Decimal
 
-from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute
+from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute, InteracPaymentRequest
 from Account.forms import JobPostingForm
 from EmployerApp import fincra_payments
+from EmployerApp import fincra_cad
 from GETMECARE.email_utils import (
     send_shift_payment_employer_email,
     send_shift_payment_caregiver_email,
@@ -243,10 +244,26 @@ def close_job(request, job_id):
 
 @employer_required
 def activate_account(request):
-    """Initiate a Fincra hosted checkout for the one-time activation fee."""
+    """Initiate payment for the one-time activation fee (Fincra checkout OR Interac e-Transfer)."""
     ctx = _employer_ctx(request.user)
 
     if request.method == 'POST':
+        if request.POST.get('method') == 'interac':
+            # Interac e-Transfer — show the alias + reference on the page.
+            interac_info = fincra_cad.get_interac_payment_info(
+                request.user,
+                InteracPaymentRequest.PURPOSE_ACTIVATION,
+                EmployerProfile.ACTIVATION_FEE,
+            )
+            if not interac_info:
+                messages.error(
+                    request,
+                    'Interac e-Transfer is not set up yet. Please use the card option.',
+                )
+                return redirect('EmployerApp:activate_account')
+            ctx['interac_info'] = interac_info
+            return render(request, 'EmployerApp/activate.html', ctx)
+
         reference = fincra_payments.generate_reference(prefix='ACT')
 
         # Build the redirect URL where Fincra sends the customer after paying
@@ -290,6 +307,15 @@ def activate_account(request):
             )
             return redirect('EmployerApp:activate_account')
 
+    # Pre-populate the Interac option if available (shown alongside card)
+    try:
+        ctx['interac_info'] = fincra_cad.get_interac_payment_info(
+            request.user,
+            InteracPaymentRequest.PURPOSE_ACTIVATION,
+            EmployerProfile.ACTIVATION_FEE,
+        )
+    except Exception:
+        ctx['interac_info'] = None
     return render(request, 'EmployerApp/activate.html', ctx)
 
 
@@ -472,7 +498,7 @@ def book_caregiver(request, proposal_pk):
 
 @employer_required
 def payment_checkout(request, shift_pk):
-    """Show the payment summary and initiate a Fincra hosted checkout for a shift booking."""
+    """Show the payment summary and initiate payment (Fincra checkout OR Interac e-Transfer)."""
     shift = get_object_or_404(
         Shift,
         pk=shift_pk,
@@ -486,6 +512,29 @@ def payment_checkout(request, shift_pk):
     # Handle POST — employer clicked "Pay Now" → initiate Fincra checkout
     if request.method == 'POST':
         from django.urls import reverse
+
+        if request.POST.get('method') == 'interac':
+            # Interac e-Transfer — show the alias + reference on the page.
+            interac_info = fincra_cad.get_interac_payment_info(
+                request.user,
+                InteracPaymentRequest.PURPOSE_BOOKING,
+                total_charge,
+                shift=shift,
+            )
+            if not interac_info:
+                messages.error(
+                    request,
+                    'Interac e-Transfer is not set up yet. Please use the card option.',
+                )
+                return redirect('EmployerApp:payment_checkout', shift_pk=shift.pk)
+            ctx = _employer_ctx(request.user)
+            ctx.update({
+                'shift':        shift,
+                'duration_hrs': duration_hrs,
+                'total_charge': total_charge,
+                'interac_info': interac_info,
+            })
+            return render(request, 'EmployerApp/payment-checkout.html', ctx)
 
         reference    = fincra_payments.generate_reference(prefix='BOOK')
         redirect_url = request.build_absolute_uri(
@@ -528,13 +577,23 @@ def payment_checkout(request, shift_pk):
                 f'Unable to start payment session: {exc}. Please try again.',
             )
 
-    # GET — render the checkout summary page (employer clicks "Pay Now" here)
+        # GET — render the checkout summary page (employer clicks "Pay Now" here)
     ctx = _employer_ctx(request.user)
     ctx.update({
         'shift':        shift,
         'duration_hrs': duration_hrs,
         'total_charge': total_charge,
     })
+    # Pass Interac info so the template can show the e-Transfer option
+    try:
+        ctx['interac_info'] = fincra_cad.get_interac_payment_info(
+            request.user,
+            InteracPaymentRequest.PURPOSE_BOOKING,
+            total_charge,
+            shift=shift,
+        )
+    except Exception:
+        ctx['interac_info'] = None
     return render(request, 'EmployerApp/payment-checkout.html', ctx)
 
 
@@ -790,6 +849,24 @@ def fincra_webhook(request):
 
     event = payload.get('event', '')
     data  = payload.get('data', {})
+
+    # ── Interac e-Transfer deposits (CAD collection account) ───────────────
+    if event == 'collection.successful':
+        try:
+            matched = fincra_cad.handle_collection_webhook(data)
+        except Exception:
+            logger.exception('Fincra collection.successful processing failed')
+            matched = False
+        # Always acknowledge so Fincra doesn't retry; unmatched deposits are
+        # stored for manual reconciliation.
+        return HttpResponse(status=200)
+
+    if event == 'collection.failed':
+        try:
+            fincra_cad.log_failed_collection(data)
+        except Exception:
+            logger.exception('Fincra collection.failed processing failed')
+        return HttpResponse(status=200)
 
     if event != 'charge.successful':
         # We only process successful charge events; acknowledge others silently

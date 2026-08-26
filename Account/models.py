@@ -681,3 +681,135 @@ class Dispute(models.Model):
     @property
     def is_resolved(self):
         return self.status in (self.STATUS_RESOLVED, self.STATUS_DISMISSED)
+# ──────────────────────────────────────────────────────────────
+# Fincra CAD (Interac e-Transfer) — collection account, deposits,
+# and per-employer payment requests
+# ──────────────────────────────────────────────────────────────
+class FincraCadAccount(models.Model):
+    """The merchant's Fincra CAD collection account + Interac alias.
+
+    A single CAD collection account is requested once via Fincra's API.  On
+    approval Fincra issues a unique Interac collection alias (interac_email)
+    registered for Autodeposit.  Employers e-Transfer to that alias.
+    """
+
+    STATUS_PENDING  = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_FAILED   = 'failed'
+    STATUS_CHOICES = [
+        (STATUS_PENDING,  'Pending review'),
+        (STATUS_APPROVED, 'Approved (active)'),
+        (STATUS_FAILED,   'Failed'),
+    ]
+
+    currency      = models.CharField(max_length=10, default='CAD')
+    account_id    = models.CharField(max_length=100, unique=True)
+    status        = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING,
+    )
+    interac_email = models.CharField(
+        max_length=254, blank=True,
+        help_text='Interac collection alias (e.g. merchantname@fincra.ca)',
+    )
+    raw_data      = models.JSONField(default=dict, blank=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name        = 'Fincra CAD Collection Account'
+        verbose_name_plural = 'Fincra CAD Collection Accounts'
+
+    def __str__(self):
+        return f'{self.currency} account {self.account_id} — {self.get_status_display()}'
+
+
+class FincraCollection(models.Model):
+    """An incoming Interac e-Transfer deposit (collection.successful event).
+
+    `session_id` is unique so each deposit is only processed once.  `processed`
+    is False when the deposit could not be matched to an employer automatically
+    (admin can reconcile via a management command / Django admin).
+    """
+
+    session_id      = models.CharField(max_length=200, unique=True)
+    virtual_account = models.CharField(max_length=100, blank=True)
+    amount_received = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+    )
+    fee             = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+    )
+    source_currency = models.CharField(max_length=10, blank=True)
+    customer_name   = models.CharField(max_length=255, blank=True)
+    description     = models.TextField(blank=True)
+    reference       = models.CharField(max_length=200, blank=True)
+    status          = models.CharField(max_length=20, default='successful')
+    processed       = models.BooleanField(default=False)
+    note            = models.TextField(blank=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name        = 'Fincra Collection'
+        verbose_name_plural = 'Fincra Collections'
+
+    def __str__(self):
+        return (
+            f'Collection {self.session_id} — {self.customer_name} — '
+            f'{self.amount_received} {self.source_currency}'
+        )
+
+
+class InteracPaymentRequest(models.Model):
+    """A pending wage the employer intends to pay via Interac e-Transfer.
+
+    Because the Interac alias is shared by all employers, each request carries
+    a unique `reference` code the employer includes in the e-Transfer message so
+    we can attribute the deposit.  For the fixed activation fee we also fall
+    back to an exact-amount match.
+    """
+
+    PURPOSE_ACTIVATION = 'activation'
+    PURPOSE_BOOKING    = 'booking'
+    PURPOSE_CHOICES = [
+        (PURPOSE_ACTIVATION, 'Account Activation Fee'),
+        (PURPOSE_BOOKING,    'Shift Booking'),
+    ]
+
+    STATUS_PENDING = 'pending'
+    STATUS_PAID    = 'paid'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_PAID,    'Paid'),
+    ]
+
+    user       = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='interac_payment_requests',
+    )
+    purpose    = models.CharField(max_length=20, choices=PURPOSE_CHOICES)
+    reference  = models.CharField(max_length=100, unique=True)
+    amount     = models.DecimalField(max_digits=8, decimal_places=2)
+    shift      = models.ForeignKey(
+        'Shift',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='interac_payment_requests',
+    )
+    status     = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at    = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering        = ['-created_at']
+        verbose_name        = 'Interac Payment Request'
+        verbose_name_plural = 'Interac Payment Requests'
+
+    def __str__(self):
+        return (
+            f'{self.reference} — {self.user.get_full_name()} — '
+            f'{self.get_purpose_display()}'
+        )
