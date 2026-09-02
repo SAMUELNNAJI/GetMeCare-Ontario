@@ -244,70 +244,12 @@ def close_job(request, job_id):
 
 @employer_required
 def activate_account(request):
-    """Initiate payment for the one-time activation fee (Fincra checkout OR Interac e-Transfer)."""
+    """Show Interac e-Transfer instructions for the one-time activation fee.
+
+    GetMeCare collects activation payments exclusively via Interac
+    e-Transfer (CAD).  The legacy Fincra USD card-checkout path was removed.
+    """
     ctx = _employer_ctx(request.user)
-
-    if request.method == 'POST':
-        if request.POST.get('method') == 'interac':
-            # Interac e-Transfer — show the alias + reference on the page.
-            interac_info = fincra_cad.get_interac_payment_info(
-                request.user,
-                InteracPaymentRequest.PURPOSE_ACTIVATION,
-                EmployerProfile.ACTIVATION_FEE,
-            )
-            if not interac_info:
-                messages.error(
-                    request,
-                    'Interac e-Transfer is not set up yet. Please use the card option.',
-                )
-                return redirect('EmployerApp:activate_account')
-            ctx['interac_info'] = interac_info
-            return render(request, 'EmployerApp/activate.html', ctx)
-
-        reference = fincra_payments.generate_reference(prefix='ACT')
-
-        # Build the redirect URL where Fincra sends the customer after paying
-        from django.urls import reverse
-        redirect_url = request.build_absolute_uri(
-            reverse('EmployerApp:fincra_activation_callback')
-        )
-
-        full_name = (
-            f'{request.user.first_name} {request.user.last_name}'.strip()
-            or request.user.username
-        )
-
-        try:
-            result = fincra_payments.initiate_checkout(
-                amount        = float(EmployerProfile.ACTIVATION_FEE),
-                customer_name = full_name,
-                customer_email= request.user.email,
-                reference     = reference,
-                redirect_url  = redirect_url,
-                metadata      = {
-                    'user_id':      request.user.pk,
-                    'payment_type': EmployerPayment.TYPE_ACTIVATION,
-                },
-                description   = 'GetMeCare — One-time account activation fee',
-            )
-
-            # Stash the reference in the session so the callback can pick it up
-            request.session['fincra_activation_ref'] = reference
-
-            # Redirect the employer to Fincra's hosted checkout page
-            checkout_link = result['data']['link']
-            return redirect(checkout_link)
-
-        except Exception as exc:
-            logger.exception('Fincra activation checkout failed')
-            print(f'\n[FINCRA ERROR] {exc}\n')  # visible in terminal
-            messages.error(
-                request,
-                f'Unable to start payment session: {exc}. Please try again.',
-            )
-            return redirect('EmployerApp:activate_account')
-
-    # Pre-populate the Interac option if available (shown alongside card)
     try:
         ctx['interac_info'] = fincra_cad.get_interac_payment_info(
             request.user,
@@ -498,7 +440,7 @@ def book_caregiver(request, proposal_pk):
 
 @employer_required
 def payment_checkout(request, shift_pk):
-    """Show the payment summary and initiate payment (Fincra checkout OR Interac e-Transfer)."""
+    """Show the payment summary and Interac e-Transfer instructions."""
     shift = get_object_or_404(
         Shift,
         pk=shift_pk,
@@ -509,75 +451,8 @@ def payment_checkout(request, shift_pk):
     duration_hrs = shift.duration_hours or Decimal('0')
     total_charge = round(duration_hrs * shift.hourly_rate, 2)
 
-    # Handle POST — employer clicked "Pay Now" → initiate Fincra checkout
-    if request.method == 'POST':
-        from django.urls import reverse
-
-        if request.POST.get('method') == 'interac':
-            # Interac e-Transfer — show the alias + reference on the page.
-            interac_info = fincra_cad.get_interac_payment_info(
-                request.user,
-                InteracPaymentRequest.PURPOSE_BOOKING,
-                total_charge,
-                shift=shift,
-            )
-            if not interac_info:
-                messages.error(
-                    request,
-                    'Interac e-Transfer is not set up yet. Please use the card option.',
-                )
-                return redirect('EmployerApp:payment_checkout', shift_pk=shift.pk)
-            ctx = _employer_ctx(request.user)
-            ctx.update({
-                'shift':        shift,
-                'duration_hrs': duration_hrs,
-                'total_charge': total_charge,
-                'interac_info': interac_info,
-            })
-            return render(request, 'EmployerApp/payment-checkout.html', ctx)
-
-        reference    = fincra_payments.generate_reference(prefix='BOOK')
-        redirect_url = request.build_absolute_uri(
-            reverse('EmployerApp:fincra_booking_callback', kwargs={'shift_pk': shift.pk})
-        )
-
-        full_name = (
-            f'{request.user.first_name} {request.user.last_name}'.strip()
-            or request.user.username
-        )
-
-        try:
-            result = fincra_payments.initiate_checkout(
-                amount        = float(total_charge),
-                customer_name = full_name,
-                customer_email= request.user.email,
-                reference     = reference,
-                redirect_url  = redirect_url,
-                metadata      = {
-                    'user_id':      request.user.pk,
-                    'shift_id':     shift.pk,
-                    'payment_type': EmployerPayment.TYPE_BOOKING,
-                },
-                description   = (
-                    f'GetMeCare — Shift #{shift.pk} booking, '
-                    f'{duration_hrs} hrs @ ${shift.hourly_rate}/hr'
-                ),
-            )
-
-            # Store the reference in session for the callback
-            request.session['fincra_booking_ref']   = reference
-            request.session['fincra_booking_shift'] = shift.pk
-
-            return redirect(result['data']['link'])
-
-        except Exception as exc:
-            logger.exception('Fincra booking checkout failed')
-            messages.error(
-                request,
-                f'Unable to start payment session: {exc}. Please try again.',
-            )
-
-        # GET — render the checkout summary page (employer clicks "Pay Now" here)
+    # GetMeCare collects booking payments exclusively via Interac e-Transfer
+    # (CAD).  The legacy Fincra USD card-checkout path was removed.
     ctx = _employer_ctx(request.user)
     ctx.update({
         'shift':        shift,

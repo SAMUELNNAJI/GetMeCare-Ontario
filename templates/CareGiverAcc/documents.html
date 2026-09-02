@@ -249,6 +249,123 @@ GetMeCare{% endblock %} {% block extra_head %}
     cursor: not-allowed;
   }
 
+  /* ── Profile Photo Upload Banner ── */
+  .photo-upload-banner {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+    border: 2px solid #f5d78a;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 22px;
+  }
+  .photo-upload-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .photo-upload-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #c96000;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(201, 96, 0, 0.15);
+  }
+  .photo-upload-text {
+    flex: 1;
+    min-width: 200px;
+  }
+  .photo-upload-text h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .photo-upload-text p {
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.4;
+  }
+  .photo-upload-action {
+    flex-shrink: 0;
+  }
+  .btn-upload-photo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #c96000;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 12px 24px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-upload-photo:hover {
+    background: #a85000;
+    transform: translateY(-1px);
+  }
+  .btn-upload-photo:active {
+    transform: translateY(0);
+  }
+
+  /* Photo uploaded success banner */
+  .photo-uploaded-banner {
+    background: #e6f5ee;
+    border: 1px solid #a8dfc0;
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .photo-uploaded-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #c6ecd6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1b7d4f;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .photo-uploaded-text {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #1b5e35;
+  }
+  .btn-change-photo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    color: #1b7d4f;
+    border: 1.5px solid #a8dfc0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-change-photo:hover {
+    background: #f0faf4;
+  }
+
   /* Upload progress indicator */
   .upload-progress {
     margin-top: 12px;
@@ -708,6 +825,48 @@ GetMeCare{% endblock %} {% block extra_head %}
   {{ msg }}
 </div>
 {% endfor %}
+
+<!-- Profile Photo Upload Section (shown until photo is uploaded) -->
+{% if not has_profile_photo %}
+<div class="photo-upload-banner">
+  <div class="photo-upload-content">
+    <div class="photo-upload-icon">
+      <i class="fas fa-camera"></i>
+    </div>
+    <div class="photo-upload-text">
+      <h3><i class="fas fa-star" style="color: #c96000;"></i> Add Your Profile Photo</h3>
+      <p>Employers look at your photo <strong>before</strong> deciding who to reach out to. A clear, friendly photo is your <strong>selling point</strong> — it builds trust and gets you contacted for shifts.</p>
+    </div>
+    <div class="photo-upload-action">
+      <form method="post" enctype="multipart/form-data" id="photo-upload-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="photo">
+        <input type="file" name="profile_image" id="profile-image-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="this.form.submit()">
+        <button type="button" class="btn-upload-photo" onclick="document.getElementById('profile-image-input').click()">
+          <i class="fas fa-camera"></i> Upload Photo
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="photo-uploaded-banner">
+  <div class="photo-uploaded-icon"><i class="fas fa-check-circle"></i></div>
+  <div class="photo-uploaded-text">
+    <strong>Profile photo added!</strong> Employers will see your photo when browsing caregivers.
+  </div>
+  <div class="photo-uploaded-action">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="photo">
+      <input type="file" name="profile_image" id="profile-image-change" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="this.form.submit()">
+      <button type="button" class="btn-change-photo" onclick="document.getElementById('profile-image-change').click()">
+        <i class="fas fa-sync"></i> Change
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
 
 <!-- Verification progress banner -->
 {% if all_approved %}

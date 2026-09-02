@@ -102,36 +102,6 @@
   }
 
   /* Interac e-Transfer option */
-  .ep-method-selector {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 22px;
-  }
-  .ep-method-option {
-    flex: 1;
-    border: 2px solid #e4e4e4;
-    border-radius: 12px;
-    padding: 14px 12px;
-    text-align: center;
-    cursor: pointer;
-    background: #fafafa;
-    transition: all .2s;
-    font-size: 0.85rem;
-  }
-  .ep-method-option:hover {
-    border-color: #1b7d4f;
-    background: #f0faf7;
-  }
-  .ep-method-option.active {
-    border-color: #1b7d4f;
-    background: #fff;
-  }
-  .ep-method-option i {
-    font-size: 1.4rem;
-    margin-bottom: 4px;
-    display: block;
-    color: #1b7d4f;
-  }
   .ep-interac-info {
     background: linear-gradient(135deg, #e8f5f0, #d4f7e3);
     border-radius: 14px;
@@ -216,81 +186,51 @@
     </div>
 
     {% if interac_info %}
-    <!-- Payment method selector -->
-    <div class="ep-method-selector">
-      <label class="ep-method-option" onclick="selectMethod('card')">
-        <input type="radio" name="method" value="card" checked style="display:none">
-        <i class="fas fa-credit-card"></i>
-        <span>Credit Card</span>
-      </label>
-      <label class="ep-method-option active" onclick="selectMethod('interac')">
-        <input type="radio" name="method" value="interac" checked style="display:none">
-        <i class="fas fa-university"></i>
-        <span>Interac e-Transfer (CAD)</span>
-      </label>
-    </div>
-
-    <!-- Interac e-Transfer instructions (shown when interac is selected) -->
-    <div id="ep-interac-panel" style="display:block">
-      <div class="ep-interac-info">
-        <h3><i class="fas fa-university"></i> Send Interac e-Transfer</h3>
-        <p style="font-size:0.85rem;color:#555;margin:8px 0 0">Send exactly <strong>${{ interac_info.amount }} CAD</strong> from your Canadian bank app to:</p>
-        <div class="ep-interac-email" id="ep-interac-email">
-          {{ interac_info.alias }}
-          <button class="ep-copy-btn" onclick="copyEmail()">Copy</button>
-        </div>
-        <div class="ep-interac-ref">
-          <strong>Reference:</strong> {{ interac_info.reference }}
-          <button class="ep-copy-btn" onclick="copyRef()">Copy</button>
-        </div>
-        <div class="ep-interac-instructions">
-          <p style="font-size:0.8rem;color:#555;margin:8px 0"><strong>Instructions:</strong></p>
-          <ol>
-            <li>Open your bank's mobile app or online banking</li>
-            <li>Send an INTERAC e-Transfer (not a bill payment) to the email above</li>
-            <li>Include the reference code above in the message field</li>
-            <li>Send exactly <strong>${{ interac_info.amount }} CAD</strong></li>
-            <li>Your account activates automatically once the transfer is received</li>
-          </ol>
-        </div>
+    <!-- ── Pay with Interac e-Transfer (CAD) — primary & only method ── -->
+    <div class="ep-interac-info">
+      <h3><i class="fas fa-university"></i> Pay with Interac e-Transfer</h3>
+      <p style="font-size:.85rem;color:#555;margin:8px 0 0">
+        Send exactly <strong>${{ interac_info.amount }} CAD</strong> from your Canadian bank app to:
+      </p>
+      <div class="ep-interac-email">
+        {{ interac_info.alias }}
+        <button class="ep-copy-btn" onclick="copyEmail()">Copy</button>
       </div>
-      <p style="font-size:0.8rem;color:#888;text-align:center">
-        The Interac e-Transfer option appears instantly after your bank processes the transfer.
-        No extra steps needed.
+      <div class="ep-interac-ref">
+        <strong>Reference:</strong> {{ interac_info.reference }}
+        <button class="ep-copy-btn" onclick="copyRef()">Copy</button>
+      </div>
+      <div class="ep-interac-instructions">
+        <p style="font-size:.8rem;color:#555;margin:8px 0"><strong>How to pay:</strong></p>
+        <ol>
+          <li>Open your bank's mobile app or online banking</li>
+          <li>Choose <strong>Interac e-Transfer</strong> (not a bill payment)</li>
+          <li>Send to the email above — put the reference code in the message field</li>
+          <li>Send exactly <strong>${{ interac_info.amount }} CAD</strong></li>
+          <li>Your account activates automatically once the transfer arrives (usually minutes)</li>
+        </ol>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:#888;text-align:center;margin-top:10px">
+      Autodeposit is enabled — no security question needed.<br>
+      Your activation happens automatically — no need to contact anyone.
+    </p>
+{% else %}
+    <!-- ── Interac not configured yet ── -->
+    <div class="ep-interac-info" style="text-align:center">
+      <h3 style="justify-content:center"><i class="fas fa-hourglass-half"></i> Online payments almost ready</h3>
+      <p style="font-size:.85rem;color:#555;line-height:1.7">
+        We're switching GetMeCare to <strong>Interac e-Transfer</strong> payments
+        (Canadian dollars, straight from your bank app).<br>
+        This page will show payment instructions shortly.<br><br>
+        Need your account activated right now? Email
+        <a href="mailto:info@getmecare-ontario.com">info@getmecare-ontario.com</a>
+        and we'll take care of it manually.
       </p>
     </div>
-    <div id="ep-card-panel" style="display:none">
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="ep-activate-btn">
-          <i class="fas fa-lock"></i> Pay Now & Activate via Fincra
-        </button>
-      </form>
-    </div>
-{% else %}
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit" class="ep-activate-btn">
-        <i class="fas fa-lock"></i> Pay Now & Activate via Fincra
-      </button>
-    </form>
 {% endif %}
 
 <script>
-function selectMethod(method) {
-  document.querySelectorAll('.ep-method-option').forEach(function(el) {
-    el.classList.remove('active');
-  });
-  if (method === 'interac') {
-    document.querySelector('.ep-method-option[onclick*="interac"]').classList.add('active');
-    document.getElementById('ep-interac-panel').style.display = 'block';
-    document.getElementById('ep-card-panel').style.display = 'none';
-  } else {
-    document.querySelector('.ep-method-option[onclick*="card"]').classList.add('active');
-    document.getElementById('ep-interac-panel').style.display = 'none';
-    document.getElementById('ep-card-panel').style.display = 'block';
-  }
-}
 function copyEmail() {
   navigator.clipboard.writeText('{{ interac_info.alias }}').then(function() {});
 }
@@ -301,8 +241,8 @@ function copyRef() {
 
 <a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
     <p style="margin-top:12px;font-size:.75rem;color:#bbb">
-      Payments are securely processed by <strong>Fincra</strong>.<br>
-      GetMeCare never stores your card details.
+      Paid via <strong>Interac e-Transfer</strong> in Canadian dollars.<br>
+      Secured by Fincra · GetMeCare never sees your banking credentials.
     </p>
   </div>
 </div>

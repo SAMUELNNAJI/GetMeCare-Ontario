@@ -357,7 +357,10 @@ def earnings(request):
 
 @caregiver_required
 def documents(request):
-    from Account.forms import DocumentUploadForm, REQUIRED_DOC_TYPES
+    from Account.forms import DocumentUploadForm, ProfileImageForm, REQUIRED_DOC_TYPES
+
+    # Get or create the caregiver profile
+    profile, _ = CaregiverProfile.objects.get_or_create(user=request.user)
 
     # Get all user documents in a single query, ordered by upload date
     user_docs = CaregiverDocument.objects.filter(
@@ -389,22 +392,50 @@ def documents(request):
         for item in required_checklist
     )
 
+    # Check if profile photo exists
+    has_profile_photo = bool(profile.profile_image)
+
+    # Handle profile photo upload
     if request.method == 'POST':
-        form = DocumentUploadForm(request.POST, request.FILES, uploaded_types=uploaded_types)
-        if form.is_valid():
-            dt = form.cleaned_data['doc_type']
-            if dt in uploaded_types and dt != CaregiverDocument.DOC_OTHER:
-                messages.error(
-                    request,
-                    f'You have already uploaded a {dict(CaregiverDocument.DOC_TYPE_CHOICES)[dt]}. '
-                    'Wait for admin review before re-uploading.'
-                )
+        action = request.POST.get('action', 'document')
+
+        if action == 'photo':
+            # Handle profile photo upload
+            if 'profile_image' not in request.FILES:
+                messages.error(request, 'No file received. Please select an image and try again.')
+                return redirect('CareGiverAcc:documents')
+
+            image_form = ProfileImageForm(request.POST, request.FILES, instance=profile)
+            if image_form.is_valid():
+                try:
+                    image_form.save()
+                    messages.success(request, 'Profile photo uploaded successfully. Employers will now see your photo!')
+                except Exception as exc:
+                    messages.error(request, f'Photo upload failed: {str(exc) or "Please try again."}')
             else:
-                doc = form.save(commit=False)
-                doc.user = request.user
-                doc.save()
-                messages.success(request, f'{doc.get_doc_type_display()} uploaded successfully.')
+                error_msg = '; '.join(
+                    str(e) for errors in image_form.errors.values() for e in errors
+                )
+                messages.error(request, f'Invalid image: {error_msg}')
             return redirect('CareGiverAcc:documents')
+
+        else:
+            # Handle document upload
+            form = DocumentUploadForm(request.POST, request.FILES, uploaded_types=uploaded_types)
+            if form.is_valid():
+                dt = form.cleaned_data['doc_type']
+                if dt in uploaded_types and dt != CaregiverDocument.DOC_OTHER:
+                    messages.error(
+                        request,
+                        f'You have already uploaded a {dict(CaregiverDocument.DOC_TYPE_CHOICES)[dt]}. '
+                        'Wait for admin review before re-uploading.'
+                    )
+                else:
+                    doc = form.save(commit=False)
+                    doc.user = request.user
+                    doc.save()
+                    messages.success(request, f'{doc.get_doc_type_display()} uploaded successfully.')
+                return redirect('CareGiverAcc:documents')
     else:
         form = DocumentUploadForm(uploaded_types=uploaded_types)
 
@@ -423,6 +454,8 @@ def documents(request):
         'all_approved':       all_approved,
         'uploaded_types':     uploaded_types,
         'has_remaining_types': has_remaining_types,
+        'profile':            profile,
+        'has_profile_photo':  has_profile_photo,
     })
     return render(request, 'CareGiverAcc/documents.html', ctx)
 
