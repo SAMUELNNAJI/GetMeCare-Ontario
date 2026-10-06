@@ -779,6 +779,20 @@
         <a href="{% url 'EmployerApp:dashboard' %}" data-nav="dashboard"
           ><i class="fas fa-th-large"></i> Dashboard</a
         >
+        {% if is_moderation_restricted %}
+        {# ── Restricted: only support chat is accessible ── #}
+        <div class="ep-nav-section">Support</div>
+        <a href="{% url 'support_chat' %}" data-nav="support_chat"
+          ><i class="fas fa-headset" style="color:#e05252"></i> Contact Support{% if support_unread_count %}<span class="nav-unread-badge">{{ support_unread_count }}</span>{% endif %}</a
+        >
+        <div class="ep-nav-section" style="margin-top:8px;">Locked</div>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> Find a Caregiver</a>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> Post a Job</a>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> My Jobs</a>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> My Shifts</a>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> Payment History</a>
+        <a class="ep-nav-lock" title="Account restricted"><i class="fas fa-lock"></i> Messages</a>
+        {% else %}
         <div class="ep-nav-section">Caregivers</div>
         <a
           href="{% url 'browse' %}"
@@ -823,6 +837,7 @@
           data-nav="activate_account"
           ><i class="fas fa-bolt"></i> Activate Account</a
         >{% endif %}
+        {% endif %}{# end is_moderation_restricted #}
       </nav>
       <div class="ep-sb-stats">
         <div class="s-item">

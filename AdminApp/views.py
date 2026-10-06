@@ -876,3 +876,107 @@ def public_services(request):
         }
         data.append(item)
     return JsonResponse({'services': data})
+
+
+# ──────────────────────────────────────────────────────────────
+# Employer moderation — suspend / deactivate / reactivate
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def suspend_employer(request, profile_id):
+    """Suspend an employer account with a mandatory reason."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_employers')
+
+    from GETMECARE.email_utils import send_employer_suspended_email
+
+    profile = get_object_or_404(EmployerProfile, pk=profile_id)
+    reason  = request.POST.get('reason', '').strip()
+
+    if not reason:
+        messages.error(request, 'Please provide a reason for suspending this account.')
+        return redirect('AdminApp:manage_employers')
+
+    profile.account_status    = EmployerProfile.ACCOUNT_SUSPENDED
+    profile.status_reason     = reason
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_employer_suspended_email(profile.user, reason)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Suspension email failed for employer %s', profile.user.pk
+        )
+
+    messages.warning(
+        request,
+        f'{profile.user.get_full_name()} has been suspended. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_employers')
+
+
+@admin_required
+def deactivate_employer(request, profile_id):
+    """Deactivate an employer account with a mandatory reason."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_employers')
+
+    from GETMECARE.email_utils import send_employer_deactivated_email
+
+    profile = get_object_or_404(EmployerProfile, pk=profile_id)
+    reason  = request.POST.get('reason', '').strip()
+
+    if not reason:
+        messages.error(request, 'Please provide a reason for deactivating this account.')
+        return redirect('AdminApp:manage_employers')
+
+    profile.account_status    = EmployerProfile.ACCOUNT_DEACTIVATED
+    profile.status_reason     = reason
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_employer_deactivated_email(profile.user, reason)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Deactivation email failed for employer %s', profile.user.pk
+        )
+
+    messages.warning(
+        request,
+        f'{profile.user.get_full_name()} has been deactivated. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_employers')
+
+
+@admin_required
+def reactivate_employer(request, profile_id):
+    """Reactivate a suspended or deactivated employer account."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_employers')
+
+    from GETMECARE.email_utils import send_employer_reactivated_email
+
+    profile = get_object_or_404(EmployerProfile, pk=profile_id)
+
+    profile.account_status    = EmployerProfile.ACCOUNT_ACTIVE
+    profile.status_reason     = ''
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_employer_reactivated_email(profile.user)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Reactivation email failed for employer %s', profile.user.pk
+        )
+
+    messages.success(
+        request,
+        f'{profile.user.get_full_name()} has been reactivated. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_employers')

@@ -85,6 +85,56 @@
 <div class="dash-date"><i class="fas fa-calendar-day"></i> {{ today|date:"l, F j" }}</div>
 </div>
 {% for msg in messages %}<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"><i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i> {{ msg }}</div>{% endfor %}
+
+{% if account_status == 'suspended' %}
+<div style="background:#fff3e0;border:1.5px solid #f5d78a;border-radius:14px;padding:22px 24px;margin-bottom:22px;">
+  <div style="display:flex;align-items:flex-start;gap:16px;">
+    <div style="width:42px;height:42px;border-radius:50%;background:#fff3cd;border:1.5px solid #f5d78a;display:flex;align-items:center;justify-content:center;color:#c96000;font-size:1.1rem;flex-shrink:0;">
+      <i class="fas fa-pause-circle"></i>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:1rem;font-weight:700;color:#7a3c00;margin-bottom:5px;">Your account has been suspended</div>
+      <p style="font-size:.855rem;color:#7a3c00;line-height:1.55;margin-bottom:{% if account_status_reason %}10px{% else %}14px{% endif %};">
+        Your employer account is currently <strong>suspended</strong>. You cannot post jobs, browse caregivers, or manage shifts until the suspension is lifted.
+      </p>
+      {% if account_status_reason %}
+      <div style="background:#fff8e1;border:1px solid #f5d78a;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#5a3000;">
+        <strong>Reason:</strong> {{ account_status_reason }}
+      </div>
+      {% endif %}
+      <p style="font-size:.82rem;color:#a05000;margin-bottom:14px;">If you believe this is a mistake or want to appeal, please contact our support team.</p>
+      <a href="{% url 'support_chat' %}" style="display:inline-flex;align-items:center;gap:8px;background:#c96000;color:#fff;border-radius:9px;padding:10px 22px;font-size:.855rem;font-weight:700;text-decoration:none;">
+        <i class="fas fa-headset"></i> Contact Support
+      </a>
+    </div>
+  </div>
+</div>
+{% elif account_status == 'deactivated' %}
+<div style="background:#fdecea;border:1.5px solid #ffcdd2;border-radius:14px;padding:22px 24px;margin-bottom:22px;">
+  <div style="display:flex;align-items:flex-start;gap:16px;">
+    <div style="width:42px;height:42px;border-radius:50%;background:#fdecea;border:1.5px solid #ffcdd2;display:flex;align-items:center;justify-content:center;color:#c62828;font-size:1.1rem;flex-shrink:0;">
+      <i class="fas fa-ban"></i>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:1rem;font-weight:700;color:#7f1414;margin-bottom:5px;">Your account has been deactivated</div>
+      <p style="font-size:.855rem;color:#7f1414;line-height:1.55;margin-bottom:{% if account_status_reason %}10px{% else %}14px{% endif %};">
+        Your employer account has been <strong>deactivated</strong> by our admin team. Your job listings have been removed from the platform.
+      </p>
+      {% if account_status_reason %}
+      <div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#7f1414;">
+        <strong>Reason:</strong> {{ account_status_reason }}
+      </div>
+      {% endif %}
+      <p style="font-size:.82rem;color:#b71c1c;margin-bottom:14px;">If you have questions or want to appeal this decision, please contact our support team.</p>
+      <a href="{% url 'support_chat' %}" style="display:inline-flex;align-items:center;gap:8px;background:#c62828;color:#fff;border-radius:9px;padding:10px 22px;font-size:.855rem;font-weight:700;text-decoration:none;">
+        <i class="fas fa-headset"></i> Contact Support
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if not is_moderation_restricted %}
 {% if not is_activated %}
 <div class="dash-alert">
 <div class="dash-alert-icon"><i class="fas fa-bolt"></i></div>
@@ -92,6 +142,7 @@
 <a href="{% url 'EmployerApp:activate_account' %}" class="dash-alert-btn">Activate now</a>
 </div>
 {% endif %}
+{% endif %}{# end is_moderation_restricted #}
 <div class="dash-stats">
 <div class="dash-stat"><div class="dash-stat-icon si-blue"><i class="fas fa-calendar-check"></i></div><div class="dash-stat-val">{{ total_scheduled }}</div><div class="dash-stat-lbl">Upcoming Shifts</div>{% if total_scheduled %}<div class="dash-stat-sub muted">this week</div>{% endif %}</div>
 <div class="dash-stat"><div class="dash-stat-icon si-orange"><i class="fas fa-clock"></i></div><div class="dash-stat-val">{{ total_active }}</div><div class="dash-stat-lbl">Active Now</div>{% if total_active %}<div class="dash-stat-sub">in progress</div>{% endif %}</div>

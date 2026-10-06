@@ -413,6 +413,17 @@ class ShiftLog(models.Model):
 class EmployerProfile(models.Model):
     ACTIVATION_FEE = 39.99  # CAD — flat one-time activation fee
 
+    # ── Account moderation status ──────────────────────────────
+    ACCOUNT_ACTIVE      = 'active'
+    ACCOUNT_SUSPENDED   = 'suspended'
+    ACCOUNT_DEACTIVATED = 'deactivated'
+
+    ACCOUNT_STATUS_CHOICES = [
+        (ACCOUNT_ACTIVE,      'Active'),
+        (ACCOUNT_SUSPENDED,   'Suspended'),
+        (ACCOUNT_DEACTIVATED, 'Deactivated'),
+    ]
+
     user               = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name='employer_profile',
     )
@@ -428,10 +439,38 @@ class EmployerProfile(models.Model):
         null=True, blank=True,
         help_text='Last time an "activate your account" reminder was sent',
     )
+    # ── Moderation fields ─────────────────────────────────────
+    account_status     = models.CharField(
+        max_length=20,
+        choices=ACCOUNT_STATUS_CHOICES,
+        default=ACCOUNT_ACTIVE,
+        help_text='Admin-controlled moderation status',
+    )
+    status_reason      = models.TextField(
+        blank=True,
+        help_text='Reason given to employer for suspension/deactivation',
+    )
+    status_changed_at  = models.DateTimeField(
+        null=True, blank=True,
+        help_text='When the account_status was last changed by admin',
+    )
 
     def __str__(self):
         status = 'Active' if self.is_active else 'Inactive'
         return f"{self.user.get_full_name()} — {status}"
+
+    @property
+    def is_suspended(self):
+        return self.account_status == self.ACCOUNT_SUSPENDED
+
+    @property
+    def is_deactivated(self):
+        return self.account_status == self.ACCOUNT_DEACTIVATED
+
+    @property
+    def is_moderation_restricted(self):
+        """True if the employer cannot access the full dashboard."""
+        return self.account_status in (self.ACCOUNT_SUSPENDED, self.ACCOUNT_DEACTIVATED)
 
 
 # ──────────────────────────────────────────────────────────────

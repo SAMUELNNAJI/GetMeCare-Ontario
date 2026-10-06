@@ -138,16 +138,23 @@
             >
           </td>
           <td>
-            {% if u.id != request.user.id %}
-            <form method="post" action="{% url 'AdminApp:delete_user' u.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ u.get_full_name|default:u.username }}? This action cannot be undone.');">
-              {% csrf_token %}
-              <button type="submit" class="adm-btn adm-btn-danger" style="padding: 6px 12px; font-size: 0.75rem;">
-                <i class="fas fa-trash"></i> Delete
-              </button>
-            </form>
-            {% else %}
-            <span style="color: #ccc; font-size: 0.75rem;">—</span>
-            {% endif %}
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              {% if u.id != request.user.id and not u.is_superuser and not u.is_staff %}
+              <a href="{% url 'chat_start' u.id %}" class="adm-btn adm-btn-green" style="padding:6px 12px;font-size:.75rem;">
+                <i class="fas fa-comment"></i> Chat
+              </a>
+              {% endif %}
+              {% if u.id != request.user.id %}
+              <form method="post" action="{% url 'AdminApp:delete_user' u.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ u.get_full_name|default:u.username }}? This action cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="adm-btn adm-btn-danger" style="padding:6px 12px;font-size:.75rem;">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </form>
+              {% else %}
+              <span style="color:#ccc;font-size:.75rem;">—</span>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% empty %}

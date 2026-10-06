@@ -943,3 +943,105 @@ def send_password_changed_email(user) -> bool:
         to_email=user.email,
         html_body=_wrap(content),
     )
+
+
+# ──────────────────────────────────────────────────────────────
+# 17. Employer account suspended by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_employer_suspended_email(employer, reason: str) -> bool:
+    support_url = f'{SITE_URL}/chatbot/support/'
+    changed_str = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#c62828;">Your account has been suspended</h2>
+    <p>Hi {employer.first_name or employer.username}, we are writing to inform you that
+       your <strong>{SITE_NAME}</strong> employer account has been
+       <strong>temporarily suspended</strong> by our admin team.</p>
+    <div class="info-box" style="border-left-color:#c62828;background:#fdecea;">
+      <p><strong>Account:</strong> {employer.get_full_name()}</p>
+      <p><strong>Email:</strong> {employer.email}</p>
+      <p><strong>Status:</strong> Suspended</p>
+      <p><strong>Effective:</strong> {changed_str}</p>
+      <p><strong>Reason:</strong><br />{reason or 'No reason provided.'}</p>
+    </div>
+    <p>While your account is suspended you will <strong>not</strong> be able to post
+       jobs, book shifts, or browse caregivers. You can still access your
+       <strong>support chat</strong> to contact our team.</p>
+    <p>If you believe this was a mistake or would like to appeal, please reach out
+       to us through the support chat or by emailing
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    <a class="btn" href="{support_url}" style="background:#c62828;">Contact Support</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your account has been suspended',
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 18. Employer account deactivated by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_employer_deactivated_email(employer, reason: str) -> bool:
+    support_url = f'{SITE_URL}/chatbot/support/'
+    changed_str = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#7b1fa2;">Your account has been deactivated</h2>
+    <p>Hi {employer.first_name or employer.username}, we are writing to inform you that
+       your <strong>{SITE_NAME}</strong> employer account has been
+       <strong>deactivated</strong> by our admin team.</p>
+    <div class="info-box" style="border-left-color:#7b1fa2;background:#f3e8ff;">
+      <p><strong>Account:</strong> {employer.get_full_name()}</p>
+      <p><strong>Email:</strong> {employer.email}</p>
+      <p><strong>Status:</strong> Deactivated</p>
+      <p><strong>Effective:</strong> {changed_str}</p>
+      <p><strong>Reason:</strong><br />{reason or 'No reason provided.'}</p>
+    </div>
+    <p>Your account has been deactivated and your listings have been removed from
+       the platform. You can still access your <strong>support chat</strong>
+       to contact our team.</p>
+    <p>If you have questions or would like to appeal this decision, please contact
+       us through the support chat or email
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    <a class="btn" href="{support_url}" style="background:#7b1fa2;">Contact Support</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your account has been deactivated',
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 19. Employer account reactivated by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_employer_reactivated_email(employer) -> bool:
+    dashboard_url = f'{SITE_URL}/employer/dashboard/'
+    changed_str   = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#1a6b4a;">Your account has been reactivated</h2>
+    <p>Hi {employer.first_name or employer.username}, great news — your
+       <strong>{SITE_NAME}</strong> employer account has been
+       <strong>reactivated</strong> by our admin team.</p>
+    <div class="info-box">
+      <p><strong>Account:</strong> {employer.get_full_name()}</p>
+      <p><strong>Email:</strong> {employer.email}</p>
+      <p><strong>Status:</strong> Active</p>
+      <p><strong>Reactivated on:</strong> {changed_str}</p>
+    </div>
+    <p>You now have full access to the platform again. You can post jobs,
+       browse caregivers, and manage your shifts as usual.</p>
+    <a class="btn" href="{dashboard_url}">Go to My Dashboard</a>
+    <p style="margin-top:24px;">Questions? Contact us at
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your account has been reactivated',
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )

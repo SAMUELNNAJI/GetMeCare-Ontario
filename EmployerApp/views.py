@@ -38,6 +38,28 @@ def employer_required(view_func):
     return wrapper
 
 
+def employer_moderation_check(view_func):
+    """
+    Decorator: redirect suspended/deactivated employers to dashboard,
+    where the lockout banner is shown. Only the dashboard itself and
+    the support chat are allowed through.
+    """
+    @login_required(login_url='Account:login')
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_employer:
+            profile = EmployerProfile.objects.filter(user=request.user).first()
+            if profile and profile.is_moderation_restricted:
+                messages.warning(
+                    request,
+                    'Your account is currently restricted. '
+                    'Please use the support chat to contact us.'
+                )
+                return redirect('EmployerApp:dashboard')
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+
 def _employer_ctx(user):
     """Shared context for base_employer.html sidebar."""
     profile, _ = EmployerProfile.objects.get_or_create(user=user)
@@ -51,11 +73,14 @@ def _employer_ctx(user):
         employer=user, is_seen=False
     ).count()
     return {
-        'emp_profile':       profile,
-        'is_activated':      profile.is_active,
-        'total_completed':   total_completed,
-        'open_jobs_count':   open_jobs,
-        'unseen_payments':   unseen_payments,
+        'emp_profile':            profile,
+        'is_activated':           profile.is_active,
+        'total_completed':        total_completed,
+        'open_jobs_count':        open_jobs,
+        'unseen_payments':        unseen_payments,
+        'account_status':         profile.account_status,
+        'account_status_reason':  profile.status_reason,
+        'is_moderation_restricted': profile.is_moderation_restricted,
     }
 
 
@@ -140,6 +165,7 @@ def dashboard(request):
 
 
 @employer_required
+@employer_moderation_check
 def my_shifts(request):
     shifts = Shift.objects.filter(
         employer=request.user
@@ -150,11 +176,13 @@ def my_shifts(request):
 
 
 @employer_required
+@employer_moderation_check
 def find_caregiver(request):
     return redirect('browse')
 
 
 @employer_required
+@employer_moderation_check
 def payment_history(request):
     emp_payments = EmployerPayment.objects.filter(
         employer=request.user
@@ -196,6 +224,7 @@ def payment_history(request):
 
 
 @employer_required
+@employer_moderation_check
 def post_job(request):
     """Only activated (paid) employers can post jobs."""
     ctx = _employer_ctx(request.user)
@@ -225,6 +254,7 @@ def post_job(request):
 
 
 @employer_required
+@employer_moderation_check
 def my_jobs(request):
     jobs = JobPosting.objects.filter(employer=request.user).order_by('-created_at')
     ctx  = _employer_ctx(request.user)
@@ -233,6 +263,7 @@ def my_jobs(request):
 
 
 @employer_required
+@employer_moderation_check
 def close_job(request, job_id):
     job = get_object_or_404(JobPosting, pk=job_id, employer=request.user)
     if request.method == 'POST':
@@ -243,6 +274,7 @@ def close_job(request, job_id):
 
 
 @employer_required
+@employer_moderation_check
 def activate_account(request):
     """Show the Stripe checkout option for the one-time activation fee.
 
@@ -284,6 +316,7 @@ def _complete_activation(employer, reference: str) -> None:
 
 
 @employer_required
+@employer_moderation_check
 def stripe_activation_checkout(request):
     """POST — create a Stripe Checkout session for the activation fee."""
     if request.method != 'POST':
@@ -330,6 +363,7 @@ def stripe_activation_checkout(request):
 
 
 @employer_required
+@employer_moderation_check
 def stripe_activation_callback(request):
     """Handle the redirect back from Stripe after activation fee payment.
 
@@ -380,6 +414,7 @@ def stripe_activation_callback(request):
 
 
 @employer_required
+@employer_moderation_check
 def pay_later(request):
     """Dismiss the activation modal and set a session flag."""
     request.session['modal_dismissed'] = True
@@ -391,6 +426,7 @@ def pay_later(request):
 # ──────────────────────────────────────────────────────────────
 
 @employer_required
+@employer_moderation_check
 def book_caregiver(request, proposal_pk):
     """Employer fills in date/time and confirms the booking from a price proposal."""
     from Account.models import BookingProposal
@@ -485,6 +521,7 @@ def book_caregiver(request, proposal_pk):
 
 
 @employer_required
+@employer_moderation_check
 def payment_checkout(request, shift_pk):
     """Show the payment summary and the Stripe card-payment button."""
     shift = get_object_or_404(
@@ -554,6 +591,7 @@ def _complete_booking(employer, shift, reference: str, send_emails: bool = True)
 
 
 @employer_required
+@employer_moderation_check
 def stripe_booking_checkout(request, shift_pk):
     """POST — create a Stripe Checkout session for a shift booking."""
     if request.method != 'POST':
@@ -611,6 +649,7 @@ def stripe_booking_checkout(request, shift_pk):
 
 
 @employer_required
+@employer_moderation_check
 def stripe_booking_callback(request, shift_pk):
     """Handle the redirect back from Stripe after a shift-booking payment.
 
@@ -670,6 +709,7 @@ def stripe_booking_callback(request, shift_pk):
 # Keep the old confirm_payment view as a graceful fallback for any stale links.
 # In the new flow the employer is redirected to Stripe's hosted page instead.
 @employer_required
+@employer_moderation_check
 def confirm_payment(request, shift_pk):
     """Legacy endpoint — redirects to checkout if accessed directly."""
     return redirect('EmployerApp:payment_checkout', shift_pk=shift_pk)
@@ -680,6 +720,7 @@ def confirm_payment(request, shift_pk):
 # ──────────────────────────────────────────────────────────────
 
 @employer_required
+@employer_moderation_check
 def submit_dispute(request):
     """POST — employer raises a dispute from the modal form."""
     if request.method != 'POST':
@@ -773,6 +814,7 @@ def submit_dispute(request):
 
 
 @employer_required
+@employer_moderation_check
 def my_disputes(request):
     """Employer views all their own disputes."""
     disputes = Dispute.objects.filter(
