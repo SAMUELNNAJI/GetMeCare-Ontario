@@ -5,6 +5,9 @@ from django.conf import settings
 from Account.models import CaregiverProfile, JobPosting
 from AdminApp.models import Faq, Service
 
+# Contact-form submissions are delivered to this inbox (admin notification).
+CONTACT_FORM_INBOX = 'getmecareontario@gmail.com'
+
 
 def home(request):
     verified_caregivers = CaregiverProfile.objects.filter(
@@ -166,7 +169,7 @@ def contact(request):
         message    = request.POST.get('message', '').strip()
 
         if first_name and last_name and email and role and subject and message:
-            from GETMECARE.email_utils import send_transactional_email, _wrap, ADMIN_EMAIL, SITE_NAME
+            from GETMECARE.email_utils import send_transactional_email, _wrap, SITE_NAME
 
             # ── Branded HTML email to admin ───────────────────
             html_content = f"""
@@ -189,7 +192,7 @@ def contact(request):
 
             ok = send_transactional_email(
                 subject   = f'[Contact Form] {subject} — {first_name} {last_name}',
-                to_email  = ADMIN_EMAIL,          # always info@getmecare-ontario.com
+                to_email  = CONTACT_FORM_INBOX,   # getmecareontario@gmail.com
                 html_body = _wrap(html_content),
                 plain_body = (
                     f"New contact form submission\n\n"
@@ -212,7 +215,7 @@ def contact(request):
               <p><strong>Your subject:</strong> {subject}</p>
             </div>
             <p>If your matter is urgent, you can also email us directly at
-               <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+               <a href="mailto:{CONTACT_FORM_INBOX}">{CONTACT_FORM_INBOX}</a>.</p>
             """
             send_transactional_email(
                 subject   = f'[{SITE_NAME}] We received your message — {subject}',
@@ -225,7 +228,7 @@ def contact(request):
                 dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
             else:
                 from django.contrib import messages as dj_messages
-                dj_messages.error(request, "Sorry, there was a problem sending your message. Please email us directly at info@getmecare-ontario.com.")
+                dj_messages.error(request, "Sorry, there was a problem sending your message. Please email us directly at getmecareontario@gmail.com.")
         else:
             from django.contrib import messages as dj_messages
             dj_messages.error(request, 'Please fill in all required fields.')
