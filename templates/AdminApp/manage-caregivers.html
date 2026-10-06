@@ -1,232 +1,602 @@
-{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Caregivers —
-Admin{% endblock %} {% block extra_head %}
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Manage Caregivers — Admin{% endblock %}
+{% block extra_head %}
 <style>
-  .cg-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .cg-av-sm {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #2d5a42;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .cg-nm {
-    font-size: 0.855rem;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-  .cg-em {
-    font-size: 0.72rem;
-    color: #aaa;
-  }
-  .doc-mini {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .doc-pip {
-    font-size: 0.65rem;
-    font-weight: 600;
-    border-radius: 4px;
-    padding: 2px 6px;
-  }
-  .pip-ok {
-    background: #e6f5ee;
-    color: #1b7d4f;
-  }
-  .pip-mis {
-    background: #f5f5f5;
-    color: #bbb;
-  }
-  .pip-rej {
-    background: #fdecea;
-    color: #c62828;
-  }
-  .act-cell {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  @media (max-width: 900px) {
-    .adm-table th:nth-child(4),
-    .adm-table td:nth-child(4),
-    .adm-table th:nth-child(5),
-    .adm-table td:nth-child(5) {
-      display: none;
-    }
-  }
+/* ═══ PAGE HEADER ═══ */
+.mc-header {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:14px; margin-bottom:24px;
+}
+.mc-header-left h1 { font-size:1.45rem; font-weight:800; color:#0f1f17; letter-spacing:-.3px; }
+.mc-header-left p  { font-size:.83rem; color:#7a8c80; margin-top:3px; }
+.mc-stat-pills { display:flex; gap:10px; flex-wrap:wrap; }
+.mc-stat-pill {
+  display:flex; align-items:center; gap:8px;
+  background:#fff; border:1px solid #e4ece7; border-radius:40px;
+  padding:7px 14px; font-size:.78rem; font-weight:600; color:#444;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.mc-stat-pill .pill-val { font-size:.95rem; font-weight:800; color:#1b3a2d; }
+
+/* ── search ── */
+.mc-search-box {
+  display:flex; align-items:center; gap:9px;
+  background:#fff; border:1.5px solid #dde4d9; border-radius:12px;
+  padding:9px 16px; flex:1; max-width:400px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  transition:border-color .15s;
+}
+.mc-search-box:focus-within { border-color:#1b7d4f; box-shadow:0 0 0 3px rgba(27,125,79,.1); }
+.mc-search-box i { color:#9aaa9e; font-size:.84rem; flex-shrink:0; }
+.mc-search-box input {
+  border:none; outline:none; background:transparent;
+  font-size:.875rem; color:#333; width:100%; font-family:inherit;
+}
+.mc-search-box input::placeholder { color:#bbb; }
+.mc-clear-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#fdecea; color:#c62828; border:1px solid #ffcdd2;
+  border-radius:9px; padding:8px 14px; font-size:.78rem;
+  font-weight:600; text-decoration:none; transition:background .15s;
+}
+.mc-clear-btn:hover { background:#ffcdd2; }
+.mc-search-result-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#e6f5ee; color:#1b5e35; border:1px solid #b2dfca;
+  border-radius:20px; padding:6px 14px; font-size:.8rem;
+  margin-bottom:16px;
+}
+
+/* ═══ CARD GRID ═══ */
+.cg-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(340px,1fr));
+  gap:16px;
+}
+
+.cg-card {
+  background:#fff; border:1px solid #e8ede9; border-radius:16px;
+  overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.05);
+  transition:box-shadow .2s, transform .2s;
+  display:flex; flex-direction:column;
+}
+.cg-card:hover { box-shadow:0 6px 24px rgba(27,58,45,.1); transform:translateY(-2px); }
+
+.cg-accent         { height:4px; }
+.cg-accent-active  { background:linear-gradient(90deg,#1b7d4f,#2daa70); }
+.cg-accent-pending { background:linear-gradient(90deg,#c96000,#f0a040); }
+.cg-accent-rejected{ background:linear-gradient(90deg,#c62828,#e05252); }
+.cg-accent-inact   { background:linear-gradient(90deg,#9aaa9e,#c8d8c8); }
+
+.cg-card-body { padding:18px 20px 12px; flex:1; }
+
+/* top row */
+.cg-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:14px; }
+.cg-av {
+  width:50px; height:50px; border-radius:50%;
+  color:#fff; font-size:1rem; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; box-shadow:0 2px 8px rgba(27,58,45,.22);
+  overflow:hidden; text-decoration:none;
+}
+.cg-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.cg-av-active  { background:linear-gradient(135deg,#1b3a2d,#2d7a50); }
+.cg-av-pending { background:linear-gradient(135deg,#c96000,#f0a040); }
+.cg-av-rejected{ background:linear-gradient(135deg,#c62828,#e05252); }
+.cg-av-inact   { background:linear-gradient(135deg,#6b7c72,#9aaa9e); }
+
+.cg-name-block { flex:1; min-width:0; }
+.cg-name  { font-size:.945rem; font-weight:700; color:#0f1f17; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cg-name a{ color:inherit; text-decoration:none; }
+.cg-name a:hover{ color:#1b7d4f; }
+.cg-email { font-size:.74rem; color:#9aaa9e; margin-top:2px; }
+
+.cg-sbadge {
+  display:inline-flex; align-items:center; gap:5px; border-radius:20px;
+  padding:4px 10px; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0;
+}
+.csb-active  { background:#e6f5ee; color:#1b7d4f; }
+.csb-pending { background:#fff3e0; color:#c96000; }
+.csb-rejected{ background:#fdecea; color:#c62828; }
+.csb-inact   { background:#f0f0f0; color:#777; }
+.csb-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.csd-active  { background:#1b7d4f; }
+.csd-pending { background:#c96000; animation:cpulse 2s infinite; }
+.csd-rejected{ background:#c62828; }
+.csd-inact   { background:#bbb; }
+@keyframes cpulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* meta grid */
+.cg-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.cg-meta-item { background:#f8faf7; border-radius:9px; padding:8px 11px; }
+.cg-meta-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; }
+.cg-meta-val { font-size:.81rem; font-weight:600; color:#1a1a1a; margin-top:2px; }
+
+/* doc pills */
+.cg-docs { margin-bottom:12px; }
+.cg-docs-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+.cg-docs-pills { display:flex; gap:5px; flex-wrap:wrap; }
+.dp {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:.7rem; font-weight:700; border-radius:6px; padding:3px 9px;
+}
+.dp-ok   { background:#e6f5ee; color:#1b7d4f; }
+.dp-pend { background:#fff3e0; color:#c96000; }
+.dp-rej  { background:#fdecea; color:#c62828; }
+.dp-miss { background:#f5f5f5; color:#ccc; border:1px dashed #e0e0e0; }
+
+/* skills */
+.cg-skills { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.skill-tag { font-size:.7rem; font-weight:600; background:#eef4f1; color:#2d5a42; border-radius:20px; padding:3px 10px; }
+
+/* actions */
+.cg-actions {
+  padding:12px 20px 15px; border-top:1px solid #f2f4f0;
+  display:flex; gap:7px; flex-wrap:wrap; align-items:center;
+}
+.cc-btn {
+  display:inline-flex; align-items:center; gap:5px; border-radius:8px;
+  padding:7px 13px; font-size:.775rem; font-weight:600; cursor:pointer;
+  border:none; font-family:inherit; text-decoration:none;
+  transition:opacity .15s, transform .1s;
+}
+.cc-btn:hover { opacity:.88; transform:translateY(-1px); }
+.ccb-green { background:#1b7d4f; color:#fff; }
+.ccb-blue  { background:#e8f0fe; color:#1a56c4; }
+.ccb-ghost { background:#f0f2ee; color:#333; border:1px solid #dde2d8; }
+.ccb-warn  { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; cursor:default; }
+
+/* empty */
+.cg-empty { grid-column:1/-1; text-align:center; padding:52px 0; color:#c0ccc4; font-size:.88rem; }
+.cg-empty i { font-size:2.8rem; display:block; margin-bottom:10px; }
+
+/* ═══ DOCUMENT MODAL ═══ */
+.docs-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:900;
+  align-items:center; justify-content:center; padding:20px;
+}
+.docs-backdrop.open { display:flex; }
+.docs-modal {
+  background:#fff; border-radius:18px;
+  max-width:580px; width:100%; max-height:88vh;
+  display:flex; flex-direction:column;
+  box-shadow:0 24px 72px rgba(0,0,0,.22);
+  animation:docsIn .25s ease;
+  overflow:hidden;
+}
+@keyframes docsIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.docs-modal-header {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+  padding:22px 24px 16px; border-bottom:1px solid #f2f4f0; flex-shrink:0;
+}
+.docs-modal-title {
+  font-size:1rem; font-weight:800; color:#0f1f17;
+  display:flex; align-items:center; gap:8px;
+}
+.docs-modal-sub { font-size:.76rem; color:#9aaa9e; margin-top:3px; }
+.docs-modal-close {
+  width:32px; height:32px; border-radius:50%; border:none;
+  background:#f0f2ee; color:#666; cursor:pointer; font-size:.9rem;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:background .15s;
+}
+.docs-modal-close:hover { background:#e4e7e0; color:#333; }
+.docs-modal-body { flex:1; overflow-y:auto; padding:16px 24px; }
+.docs-modal-body::-webkit-scrollbar { width:5px; }
+.docs-modal-body::-webkit-scrollbar-track { background:#f8faf7; border-radius:4px; }
+.docs-modal-body::-webkit-scrollbar-thumb { background:#c8d8c8; border-radius:4px; }
+.docs-modal-footer {
+  padding:14px 24px 18px; border-top:1px solid #f2f4f0;
+  display:flex; gap:10px; flex-shrink:0;
+}
+
+/* ── doc row ── */
+.doc-row-item {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:13px 0; border-bottom:1px solid #f5f7f4;
+}
+.doc-row-item:last-child { border-bottom:none; }
+.doc-row-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
+.doc-row-icon {
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.95rem; flex-shrink:0;
+}
+.doc-icon-ok   { background:#e6f5ee; color:#1b7d4f; }
+.doc-icon-rej  { background:#fdecea; color:#c62828; }
+.doc-icon-pend { background:#fff3e0; color:#c96000; }
+.doc-row-info { min-width:0; }
+.doc-row-name { font-size:.855rem; font-weight:700; color:#1a1a1a; }
+.doc-row-meta { font-size:.72rem; color:#9aaa9e; margin-top:2px; }
+.doc-row-note {
+  font-size:.74rem; color:#666; margin-top:4px;
+  background:#f8faf7; border-radius:6px; padding:4px 8px;
+  display:flex; align-items:center; gap:5px;
+}
+.doc-row-right {
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+}
+.doc-status-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  border-radius:20px; padding:4px 9px;
+  font-size:.7rem; font-weight:700; white-space:nowrap;
+}
+.dsb-ok   { background:#e6f5ee; color:#1b7d4f; }
+.dsb-rej  { background:#fdecea; color:#c62828; }
+.dsb-pend { background:#fff3e0; color:#c96000; }
+.doc-view-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  background:#1b7d4f; color:#fff; border-radius:7px;
+  padding:5px 11px; font-size:.74rem; font-weight:600;
+  text-decoration:none; transition:background .15s;
+}
+.doc-view-btn:hover { background:#155f3c; }
+.docs-empty {
+  text-align:center; padding:36px 0; color:#c0ccc4; font-size:.86rem;
+}
+.docs-empty i { font-size:2rem; display:block; margin-bottom:8px; }
+
+/* ═══ PAGINATION ═══ */
+.adm-pagination {
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; margin-top:28px; flex-wrap:wrap;
+}
+.adm-pagination a,
+.adm-pagination span {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:36px; height:36px; border-radius:9px;
+  font-size:.82rem; font-weight:600; text-decoration:none;
+  transition:background .15s, color .15s;
+}
+.adm-pagination a { background:#fff; color:#444; border:1px solid #dde4d9; }
+.adm-pagination a:hover { background:#e6f5ee; color:#1b7d4f; border-color:#b2dfca; }
+.adm-pagination span.current {
+  background:#1b7d4f; color:#fff; border:1px solid #1b7d4f;
+}
+.adm-pagination span.disabled { background:#f5f5f5; color:#ccc; border:1px solid #eee; cursor:default; }
+.adm-page-info { text-align:center; font-size:.78rem; color:#9aaa9e; margin-top:10px; }
+
+@media(max-width:680px){
+  .cg-grid{grid-template-columns:1fr;}
+  .mc-header{flex-direction:column;align-items:flex-start;}
+}
 </style>
-{% endblock %} {% block content %}
-<div class="adm-page-title">
-  <i class="fas fa-user-nurse" style="color: #1b7d4f; margin-right: 8px"></i
-  >Manage Caregivers
+{% endblock %}
+
+{% block content %}
+
+<div class="mc-header">
+  <div class="mc-header-left">
+    <h1><i class="fas fa-user-nurse" style="color:#1b7d4f;font-size:1.2rem;margin-right:8px"></i>Manage Caregivers</h1>
+    <p>Review documents, verify and activate caregiver accounts</p>
+  </div>
+  <div class="mc-stat-pills">
+    <div class="mc-stat-pill">
+      <i class="fas fa-users" style="color:#1b7d4f"></i>
+      <span class="pill-val">{{ total_count }}</span> total
+    </div>
+  </div>
 </div>
 
+{# ── Search bar ── #}
+<form method="get" action="" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="mc-search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search by name, email, city, skills, status…" value="{{ search_q|default:'' }}" autofocus>
+    </div>
+    {% if search_q %}
+    <a href="{% url 'AdminApp:manage_caregivers' %}" class="mc-clear-btn">
+      <i class="fas fa-times"></i> Clear
+    </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if search_q %}
+<div class="mc-search-result-pill">
+  <i class="fas fa-filter"></i>
+  Showing <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} for <strong>"{{ search_q }}"</strong>
+</div>
+{% endif %}
+
 {% for msg in messages %}
-<div
-  class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}"
->
-  <i
-    class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"
-  ></i>
-  {{ msg }}
+<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}" style="margin-bottom:14px;">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i> {{ msg }}
 </div>
 {% endfor %}
 
-<div class="adm-card">
-  <div class="adm-card-pad">
-    <div
-      style="
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      "
-    >
-      <i class="fas fa-list" style="color: #1b7d4f"></i> All Caregiver Profiles
-      <span
-        style="
-          margin-left: auto;
-          font-size: 0.72rem;
-          font-weight: 600;
-          background: #e6f5ee;
-          color: #1b7d4f;
-          border-radius: 20px;
-          padding: 3px 10px;
-        "
-        >{{ profiles|length }} total</span
-      >
+<div class="cg-grid">
+{% for p in profiles %}
+
+  <div class="cg-card">
+
+    {# accent bar #}
+    <div class="cg-accent
+      {% if p.status == 'active' %}cg-accent-active
+      {% elif p.status == 'pending_admin_review' %}cg-accent-pending
+      {% elif p.status == 'rejected' %}cg-accent-rejected
+      {% else %}cg-accent-inact{% endif %}">
     </div>
-    <div class="scroll-table-wrap">
-<table class="adm-table">
-      <thead>
-        <tr>
-          <th>Caregiver</th>
-          <th>City</th>
-          <th>Rate</th>
-          <th>Skills</th>
-          <th>Docs</th>
-          <th>Status</th>
-          <th>Since</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in profiles %}
-        <tr>
-          <td>
-            <div class="cg-info">
-              <a href="{% url 'caregiver_profile' p.pk %}" title="View public profile" style="text-decoration:none">
-                <div class="cg-av-sm" style="cursor:pointer">
-                  {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+
+    <div class="cg-card-body">
+
+      {# top row #}
+      <div class="cg-top">
+        <a href="{% url 'caregiver_profile' p.pk %}" class="cg-av
+          {% if p.status == 'active' %}cg-av-active
+          {% elif p.status == 'pending_admin_review' %}cg-av-pending
+          {% elif p.status == 'rejected' %}cg-av-rejected
+          {% else %}cg-av-inact{% endif %}"
+          title="View public profile">
+          {% if p.profile_image %}
+            <img src="{{ p.profile_image.url }}" alt="{{ p.user.get_full_name }}">
+          {% else %}
+            {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+          {% endif %}
+        </a>
+
+        <div class="cg-name-block">
+          <div class="cg-name">
+            <a href="{% url 'caregiver_profile' p.pk %}">{{ p.user.get_full_name|default:p.user.username }}</a>
+          </div>
+          <div class="cg-email">{{ p.user.email }}</div>
+        </div>
+
+        {% if p.status == 'active' %}
+          <span class="cg-sbadge csb-active"><span class="csb-dot csd-active"></span> Active</span>
+        {% elif p.status == 'pending_admin_review' %}
+          <span class="cg-sbadge csb-pending"><span class="csb-dot csd-pending"></span> Pending</span>
+        {% elif p.status == 'rejected' %}
+          <span class="cg-sbadge csb-rejected"><span class="csb-dot csd-rejected"></span> Rejected</span>
+        {% else %}
+          <span class="cg-sbadge csb-inact"><span class="csb-dot csd-inact"></span> Inactive</span>
+        {% endif %}
+      </div>
+
+      {# meta grid #}
+      <div class="cg-meta">
+        <div class="cg-meta-item">
+          <div class="cg-meta-lbl"><i class="fas fa-map-marker-alt" style="margin-right:3px"></i>City</div>
+          <div class="cg-meta-val">{{ p.city|default:"—" }}</div>
+        </div>
+        <div class="cg-meta-item">
+          <div class="cg-meta-lbl"><i class="fas fa-dollar-sign" style="margin-right:3px"></i>Rate</div>
+          <div class="cg-meta-val">{% if p.hourly_rate %}${{ p.hourly_rate }}/hr{% else %}<span style="color:#ccc">—</span>{% endif %}</div>
+        </div>
+        <div class="cg-meta-item" style="grid-column:1/-1">
+          <div class="cg-meta-lbl"><i class="fas fa-calendar-alt" style="margin-right:3px"></i>Member since</div>
+          <div class="cg-meta-val">{{ p.created_at|date:"M d, Y" }}</div>
+        </div>
+      </div>
+
+      {# document pills #}
+      <div class="cg-docs">
+        <div class="cg-docs-lbl"><i class="fas fa-folder" style="margin-right:3px"></i>Documents</div>
+        <div class="cg-docs-pills">
+          {% with docs=p.user.documents.all %}
+          {% for dtype in doc_types %}
+            {% with doc_found=False %}
+            {% for d in docs %}
+              {% if d.doc_type == dtype %}
+                <span class="dp {% if d.status == 'approved' %}dp-ok{% elif d.status == 'rejected' %}dp-rej{% else %}dp-pend{% endif %}"
+                  title="{% if dtype == 'psw_certificate' %}PSW Certificate{% elif dtype == 'vulnerable_sector_check' %}Vulnerable Sector Check{% elif dtype == 'government_id' %}Government ID{% elif dtype == 'first_aid' %}First Aid/CPR{% else %}Resume/CV{% endif %} — {{ d.get_status_display }}">
+                  <i class="fas fa-{% if d.status == 'approved' %}check{% elif d.status == 'rejected' %}times{% else %}clock{% endif %}"></i>
+                  {% if dtype == "psw_certificate" %}PSW
+                  {% elif dtype == "vulnerable_sector_check" %}VSC
+                  {% elif dtype == "government_id" %}ID
+                  {% elif dtype == "first_aid" %}FA
+                  {% else %}CV{% endif %}
+                </span>
+              {% endif %}
+            {% endfor %}
+            {% endwith %}
+          {% endfor %}
+          {% endwith %}
+        </div>
+      </div>
+
+      {# skills #}
+      {% if p.skills %}
+      <div class="cg-skills">
+        {% for skill in p.skills_list|slice:":4" %}
+          <span class="skill-tag">{{ skill }}</span>
+        {% endfor %}
+        {% if p.skills_list|length > 4 %}
+          <span class="skill-tag" style="background:#e8ede9;color:#5a7a60">+{{ p.skills_list|length|add:"-4" }} more</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>{# /cg-card-body #}
+
+    {# actions #}
+    <div class="cg-actions">
+      {% if p.status == 'pending_admin_review' %}
+        {% if p.has_all_required_documents and p.hourly_rate %}
+        <form method="post" action="{% url 'AdminApp:activate_caregiver' p.pk %}" style="margin:0">
+          {% csrf_token %}
+          <button type="submit" class="cc-btn ccb-green"><i class="fas fa-check"></i> Activate</button>
+        </form>
+        {% elif not p.hourly_rate %}
+        <span class="cc-btn ccb-warn" title="Caregiver has not set an hourly rate">
+          <i class="fas fa-dollar-sign"></i> No Rate Set
+        </span>
+        {% else %}
+        <span class="cc-btn ccb-warn" title="Not all required documents have been uploaded">
+          <i class="fas fa-exclamation-triangle"></i> Incomplete Docs
+        </span>
+        {% endif %}
+      {% elif p.status == 'active' %}
+      <span style="font-size:.78rem;color:#1b7d4f;font-weight:600;display:flex;align-items:center;gap:5px;">
+        <i class="fas fa-check-circle"></i> Verified &amp; Active
+      </span>
+      {% endif %}
+
+      {# Docs button — opens inline document modal #}
+      <button type="button" class="cc-btn ccb-blue"
+        onclick="openDocsModal('docsModal-{{ p.pk }}')">
+        <i class="fas fa-folder-open"></i> Docs
+      </button>
+
+      {% if p.status == 'active' %}
+      <a href="{% url 'caregiver_profile' p.pk %}" class="cc-btn ccb-ghost">
+        <i class="fas fa-eye"></i> Profile
+      </a>
+      {% endif %}
+      <a href="{% url 'chat_start' p.user.pk %}" class="cc-btn ccb-green">
+        <i class="fas fa-comment"></i> Chat
+      </a>
+    </div>
+
+  </div>{# /cg-card #}
+
+  {# ── Document modal for this caregiver ── #}
+  <div class="docs-backdrop" id="docsModal-{{ p.pk }}">
+    <div class="docs-modal">
+      <div class="docs-modal-header">
+        <div>
+          <div class="docs-modal-title">
+            <i class="fas fa-folder-open" style="color:#1b7d4f"></i>
+            Documents — {{ p.user.get_full_name|default:p.user.username }}
+          </div>
+          <div class="docs-modal-sub">{{ p.user.email }}</div>
+        </div>
+        <button type="button" class="docs-modal-close" onclick="closeDocsModal('docsModal-{{ p.pk }}')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="docs-modal-body">
+        {% with docs=p.user.documents.all %}
+        {% if docs %}
+          {% for d in docs %}
+          <div class="doc-row-item">
+            <div class="doc-row-left">
+              <div class="doc-row-icon
+                {% if d.status == 'approved' %}doc-icon-ok
+                {% elif d.status == 'rejected' %}doc-icon-rej
+                {% else %}doc-icon-pend{% endif %}">
+                <i class="fas fa-file-{% if d.file.name|slice:'-3:' == 'pdf' %}pdf{% else %}image{% endif %}"></i>
+              </div>
+              <div class="doc-row-info">
+                <div class="doc-row-name">{{ d.get_doc_type_display }}</div>
+                <div class="doc-row-meta">
+                  Uploaded {{ d.uploaded_at|date:"M d, Y" }}
+                  {% if d.reviewed_at %}&nbsp;&bull;&nbsp; Reviewed {{ d.reviewed_at|date:"M d, Y" }}{% endif %}
                 </div>
-              </a>
-              <div>
-                <div class="cg-nm">
-                  <a href="{% url 'caregiver_profile' p.pk %}" style="color:inherit;text-decoration:none">{{ p.user.get_full_name|default:p.user.username }}</a>
-                </div>
-                <div class="cg-em">{{ p.user.email }}</div>
+                {% if d.note %}
+                <div class="doc-row-note"><i class="fas fa-comment-alt"></i> {{ d.note }}</div>
+                {% endif %}
               </div>
             </div>
-          </td>
-          <td style="color: #555; font-size: 0.84rem">
-            {{ p.city|default:"—" }}
-          </td>
-          <td style="font-weight: 600">
-            {% if p.hourly_rate %}${{ p.hourly_rate }}/hr{% else %}—{% endif %}
-          </td>
-          <td
-            style="
-              color: #888;
-              font-size: 0.8rem;
-              max-width: 120px;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            "
-            title="{{ p.skills }}"
-          >
-            {{ p.skills|default:"—" }}
-          </td>
-          <td>
-            {% with docs=p.user.documents.all %}{% for dtype in doc_types %}{% with matched=docs|dictsortreversed:"uploaded_at" %}{% for d in matched %}{% if d.doc_type == dtype %}
-            <span
-              class="doc-pip {% if d.status == 'approved' %}pip-ok{% elif d.status == 'rejected' %}pip-rej{% else %}pip-mis{% endif %}"
-            >
-              {% if dtype == "psw_certificate" %}PSW{% elif dtype == "vulnerable_sector_check" %}VSC{% elif dtype == "government_id" %}ID{% elif dtype == "first_aid" %}FA{% else %}CV{% endif %}
-            </span>
-            {% endif %}{% endfor %}{% endwith %}{% endfor %}{% endwith %}
-          </td>
-          <td>
-            <span
-              class="badge {% if p.status == 'active' %}badge-green {% elif p.status == 'pending_admin_review' %}badge-orange {% elif p.status == 'rejected' %}badge-red {% else %}badge-grey{% endif %}"
-            >
-              {{ p.get_status_display }}
-            </span>
-          </td>
-          <td style="color: #888; font-size: 0.82rem">
-            {{ p.created_at|date:"M d, Y" }}
-          </td>
-          <td>
-            <div class="act-cell">
-              {% if p.status == 'pending_admin_review' %}
-                {% if p.has_all_required_documents %}
-                <form
-                  method="post"
-                  action="{% url 'AdminApp:activate_caregiver' p.pk %}"
-                >
-                  {% csrf_token %}
-                  <button type="submit" class="adm-btn adm-btn-green">
-                    <i class="fas fa-check"></i> Activate
-                  </button>
-                </form>
-                {% else %}
-                <span style="font-size: 0.75rem; color: #ff9800; display: flex; align-items: center; gap: 4px;">
-                  <i class="fas fa-exclamation-triangle"></i> Incomplete Docs
-                </span>
-                {% endif %}
-              {% elif p.status == 'active' %}
-              <span style="font-size: 0.75rem; color: #1b7d4f"
-                ><i class="fas fa-check-circle"></i> Active</span
-              >
-              {% else %}
-              <span style="font-size: 0.75rem; color: #aaa">—</span>
-              {% endif %}
-              <a
-                href="{% url 'AdminApp:review_documents' %}"
-                class="adm-btn adm-btn-ghost"
-                style="font-size: 0.74rem"
-              >
-                <i class="fas fa-file-alt"></i> Docs
+            <div class="doc-row-right">
+              <span class="doc-status-badge
+                {% if d.status == 'approved' %}dsb-ok
+                {% elif d.status == 'rejected' %}dsb-rej
+                {% else %}dsb-pend{% endif %}">
+                {% if d.status == 'approved' %}<i class="fas fa-check-circle"></i> Approved
+                {% elif d.status == 'rejected' %}<i class="fas fa-times-circle"></i> Rejected
+                {% else %}<i class="fas fa-clock"></i> Pending{% endif %}
+              </span>
+              {% if d.file %}
+              <a href="{% url 'AdminApp:serve_document' d.pk %}" target="_blank"
+                class="doc-view-btn" title="View file">
+                <i class="fas fa-external-link-alt"></i> View
               </a>
+              {% endif %}
             </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8">
-            <div class="adm-empty">
-              <i class="fas fa-user-slash"></i>No caregiver profiles found.
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div><!-- /scroll-table-wrap -->
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="docs-empty">
+            <i class="fas fa-folder-open"></i>
+            No documents uploaded yet.
+          </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+      <div class="docs-modal-footer">
+        <a href="{% url 'AdminApp:review_documents' %}" class="cc-btn ccb-blue" style="font-size:.8rem;">
+          <i class="fas fa-list-check"></i> Go to Documents Review
+        </a>
+        <button type="button" class="cc-btn ccb-ghost" style="font-size:.8rem;"
+          onclick="closeDocsModal('docsModal-{{ p.pk }}')">Close</button>
+      </div>
+    </div>
   </div>
+
+{% empty %}
+  <div class="cg-empty">
+    <i class="fas fa-user-nurse"></i>
+    {% if search_q %}No caregivers match "{{ search_q }}"{% else %}No caregiver profiles found.{% endif %}
+  </div>
+{% endfor %}
 </div>
+
+{# ═══ Pagination ═══ #}
+{% if page_obj.has_other_pages %}
+<nav class="adm-pagination" aria-label="Caregivers pagination">
+  {% if page_obj.has_previous %}
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page=1" title="First"><i class="fas fa-angles-left"></i></a>
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+  {% else %}
+    <span class="disabled"><i class="fas fa-angles-left"></i></span>
+    <span class="disabled"><i class="fas fa-chevron-left"></i></span>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="current">{{ num }}</span>
+    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+      <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ num }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.paginator.num_pages }}" title="Last"><i class="fas fa-angles-right"></i></a>
+  {% else %}
+    <span class="disabled"><i class="fas fa-chevron-right"></i></span>
+    <span class="disabled"><i class="fas fa-angles-right"></i></span>
+  {% endif %}
+</nav>
+<p class="adm-page-info">
+  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &nbsp;&bull;&nbsp; {{ total_count }} caregiver{{ total_count|pluralize }} total
+</p>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function(){
+  function openDocsModal(id){
+    var el = document.getElementById(id);
+    if(el){ el.classList.add('open'); document.body.style.overflow='hidden'; }
+  }
+  function closeDocsModal(id){
+    var el = document.getElementById(id);
+    if(el){ el.classList.remove('open'); document.body.style.overflow=''; }
+  }
+  // close on backdrop click
+  document.addEventListener('click', function(e){
+    if(e.target.classList.contains('docs-backdrop')){
+      e.target.classList.remove('open');
+      document.body.style.overflow='';
+    }
+  });
+  // close on Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+      document.querySelectorAll('.docs-backdrop.open').forEach(function(el){
+        el.classList.remove('open');
+      });
+      document.body.style.overflow='';
+    }
+  });
+  window.openDocsModal  = openDocsModal;
+  window.closeDocsModal = closeDocsModal;
+})();
+</script>
 {% endblock %}

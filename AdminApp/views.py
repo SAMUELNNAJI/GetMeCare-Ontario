@@ -214,21 +214,49 @@ def manage_caregivers(request):
             Q(skills__icontains=q) |
             Q(status__icontains=q)
         )
+    from django.core.paginator import Paginator
+    paginator   = Paginator(profiles, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj    = paginator.get_page(page_number)
+
     ctx = _admin_sidebar()
-    ctx['profiles'] = profiles
-    ctx['doc_types'] = REQUIRED_DOC_TYPES
-    ctx['search_q'] = q
+    ctx['profiles']    = page_obj          # template iterates page_obj
+    ctx['page_obj']    = page_obj
+    ctx['doc_types']   = REQUIRED_DOC_TYPES
+    ctx['search_q']    = q
+    ctx['total_count'] = paginator.count
     return render(request, 'AdminApp/manage-caregivers.html', ctx)
 
 
 @admin_required
 def manage_employers(request):
     from django.db.models import Q
+    from django.core.paginator import Paginator
+
+    q = request.GET.get('q', '').strip()
     profiles = EmployerProfile.objects.select_related('user').exclude(
         Q(user__is_superuser=True) | Q(user__is_staff=True)
     ).order_by('-created_at')
+
+    if q:
+        profiles = profiles.filter(
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__username__icontains=q) |
+            Q(user__email__icontains=q) |
+            Q(payment_reference__icontains=q) |
+            Q(account_status__icontains=q)
+        )
+
+    paginator   = Paginator(profiles, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj    = paginator.get_page(page_number)
+
     ctx = _admin_sidebar()
-    ctx['profiles'] = profiles
+    ctx['profiles']    = page_obj
+    ctx['page_obj']    = page_obj
+    ctx['search_q']    = q
+    ctx['total_count'] = paginator.count
     return render(request, 'AdminApp/manage-employers.html', ctx)
 
 
@@ -517,6 +545,15 @@ def activate_caregiver(request, profile_id):
             request,
             f'Cannot activate {profile.user.get_full_name()} — '
             f'the following required documents have not been approved yet: {labels}.'
+        )
+        return redirect('AdminApp:manage_caregivers')
+
+    # Guard: hourly rate must be set before activation
+    if not profile.hourly_rate:
+        messages.error(
+            request,
+            f'Cannot activate {profile.user.get_full_name()} — '
+            f'they have not set an hourly rate yet. Ask them to update their profile first.'
         )
         return redirect('AdminApp:manage_caregivers')
 

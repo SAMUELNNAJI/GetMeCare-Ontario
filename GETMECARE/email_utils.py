@@ -1045,3 +1045,44 @@ def send_employer_reactivated_email(employer) -> bool:
         to_email=employer.email,
         html_body=_wrap(content),
     )
+
+
+# ──────────────────────────────────────────────────────────────
+# 20. Hourly rate missing reminder
+#     (fired every 2 days while a caregiver has no hourly_rate set)
+# ──────────────────────────────────────────────────────────────
+
+def send_hourly_rate_reminder_email(user) -> bool:
+    """
+    Remind a caregiver to set their hourly rate.
+    Sent separately from the general profile reminder so it stands out.
+    """
+    profile_url = f'{SITE_URL}/edit-profile/'
+
+    content = f"""
+    <h2>You haven't set your hourly rate yet</h2>
+    <p>Hi {user.first_name or user.username}, your caregiver profile on
+       <strong>{SITE_NAME}</strong> is missing one important detail —
+       your <strong>hourly rate</strong>.</p>
+    <div class="info-box" style="border-left-color:#c96000;background:#fffbf2;">
+      <p><strong>Why this matters:</strong></p>
+      <ul style="padding-left:20px;line-height:2;margin-top:6px;">
+        <li>Employers search and filter caregivers by rate — without one, you won't appear in many results.</li>
+        <li>Your account <strong>cannot be activated</strong> until your hourly rate is set.</li>
+        <li>Families want to know the cost upfront before they reach out.</li>
+      </ul>
+    </div>
+    <p>Setting your rate takes less than 30 seconds. Go to your profile and enter
+       your preferred hourly rate in CAD under <strong>Profile &rarr; Hourly Rate</strong>.</p>
+    <a class="btn" href="{profile_url}" style="background:#c96000;">Set My Hourly Rate Now</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You are receiving this reminder because your caregiver profile is missing
+      an hourly rate. Questions? Contact us at
+      <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Action needed — set your hourly rate to get booked',
+        to_email=user.email,
+        html_body=_wrap(content),
+    )

@@ -32,6 +32,7 @@ from GETMECARE.email_utils import (
     send_document_reminder_email,
     send_profile_reminder_email,
     send_employer_activation_reminder_email,
+    send_hourly_rate_reminder_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ class Command(BaseCommand):
 
         doc_sent      = 0
         profile_sent  = 0
+        rate_sent     = 0
         employer_sent = 0
 
         # ══════════════════════════════════════════════════════
@@ -163,6 +165,22 @@ class Command(BaseCommand):
                     else:
                         logger.warning('Profile reminder FAILED → %s', user.email)
 
+            # ── 3. Hourly rate reminder (dedicated, focused email) ──
+            if not profile.hourly_rate and _is_due(profile.last_hourly_rate_reminder_sent, cutoff):
+                if dry_run:
+                    self.stdout.write(
+                        f'[DRY-RUN] Hourly rate reminder → {user.email} (rate not set)'
+                    )
+                else:
+                    ok = send_hourly_rate_reminder_email(user=user)
+                    if ok:
+                        profile.last_hourly_rate_reminder_sent = now
+                        profile.save(update_fields=['last_hourly_rate_reminder_sent'])
+                        rate_sent += 1
+                        logger.info('Hourly rate reminder sent → %s', user.email)
+                    else:
+                        logger.warning('Hourly rate reminder FAILED → %s', user.email)
+
         # ══════════════════════════════════════════════════════
         # EMPLOYER ACTIVATION REMINDERS
         # Target: employers whose EmployerProfile.is_active == False.
@@ -208,6 +226,7 @@ class Command(BaseCommand):
                     f'Reminder run complete — '
                     f'doc: {doc_sent}, '
                     f'profile: {profile_sent}, '
+                    f'hourly rate: {rate_sent}, '
                     f'employer activation: {employer_sent}'
                 )
             )

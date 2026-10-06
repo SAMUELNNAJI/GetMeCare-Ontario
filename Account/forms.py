@@ -148,8 +148,13 @@ class EditCaregiverProfileForm(forms.ModelForm):
         label='Care Types',
     )
     hourly_rate = forms.DecimalField(
-        max_digits=6, decimal_places=2, required=False,
-        widget=forms.NumberInput(attrs={'placeholder': 'e.g. 28.00', 'step': '0.50', 'min': '15'}),
+        max_digits=6, decimal_places=2, required=True,
+        widget=forms.NumberInput(attrs={
+            'placeholder': 'e.g. 28.00', 'step': '0.50', 'min': '15',
+        }),
+        error_messages={
+            'required': 'Please enter your hourly rate — employers need this to book you.',
+        },
     )
     city = forms.CharField(
         max_length=100, required=False,

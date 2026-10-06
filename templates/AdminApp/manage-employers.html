@@ -2,313 +2,499 @@
 {% block title %}Manage Employers — Admin{% endblock %}
 {% block extra_head %}
 <style>
-  .emp-info { display:flex; align-items:center; gap:10px; }
-  .emp-av-sm {
-    width:32px; height:32px; border-radius:50%;
-    background:#2d5a42; color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:.75rem; font-weight:700; flex-shrink:0;
-  }
-  .emp-nm  { font-size:.855rem; font-weight:600; color:#1a1a1a; }
-  .emp-em  { font-size:.72rem; color:#aaa; }
-  .act-cell { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+/* ═══ PAGE HEADER ═══ */
+.mp-header {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:14px; margin-bottom:24px;
+}
+.mp-header-left h1 {
+  font-size:1.45rem; font-weight:800; color:#0f1f17; letter-spacing:-.3px;
+}
+.mp-header-left p { font-size:.83rem; color:#7a8c80; margin-top:3px; }
+.mp-stat-pills { display:flex; gap:10px; flex-wrap:wrap; }
+.mp-stat-pill {
+  display:flex; align-items:center; gap:8px;
+  background:#fff; border:1px solid #e4ece7; border-radius:40px;
+  padding:7px 14px; font-size:.78rem; font-weight:600; color:#444;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.mp-stat-pill .pill-val { font-size:.95rem; font-weight:800; color:#1b3a2d; }
 
-  /* Status column badges */
-  .badge-suspended   { background:#fff3e0; color:#c96000; }
-  .badge-deactivated { background:#fdecea; color:#c62828; }
+/* ═══ CARD GRID ═══ */
+.emp-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(340px,1fr));
+  gap:16px;
+}
 
-  /* Reason tooltip preview */
-  .reason-preview {
-    max-width:180px; font-size:.72rem; color:#888;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
+/* ── Card ── */
+.emp-card {
+  background:#fff; border:1px solid #e8ede9; border-radius:16px;
+  overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.05);
+  transition:box-shadow .2s, transform .2s;
+  display:flex; flex-direction:column;
+}
+.emp-card:hover { box-shadow:0 6px 24px rgba(27,58,45,.1); transform:translateY(-2px); }
 
-  /* ── Moderation modal ── */
-  .mod-modal-backdrop {
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,.55); z-index:900;
-    align-items:center; justify-content:center; padding:20px;
-  }
-  .mod-modal-backdrop.open { display:flex; }
-  .mod-modal {
-    background:#fff; border-radius:16px; max-width:440px; width:100%;
-    padding:30px 28px 24px; box-shadow:0 20px 60px rgba(0,0,0,.22);
-    animation:modIn .25s ease;
-  }
-  @keyframes modIn {
-    from { opacity:0; transform:translateY(16px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  .mod-modal-title {
-    font-size:1.05rem; font-weight:700; color:#1a1a1a;
-    margin-bottom:6px; display:flex; align-items:center; gap:10px;
-  }
-  .mod-modal-sub  { font-size:.84rem; color:#666; margin-bottom:18px; line-height:1.5; }
-  .mod-modal label { font-size:.8rem; font-weight:600; color:#555; display:block; margin-bottom:6px; }
-  .mod-modal textarea {
-    width:100%; min-height:90px; border:1px solid #dde2d8;
-    border-radius:9px; padding:10px 12px; font-family:inherit;
-    font-size:.84rem; color:#333; resize:vertical; outline:none;
-    transition:border-color .15s;
-  }
-  .mod-modal textarea:focus { border-color:#1b7d4f; }
-  .mod-modal-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
-  .mod-modal-cancel {
-    background:#f0f2ee; color:#333; border:1px solid #dde2d8;
-    border-radius:9px; padding:9px 20px; font-size:.84rem;
-    font-weight:600; cursor:pointer; font-family:inherit;
-  }
-  .mod-modal-cancel:hover { background:#e4e7e0; }
-  .mod-modal-confirm {
-    border:none; border-radius:9px; padding:9px 20px;
-    font-size:.84rem; font-weight:700; cursor:pointer; font-family:inherit; color:#fff;
-  }
+.emp-accent         { height:4px; }
+.emp-accent-active  { background:linear-gradient(90deg,#1b7d4f,#2daa70); }
+.emp-accent-suspend { background:linear-gradient(90deg,#c96000,#f0a040); }
+.emp-accent-deact   { background:linear-gradient(90deg,#c62828,#e05252); }
+.emp-accent-inact   { background:linear-gradient(90deg,#9aaa9e,#c8d8c8); }
 
-  @media (max-width:900px) {
-    .adm-table th:nth-child(4),
-    .adm-table td:nth-child(4),
-    .adm-table th:nth-child(5),
-    .adm-table td:nth-child(5) { display:none; }
-  }
+.emp-card-body { padding:18px 20px 12px; flex:1; }
+
+/* ── Top row ── */
+.emp-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:14px; }
+.emp-av {
+  width:50px; height:50px; border-radius:50%;
+  color:#fff; font-size:1rem; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; box-shadow:0 2px 8px rgba(27,58,45,.22);
+}
+.emp-av-active  { background:linear-gradient(135deg,#1b3a2d,#2d7a50); }
+.emp-av-suspend { background:linear-gradient(135deg,#c96000,#f0a040); }
+.emp-av-deact   { background:linear-gradient(135deg,#c62828,#e05252); }
+.emp-av-inact   { background:linear-gradient(135deg,#6b7c72,#9aaa9e); }
+
+.emp-name-block { flex:1; min-width:0; }
+.emp-name  { font-size:.945rem; font-weight:700; color:#0f1f17; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.emp-email { font-size:.74rem; color:#9aaa9e; margin-top:2px; }
+
+.emp-sbadge {
+  display:inline-flex; align-items:center; gap:5px; border-radius:20px;
+  padding:4px 10px; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0;
+}
+.esb-active  { background:#e6f5ee; color:#1b7d4f; }
+.esb-inact   { background:#f0f0f0; color:#777; }
+.esb-suspend { background:#fff3e0; color:#c96000; }
+.esb-deact   { background:#fdecea; color:#c62828; }
+.esb-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.esd-active  { background:#1b7d4f; }
+.esd-inact   { background:#bbb; }
+.esd-suspend { background:#c96000; animation:epulse 2s infinite; }
+.esd-deact   { background:#c62828; }
+@keyframes epulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Meta grid ── */
+.emp-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.emp-meta-item { background:#f8faf7; border-radius:9px; padding:8px 11px; }
+.emp-meta-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; }
+.emp-meta-val { font-size:.81rem; font-weight:600; color:#1a1a1a; margin-top:2px; }
+
+/* ── Reason box ── */
+.emp-reason {
+  background:#fffbf2; border:1px solid #f5d78a; border-radius:9px;
+  padding:8px 11px; margin-bottom:10px; font-size:.77rem; color:#7a4900; line-height:1.5;
+}
+.emp-reason.deact { background:#fff5f5; border-color:#ffcdd2; color:#7f1414; }
+.emp-reason-lbl { font-weight:700; font-size:.64rem; text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+
+/* ── Actions ── */
+.emp-actions {
+  padding:12px 20px 15px; border-top:1px solid #f2f4f0;
+  display:flex; gap:7px; flex-wrap:wrap; align-items:center;
+}
+.ec-btn {
+  display:inline-flex; align-items:center; gap:5px; border-radius:8px;
+  padding:7px 13px; font-size:.775rem; font-weight:600; cursor:pointer;
+  border:none; font-family:inherit; text-decoration:none;
+  transition:opacity .15s, transform .1s;
+}
+.ec-btn:hover { opacity:.88; transform:translateY(-1px); }
+.ecb-green   { background:#1b7d4f; color:#fff; }
+.ecb-suspend { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; }
+.ecb-deact   { background:#fdecea; color:#c62828; border:1px solid #ffcdd2; }
+.ecb-pay     { background:#e8f0fe; color:#1a56c4; }
+
+/* ═══ MODERATION MODAL ═══ */
+.mod-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:900;
+  align-items:center; justify-content:center; padding:20px;
+}
+.mod-backdrop.open { display:flex; }
+.mod-box {
+  background:#fff; border-radius:18px; max-width:460px; width:100%;
+  padding:32px 28px 26px; box-shadow:0 24px 72px rgba(0,0,0,.22);
+  animation:modIn .25s ease;
+}
+@keyframes modIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.mod-icon {
+  width:52px; height:52px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; margin-bottom:14px;
+}
+.mod-icon-s { background:#fff3e0; color:#c96000; }
+.mod-icon-d { background:#fdecea; color:#c62828; }
+.mod-title { font-size:1.05rem; font-weight:800; color:#1a1a1a; margin-bottom:6px; }
+.mod-sub   { font-size:.845rem; color:#666; margin-bottom:18px; line-height:1.55; }
+.mod-box label { font-size:.8rem; font-weight:700; color:#555; display:block; margin-bottom:7px; }
+.mod-box textarea {
+  width:100%; min-height:88px; border:1.5px solid #dde4d9;
+  border-radius:10px; padding:10px 12px; font-family:inherit;
+  font-size:.845rem; color:#333; resize:vertical; outline:none;
+  transition:border-color .15s;
+}
+.mod-box textarea:focus { border-color:#1b7d4f; }
+.mod-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
+.mod-cancel {
+  background:#f0f2ee; color:#555; border:1px solid #dde2d8;
+  border-radius:9px; padding:9px 20px; font-size:.845rem;
+  font-weight:600; cursor:pointer; font-family:inherit;
+}
+.mod-cancel:hover { background:#e4e7e0; }
+.mod-ok-s {
+  background:#c96000; color:#fff; border:none; border-radius:9px;
+  padding:9px 20px; font-size:.845rem; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.mod-ok-s:hover { background:#a85000; }
+.mod-ok-d {
+  background:#c62828; color:#fff; border:none; border-radius:9px;
+  padding:9px 20px; font-size:.845rem; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.mod-ok-d:hover { background:#a01f1f; }
+
+/* empty */
+.emp-empty { grid-column:1/-1; text-align:center; padding:52px 0; color:#c0ccc4; font-size:.88rem; }
+.emp-empty i { font-size:2.8rem; display:block; margin-bottom:10px; }
+
+/* ═══ SEARCH BOX ═══ */
+.mp-search-box {
+  display:flex; align-items:center; gap:9px;
+  background:#fff; border:1.5px solid #dde4d9; border-radius:12px;
+  padding:9px 16px; flex:1; max-width:400px;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  transition:border-color .15s;
+}
+.mp-search-box:focus-within { border-color:#1b7d4f; box-shadow:0 0 0 3px rgba(27,125,79,.1); }
+.mp-search-box i { color:#9aaa9e; font-size:.84rem; flex-shrink:0; }
+.mp-search-box input {
+  border:none; outline:none; background:transparent;
+  font-size:.875rem; color:#333; width:100%; font-family:inherit;
+}
+.mp-search-box input::placeholder { color:#bbb; }
+.mp-clear-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#fdecea; color:#c62828; border:1px solid #ffcdd2;
+  border-radius:9px; padding:8px 14px; font-size:.78rem;
+  font-weight:600; text-decoration:none; transition:background .15s;
+}
+.mp-clear-btn:hover { background:#ffcdd2; }
+.mp-search-result-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#e6f5ee; color:#1b5e35; border:1px solid #b2dfca;
+  border-radius:20px; padding:6px 14px; font-size:.8rem;
+  margin-bottom:16px;
+}
+
+/* ═══ PAGINATION ═══ */
+.adm-pagination {
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; margin-top:28px; flex-wrap:wrap;
+}
+.adm-pagination a,
+.adm-pagination span {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:36px; height:36px; border-radius:9px;
+  font-size:.82rem; font-weight:600; text-decoration:none;
+  transition:background .15s, color .15s;
+}
+.adm-pagination a { background:#fff; color:#444; border:1px solid #dde4d9; }
+.adm-pagination a:hover { background:#e6f5ee; color:#1b7d4f; border-color:#b2dfca; }
+.adm-pagination span.current {
+  background:#1b7d4f; color:#fff; border:1px solid #1b7d4f;
+}
+.adm-pagination span.disabled { background:#f5f5f5; color:#ccc; border:1px solid #eee; cursor:default; }
+.adm-page-info {
+  text-align:center; font-size:.78rem; color:#9aaa9e; margin-top:10px;
+}
+
+@media(max-width:680px){
+  .emp-grid{grid-template-columns:1fr;}
+  .mp-header{flex-direction:column;align-items:flex-start;}
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="adm-page-title">
-  <i class="fas fa-user-tie" style="color:#1b7d4f;margin-right:8px"></i>Manage Employers
+
+<div class="mp-header">
+  <div class="mp-header-left">
+    <h1><i class="fas fa-user-tie" style="color:#1b7d4f;font-size:1.2rem;margin-right:8px"></i>Manage Employers</h1>
+    <p>Review, activate, suspend or deactivate employer accounts</p>
+  </div>
+  <div class="mp-stat-pills">
+    <div class="mp-stat-pill">
+      <i class="fas fa-users" style="color:#1b7d4f"></i>
+      <span class="pill-val">{{ total_count }}</span> total
+    </div>
+  </div>
 </div>
 
+{# ── Search bar ── #}
+<form method="get" action="" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="mp-search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search by name, email, payment ref, status…" value="{{ search_q|default:'' }}" autofocus>
+    </div>
+    {% if search_q %}
+    <a href="{% url 'AdminApp:manage_employers' %}" class="mp-clear-btn">
+      <i class="fas fa-times"></i> Clear
+    </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if search_q %}
+<div class="mp-search-result-pill">
+  <i class="fas fa-filter"></i>
+  Showing <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} for <strong>"{{ search_q }}"</strong>
+</div>
+{% endif %}
+
 {% for msg in messages %}
-<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}">
-  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
-  {{ msg }}
+<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}" style="margin-bottom:14px;">
+  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i> {{ msg }}
 </div>
 {% endfor %}
 
-<div class="adm-card">
-  <div class="adm-card-pad">
-    <div style="font-size:.92rem;font-weight:700;color:#1a1a1a;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-      <i class="fas fa-list" style="color:#1b7d4f"></i> All Employer Profiles
-      <span style="margin-left:auto;font-size:.72rem;font-weight:600;background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:3px 10px;">{{ profiles|length }} total</span>
+<div class="emp-grid">
+{% for p in profiles %}
+
+  <div class="emp-card">
+    {# ── Accent bar colour ── #}
+    <div class="emp-accent
+      {% if p.account_status == 'suspended' %}emp-accent-suspend
+      {% elif p.account_status == 'deactivated' %}emp-accent-deact
+      {% elif not p.is_active %}emp-accent-inact
+      {% else %}emp-accent-active{% endif %}">
     </div>
 
-    <div class="scroll-table-wrap">
-      <table class="adm-table">
-        <thead>
-          <tr>
-            <th>Employer</th>
-            <th>Email</th>
-            <th>Account Status</th>
-            <th>Activation</th>
-            <th>Payment Ref</th>
-            <th>Reason</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in profiles %}
-          <tr>
-            <td>
-              <div class="emp-info">
-                <div class="emp-av-sm">
-                  {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
-                </div>
-                <div>
-                  <div class="emp-nm">{{ p.user.get_full_name|default:p.user.username }}</div>
-                </div>
-              </div>
-            </td>
-            <td style="color:#555;font-size:.84rem">{{ p.user.email }}</td>
-            <td>
-              {% if p.account_status == 'suspended' %}
-                <span class="badge badge-suspended"><i class="fas fa-pause-circle"></i> Suspended</span>
-              {% elif p.account_status == 'deactivated' %}
-                <span class="badge badge-deactivated"><i class="fas fa-ban"></i> Deactivated</span>
-              {% elif p.is_active %}
-                <span class="badge badge-green"><i class="fas fa-check-circle"></i> Active</span>
-              {% else %}
-                <span class="badge badge-grey"><i class="fas fa-clock"></i> Inactive</span>
-              {% endif %}
-            </td>
-            <td style="color:#888;font-size:.82rem">
-              {% if p.activation_paid_at %}{{ p.activation_paid_at|date:"M d, Y" }}{% else %}—{% endif %}
-            </td>
-            <td style="color:#555;font-size:.84rem">{{ p.payment_reference|default:"—" }}</td>
-            <td>
-              {% if p.status_reason %}
-                <span class="reason-preview" title="{{ p.status_reason }}">{{ p.status_reason }}</span>
-              {% else %}
-                <span style="color:#ccc;font-size:.75rem">—</span>
-              {% endif %}
-            </td>
-            <td>
-              <div class="act-cell">
-                {# ── Activate (only when not active or moderated) ── #}
-                {% if not p.is_active and p.account_status == 'active' %}
-                <form method="post" action="{% url 'AdminApp:activate_employer' p.pk %}">
-                  {% csrf_token %}
-                  <button type="submit" class="adm-btn adm-btn-green">
-                    <i class="fas fa-check"></i> Activate
-                  </button>
-                </form>
-                {% endif %}
+    <div class="emp-card-body">
 
-                {# ── Reactivate (when suspended or deactivated) ── #}
-                {% if p.account_status == 'suspended' or p.account_status == 'deactivated' %}
-                <form method="post" action="{% url 'AdminApp:reactivate_employer' p.pk %}">
-                  {% csrf_token %}
-                  <button type="submit" class="adm-btn adm-btn-green">
-                    <i class="fas fa-undo"></i> Reactivate
-                  </button>
-                </form>
-                {% endif %}
+      {# ── Top row ── #}
+      <div class="emp-top">
+        <div class="emp-av
+          {% if p.account_status == 'suspended' %}emp-av-suspend
+          {% elif p.account_status == 'deactivated' %}emp-av-deact
+          {% elif not p.is_active %}emp-av-inact
+          {% else %}emp-av-active{% endif %}">
+          {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+        </div>
+        <div class="emp-name-block">
+          <div class="emp-name">{{ p.user.get_full_name|default:p.user.username }}</div>
+          <div class="emp-email">{{ p.user.email }}</div>
+        </div>
+        {# status badge #}
+        {% if p.account_status == 'suspended' %}
+          <span class="emp-sbadge esb-suspend"><span class="esb-dot esd-suspend"></span> Suspended</span>
+        {% elif p.account_status == 'deactivated' %}
+          <span class="emp-sbadge esb-deact"><span class="esb-dot esd-deact"></span> Deactivated</span>
+        {% elif p.is_active %}
+          <span class="emp-sbadge esb-active"><span class="esb-dot esd-active"></span> Active</span>
+        {% else %}
+          <span class="emp-sbadge esb-inact"><span class="esb-dot esd-inact"></span> Inactive</span>
+        {% endif %}
+      </div>
 
-                {# ── Suspend (only when not already suspended/deactivated) ── #}
-                {% if p.account_status != 'suspended' and p.account_status != 'deactivated' %}
-                <button
-                  type="button"
-                  class="adm-btn"
-                  style="background:#fff3e0;color:#c96000;border:1px solid #f5d78a;"
-                  onclick="openModModal('suspend', {{ p.pk }}, '{{ p.user.get_full_name|escapejs }}')"
-                >
-                  <i class="fas fa-pause-circle"></i> Suspend
-                </button>
-                {% endif %}
+      {# ── Meta grid ── #}
+      <div class="emp-meta">
+        <div class="emp-meta-item">
+          <div class="emp-meta-lbl"><i class="fas fa-calendar-check" style="margin-right:3px"></i>Activated</div>
+          <div class="emp-meta-val">{% if p.activation_paid_at %}{{ p.activation_paid_at|date:"M d, Y" }}{% else %}<span style="color:#ccc">Not yet</span>{% endif %}</div>
+        </div>
+        <div class="emp-meta-item">
+          <div class="emp-meta-lbl"><i class="fas fa-receipt" style="margin-right:3px"></i>Payment Ref</div>
+          <div class="emp-meta-val" style="font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ p.payment_reference }}">{{ p.payment_reference|default:"—" }}</div>
+        </div>
+        <div class="emp-meta-item">
+          <div class="emp-meta-lbl"><i class="fas fa-user-plus" style="margin-right:3px"></i>Joined</div>
+          <div class="emp-meta-val">{{ p.created_at|date:"M d, Y" }}</div>
+        </div>
+        <div class="emp-meta-item">
+          <div class="emp-meta-lbl"><i class="fas fa-shield-alt" style="margin-right:3px"></i>Account</div>
+          <div class="emp-meta-val">
+            {% if p.account_status == 'suspended' %}Suspended
+            {% elif p.account_status == 'deactivated' %}Deactivated
+            {% else %}Active{% endif %}
+          </div>
+        </div>
+      </div>
 
-                {# ── Deactivate (only when not already deactivated) ── #}
-                {% if p.account_status != 'deactivated' %}
-                <button
-                  type="button"
-                  class="adm-btn adm-btn-danger"
-                  onclick="openModModal('deactivate', {{ p.pk }}, '{{ p.user.get_full_name|escapejs }}')"
-                >
-                  <i class="fas fa-ban"></i> Deactivate
-                </button>
-                {% endif %}
+      {# ── Reason box (only when restricted) ── #}
+      {% if p.status_reason %}
+      <div class="emp-reason {% if p.account_status == 'deactivated' %}deact{% endif %}">
+        <div class="emp-reason-lbl">
+          {% if p.account_status == 'suspended' %}<i class="fas fa-pause-circle"></i> Suspension reason
+          {% else %}<i class="fas fa-ban"></i> Deactivation reason{% endif %}
+        </div>
+        {{ p.status_reason }}
+      </div>
+      {% endif %}
 
-                <a href="{% url 'AdminApp:employer_payments' %}" class="adm-btn adm-btn-ghost" style="font-size:.74rem">
-                  <i class="fas fa-credit-card"></i> Payments
-                </a>
+    </div>{# /emp-card-body #}
 
-                {# ── Admin chat with employer ── #}
-                <a href="{% url 'chat_start' p.user.pk %}" class="adm-btn adm-btn-green" style="font-size:.74rem">
-                  <i class="fas fa-comment"></i> Chat
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7">
-              <div class="adm-empty">
-                <i class="fas fa-user-slash"></i> No employer profiles found.
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {# ── Action buttons ── #}
+    <div class="emp-actions">
+
+      {# Activate — only when not yet paid and account is in good standing #}
+      {% if not p.is_active and p.account_status == 'active' %}
+      <form method="post" action="{% url 'AdminApp:activate_employer' p.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="ec-btn ecb-green"><i class="fas fa-bolt"></i> Activate</button>
+      </form>
+      {% endif %}
+
+      {# Reactivate — when suspended or deactivated #}
+      {% if p.account_status == 'suspended' or p.account_status == 'deactivated' %}
+      <form method="post" action="{% url 'AdminApp:reactivate_employer' p.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="ec-btn ecb-green"><i class="fas fa-undo"></i> Reactivate</button>
+      </form>
+      {% endif %}
+
+      {# Suspend #}
+      {% if p.account_status != 'suspended' and p.account_status != 'deactivated' %}
+      <button type="button" class="ec-btn ecb-suspend"
+        onclick="openMod('suspend',{{ p.pk }},'{{ p.user.get_full_name|escapejs }}')">
+        <i class="fas fa-pause-circle"></i> Suspend
+      </button>
+      {% endif %}
+
+      {# Deactivate #}
+      {% if p.account_status != 'deactivated' %}
+      <button type="button" class="ec-btn ecb-deact"
+        onclick="openMod('deactivate',{{ p.pk }},'{{ p.user.get_full_name|escapejs }}')">
+        <i class="fas fa-ban"></i> Deactivate
+      </button>
+      {% endif %}
+
+      <a href="{% url 'AdminApp:employer_payments' %}" class="ec-btn ecb-pay">
+        <i class="fas fa-credit-card"></i> Payments
+      </a>
+      <a href="{% url 'chat_start' p.user.pk %}" class="ec-btn ecb-green">
+        <i class="fas fa-comment"></i> Chat
+      </a>
     </div>
+
+  </div>{# /emp-card #}
+
+{% empty %}
+  <div class="emp-empty">
+    <i class="fas fa-user-slash"></i>
+    No employer profiles found.
   </div>
+{% endfor %}
 </div>
 
-{# ══════════════ Suspend modal ══════════════ #}
-<div class="mod-modal-backdrop" id="suspendModal">
-  <div class="mod-modal">
-    <div class="mod-modal-title">
-      <i class="fas fa-pause-circle" style="color:#c96000"></i> Suspend Employer Account
-    </div>
-    <p class="mod-modal-sub">
-      You are about to suspend <strong id="suspendName"></strong>.<br>
-      They will be locked out of the dashboard and notified by email. Only support chat will remain accessible.
-    </p>
-    <form method="post" id="suspendForm">
+{# ═══ Pagination ═══ #}
+{% if page_obj.has_other_pages %}
+<nav class="adm-pagination" aria-label="Employers pagination">
+  {% if page_obj.has_previous %}
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page=1" title="First"><i class="fas fa-angles-left"></i></a>
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+  {% else %}
+    <span class="disabled"><i class="fas fa-angles-left"></i></span>
+    <span class="disabled"><i class="fas fa-chevron-left"></i></span>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <span class="current">{{ num }}</span>
+    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+      <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ num }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.paginator.num_pages }}" title="Last"><i class="fas fa-angles-right"></i></a>
+  {% else %}
+    <span class="disabled"><i class="fas fa-chevron-right"></i></span>
+    <span class="disabled"><i class="fas fa-angles-right"></i></span>
+  {% endif %}
+</nav>
+<p class="adm-page-info">
+  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &nbsp;&bull;&nbsp; {{ total_count }} employer{{ total_count|pluralize }} total
+</p>
+{% endif %}
+
+{# ═══ Suspend Modal ═══ #}
+<div class="mod-backdrop" id="modSuspend">
+  <div class="mod-box">
+    <div class="mod-icon mod-icon-s"><i class="fas fa-pause-circle"></i></div>
+    <div class="mod-title">Suspend Employer Account</div>
+    <p class="mod-sub">You are about to suspend <strong id="suspName"></strong>.<br>They will lose dashboard access and be notified by email. Only support chat remains accessible.</p>
+    <form method="post" id="suspForm">
       {% csrf_token %}
-      <label for="suspendReason">Reason for suspension <span style="color:#c62828">*</span></label>
-      <textarea id="suspendReason" name="reason" placeholder="Explain why this account is being suspended…" required></textarea>
-      <div class="mod-modal-actions">
-        <button type="button" class="mod-modal-cancel" onclick="closeModModal('suspend')">Cancel</button>
-        <button type="submit" class="mod-modal-confirm" style="background:#c96000;">
-          <i class="fas fa-pause-circle"></i> Confirm Suspension
-        </button>
+      <label for="suspReason">Reason for suspension <span style="color:#c62828">*</span></label>
+      <textarea id="suspReason" name="reason" placeholder="Explain why this account is being suspended…" required></textarea>
+      <div class="mod-actions">
+        <button type="button" class="mod-cancel" onclick="closeMod('suspend')">Cancel</button>
+        <button type="submit" class="mod-ok-s"><i class="fas fa-pause-circle"></i> Confirm Suspension</button>
       </div>
     </form>
   </div>
 </div>
 
-{# ══════════════ Deactivate modal ══════════════ #}
-<div class="mod-modal-backdrop" id="deactivateModal">
-  <div class="mod-modal">
-    <div class="mod-modal-title">
-      <i class="fas fa-ban" style="color:#c62828"></i> Deactivate Employer Account
-    </div>
-    <p class="mod-modal-sub">
-      You are about to deactivate <strong id="deactivateName"></strong>.<br>
-      Their listings will be removed and they will be locked out. Only support chat will remain accessible.
-    </p>
-    <form method="post" id="deactivateForm">
+{# ═══ Deactivate Modal ═══ #}
+<div class="mod-backdrop" id="modDeact">
+  <div class="mod-box">
+    <div class="mod-icon mod-icon-d"><i class="fas fa-ban"></i></div>
+    <div class="mod-title">Deactivate Employer Account</div>
+    <p class="mod-sub">You are about to deactivate <strong id="deactName"></strong>.<br>Their listings will be removed and they will be locked out. Only support chat remains accessible.</p>
+    <form method="post" id="deactForm">
       {% csrf_token %}
-      <label for="deactivateReason">Reason for deactivation <span style="color:#c62828">*</span></label>
-      <textarea id="deactivateReason" name="reason" placeholder="Explain why this account is being deactivated…" required></textarea>
-      <div class="mod-modal-actions">
-        <button type="button" class="mod-modal-cancel" onclick="closeModModal('deactivate')">Cancel</button>
-        <button type="submit" class="mod-modal-confirm" style="background:#c62828;">
-          <i class="fas fa-ban"></i> Confirm Deactivation
-        </button>
+      <label for="deactReason">Reason for deactivation <span style="color:#c62828">*</span></label>
+      <textarea id="deactReason" name="reason" placeholder="Explain why this account is being deactivated…" required></textarea>
+      <div class="mod-actions">
+        <button type="button" class="mod-cancel" onclick="closeMod('deactivate')">Cancel</button>
+        <button type="submit" class="mod-ok-d"><i class="fas fa-ban"></i> Confirm Deactivation</button>
       </div>
     </form>
   </div>
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-(function () {
-  function openModModal(action, profileId, name) {
-    if (action === 'suspend') {
-      document.getElementById('suspendName').textContent = name;
-      document.getElementById('suspendForm').action = '/admin-panel/employers/' + profileId + '/suspend/';
-      document.getElementById('suspendReason').value = '';
-      document.getElementById('suspendModal').classList.add('open');
+(function(){
+  function openMod(action, id, name){
+    if(action==='suspend'){
+      document.getElementById('suspName').textContent = name;
+      document.getElementById('suspForm').action = '/admin-panel/employers/'+id+'/suspend/';
+      document.getElementById('suspReason').value = '';
+      document.getElementById('modSuspend').classList.add('open');
     } else {
-      document.getElementById('deactivateName').textContent = name;
-      document.getElementById('deactivateForm').action = '/admin-panel/employers/' + profileId + '/deactivate/';
-      document.getElementById('deactivateReason').value = '';
-      document.getElementById('deactivateModal').classList.add('open');
+      document.getElementById('deactName').textContent = name;
+      document.getElementById('deactForm').action = '/admin-panel/employers/'+id+'/deactivate/';
+      document.getElementById('deactReason').value = '';
+      document.getElementById('modDeact').classList.add('open');
     }
     document.body.style.overflow = 'hidden';
   }
-
-  function closeModModal(action) {
-    var id = action === 'suspend' ? 'suspendModal' : 'deactivateModal';
-    document.getElementById(id).classList.remove('open');
+  function closeMod(action){
+    var el = document.getElementById(action==='suspend'?'modSuspend':'modDeact');
+    el.classList.remove('open');
     document.body.style.overflow = '';
   }
-
-  // Close on backdrop click
-  ['suspendModal', 'deactivateModal'].forEach(function (id) {
+  ['modSuspend','modDeact'].forEach(function(id){
     var el = document.getElementById(id);
-    if (el) el.addEventListener('click', function (e) {
-      if (e.target === el) {
-        el.classList.remove('open');
-        document.body.style.overflow = '';
-      }
+    if(el) el.addEventListener('click',function(e){
+      if(e.target===el){el.classList.remove('open');document.body.style.overflow='';}
     });
   });
-
-  // Escape key
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      ['suspendModal', 'deactivateModal'].forEach(function (id) {
-        document.getElementById(id).classList.remove('open');
-      });
-      document.body.style.overflow = '';
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      ['modSuspend','modDeact'].forEach(function(id){document.getElementById(id).classList.remove('open');});
+      document.body.style.overflow='';
     }
   });
-
-  // Expose to inline onclick
-  window.openModModal  = openModModal;
-  window.closeModModal = closeModModal;
+  window.openMod=openMod;
+  window.closeMod=closeMod;
 })();
 </script>
 {% endblock %}
