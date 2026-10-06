@@ -19,12 +19,16 @@ urlpatterns = [
     # Disputes
     path('employer/disputes/',                            views.my_disputes,       name='my_disputes'),
     path('employer/disputes/submit/',                     views.submit_dispute,    name='submit_dispute'),
-    # ── Fincra payment callbacks (redirect after hosted checkout) ──────────────
-    path('employer/fincra/activation/callback/',
-         views.fincra_activation_callback,  name='fincra_activation_callback'),
-    path('employer/fincra/booking/<int:shift_pk>/callback/',
-         views.fincra_booking_callback,     name='fincra_booking_callback'),
-    # Fincra webhook — called by Fincra's servers (not the browser)
-    path('webhooks/fincra/',
-         views.fincra_webhook,              name='fincra_webhook'),
+    # ── Stripe payment callbacks (redirect after hosted checkout) ─────────────
+    path('employer/stripe/activation/checkout/',
+         views.stripe_activation_checkout,  name='stripe_activation_checkout'),
+    path('employer/stripe/activation/callback/',
+         views.stripe_activation_callback,  name='stripe_activation_callback'),
+    path('employer/stripe/booking/<int:shift_pk>/checkout/',
+         views.stripe_booking_checkout,     name='stripe_booking_checkout'),
+    path('employer/stripe/booking/<int:shift_pk>/callback/',
+         views.stripe_booking_callback,     name='stripe_booking_callback'),
+    # Stripe webhook — called by Stripe's servers (not the browser)
+    path('webhooks/stripe/',
+         views.stripe_webhook,              name='stripe_webhook'),
 ]

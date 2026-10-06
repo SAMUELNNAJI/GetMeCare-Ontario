@@ -101,65 +101,36 @@
     color: #666;
   }
 
-  /* Interac e-Transfer option */
-  .ep-interac-info {
-    background: linear-gradient(135deg, #e8f5f0, #d4f7e3);
-    border-radius: 14px;
-    padding: 22px;
-    margin: 20px 0;
-    text-align: left;
-    border: 1px solid #b2dfca;
-  }
-  .ep-interac-info h3 {
-    font-size: 1rem;
-    color: #0d6b3d;
-    margin: 0 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .ep-interac-email {
-    font-family: 'Courier New', monospace;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    background: #fff;
-    padding: 8px 14px;
-    border-radius: 8px;
-    word-break: break-all;
-    margin-bottom: 10px;
-  }
-  .ep-interac-ref {
-    font-size: 0.85rem;
-    color: #555;
-    margin-bottom: 14px;
-  }
-  .ep-interac-instructions {
-    font-size: 0.82rem;
-    color: #555;
-    line-height: 1.6;
-    margin-top: 10px;
-  }
-  .ep-interac-instructions ol {
-    margin: 6px 0 0 18px;
-    padding: 0;
-  }
-  .ep-interac-instructions li {
-    margin-bottom: 4px;
-  }
-  .ep-copy-btn {
-    background: #1b7d4f;
+  /* Stripe card payment */
+  .ep-pay-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1b3a2d, #1b7d4f);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 0.78rem;
+    border-radius: 11px;
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
-    margin-top: 4px;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+    transition: opacity .15s;
   }
-  .ep-copy-btn:hover {
-    background: #0d6b3d;
+  .ep-pay-btn:hover { opacity: .88; }
+  .ep-secure-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: .72rem;
+    color: #aaa;
+    margin-top: 14px;
   }
+  .ep-secure-note i { color: #1b7d4f; }
 </style>
 {% endblock %}
 
@@ -173,7 +144,7 @@
     <p>Pay the one-time activation fee to unlock job posting and connect with verified caregivers across Ontario.</p>
 
     <div class="ep-price-box">
-      <div class="price">$49.99</div>
+      <div class="price">$39.99</div>
       <div class="ep-price-note">One-time activation fee · CAD</div>
     </div>
 
@@ -185,65 +156,23 @@
       <div class="ep-feature"><i class="fas fa-check-circle"></i> Full shift management tools</div>
     </div>
 
-    {% if interac_info %}
-    <!-- ── Pay with Interac e-Transfer (CAD) — primary & only method ── -->
-    <div class="ep-interac-info">
-      <h3><i class="fas fa-university"></i> Pay with Interac e-Transfer</h3>
-      <p style="font-size:.85rem;color:#555;margin:8px 0 0">
-        Send exactly <strong>${{ interac_info.amount }} CAD</strong> from your Canadian bank app to:
-      </p>
-      <div class="ep-interac-email">
-        {{ interac_info.alias }}
-        <button class="ep-copy-btn" onclick="copyEmail()">Copy</button>
-      </div>
-      <div class="ep-interac-ref">
-        <strong>Reference:</strong> {{ interac_info.reference }}
-        <button class="ep-copy-btn" onclick="copyRef()">Copy</button>
-      </div>
-      <div class="ep-interac-instructions">
-        <p style="font-size:.8rem;color:#555;margin:8px 0"><strong>How to pay:</strong></p>
-        <ol>
-          <li>Open your bank's mobile app or online banking</li>
-          <li>Choose <strong>Interac e-Transfer</strong> (not a bill payment)</li>
-          <li>Send to the email above — put the reference code in the message field</li>
-          <li>Send exactly <strong>${{ interac_info.amount }} CAD</strong></li>
-          <li>Your account activates automatically once the transfer arrives (usually minutes)</li>
-        </ol>
-      </div>
-    </div>
+    <!-- ── Pay by credit / debit card (Stripe) ── -->
+    <form method="post" action="{% url 'EmployerApp:stripe_activation_checkout' %}">
+      {% csrf_token %}
+      <button type="submit" class="ep-pay-btn">
+        <i class="fas fa-lock"></i> Pay ${{ activation_fee }} CAD — Activate Account
+      </button>
+    </form>
     <p style="font-size:.78rem;color:#888;text-align:center;margin-top:10px">
-      Autodeposit is enabled — no security question needed.<br>
-      Your activation happens automatically — no need to contact anyone.
+      You'll continue to Stripe's secure checkout to pay by credit or debit card.<br>
+      Your account activates automatically as soon as the payment succeeds.
     </p>
-{% else %}
-    <!-- ── Interac not configured yet ── -->
-    <div class="ep-interac-info" style="text-align:center">
-      <h3 style="justify-content:center"><i class="fas fa-hourglass-half"></i> Online payments almost ready</h3>
-      <p style="font-size:.85rem;color:#555;line-height:1.7">
-        We're switching GetMeCare to <strong>Interac e-Transfer</strong> payments
-        (Canadian dollars, straight from your bank app).<br>
-        This page will show payment instructions shortly.<br><br>
-        Need your account activated right now? Email
-        <a href="mailto:info@getmecare-ontario.com">info@getmecare-ontario.com</a>
-        and we'll take care of it manually.
-      </p>
-    </div>
-{% endif %}
-
-<script>
-function copyEmail() {
-  navigator.clipboard.writeText('{{ interac_info.alias }}').then(function() {});
-}
-function copyRef() {
-  navigator.clipboard.writeText('{{ interac_info.reference }}').then(function() {});
-}
-</script>
 
 <a href="{% url 'EmployerApp:dashboard' %}" class="ep-cancel-link">Pay Later</a>
-    <p style="margin-top:12px;font-size:.75rem;color:#bbb">
-      Paid via <strong>Interac e-Transfer</strong> in Canadian dollars.<br>
-      Secured by Fincra · GetMeCare never sees your banking credentials.
-    </p>
+    <div class="ep-secure-note">
+      <i class="fas fa-shield-alt"></i>
+      Paid in Canadian dollars · Secured by Stripe · GetMeCare never sees your card details.
+    </div>
   </div>
 </div>
 {% endblock %}

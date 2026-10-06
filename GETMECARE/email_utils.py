@@ -420,7 +420,7 @@ def send_offline_chat_notification(recipient, sender, message_body: str, convers
 
 # ──────────────────────────────────────────────────────────────
 # 7. Employer account activation confirmation
-#    (fired after Fincra activation payment is confirmed)
+#    (fired after the Stripe activation payment is confirmed)
 # ──────────────────────────────────────────────────────────────
 
 def send_activation_confirmation_email(employer, payment) -> bool:
@@ -846,7 +846,7 @@ def send_profile_photo_reminder_email(user) -> bool:
 
 def send_employer_activation_reminder_email(employer) -> bool:
     activate_url  = f'{SITE_URL}/employer/activate/'
-    activation_fee = '49.99'   # mirrors EmployerProfile.ACTIVATION_FEE
+    activation_fee = '39.99'   # mirrors EmployerProfile.ACTIVATION_FEE
 
     content = f"""
     <h2>Your employer account is not yet activated</h2>

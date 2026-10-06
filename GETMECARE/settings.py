@@ -198,60 +198,14 @@ STORAGES = {
 # Groq API Configuration
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
-# ── Fincra Payment Gateway ──────────────────────────────────
-FINCRA_SECRET_KEY    = os.getenv('FINCRA_SECRET_KEY')
-FINCRA_PUBLIC_KEY    = os.getenv('FINCRA_PUBLIC_KEY')
-FINCRA_WEBHOOK_KEY   = os.getenv('FINCRA_WEBHOOK_KEY')
-FINCRA_BASE_URL      = os.getenv('FINCRA_BASE_URL', 'https://sandboxapi.fincra.com')
-FINCRA_BUSINESS_ID   = os.getenv('FINCRA_BUSINESS_ID', '')
-# Currency used for Fincra checkout.  NGN supports card, bank_transfer and
-# payAttitude.  USD only supports card.  When using NGN, USD prices are
-# auto-converted using FINCRA_USD_TO_NGN_RATE.
-FINCRA_CURRENCY      = os.getenv('FINCRA_CURRENCY', 'USD')
-# Approximate USD→NGN rate used for checkout conversion.
-# Update this periodically to match the real market rate.
-FINCRA_USD_TO_NGN_RATE = float(os.getenv('FINCRA_USD_TO_NGN_RATE', '1580'))
-
-# ── Fincra CAD (Interac e-Transfer) collection account ─────────
-# The merchant is issued a unique Interac collection alias (e.g.
-# merchant@fincra.ca) which employers e-Transfer money to.  The account is
-# requested via API (POST /profile/virtual-accounts/requests) and approved
-# asynchronously by Fincra; once approved the alias is stored in the
-# FincraCadAccount model (run `python manage.py fincra_setup_cad --refresh`).
-# These settings configure the request + KYC/KYB data submitted to Fincra.
-FINCRA_CAD_ACCOUNT_ID       = os.getenv('FINCRA_CAD_ACCOUNT_ID', '')
-FINCRA_CAD_ACCOUNT_EMAIL    = os.getenv('FINCRA_CAD_ACCOUNT_EMAIL', '')  # Interac alias override
-FINCRA_CAD_ACCOUNT_TYPE     = os.getenv('FINCRA_CAD_ACCOUNT_TYPE', 'corporate')  # individual | corporate
-FINCRA_CAD_PURPOSE          = os.getenv(
-    'FINCRA_CAD_PURPOSE',
-    'Collect account activation and shift-booking payments from Canadian employers via Interac e-Transfer.',
-)
-# KYC / KYB information (env vars used by the management command).  Address,
-# income band and document can be supplied as JSON strings.  Alternatively set
-# FINCRA_CAD_KYC_JSON to a full JSON object that overrides/merges into KYCInformation.
-FINCRA_CAD_KYC_FIRST_NAME   = os.getenv('FINCRA_CAD_KYC_FIRST_NAME', '')
-FINCRA_CAD_KYC_LAST_NAME    = os.getenv('FINCRA_CAD_KYC_LAST_NAME', '')
-FINCRA_CAD_KYC_OTHER_NAME   = os.getenv('FINCRA_CAD_KYC_OTHER_NAME', '')
-FINCRA_CAD_KYC_EMAIL        = os.getenv('FINCRA_CAD_KYC_EMAIL', '')
-FINCRA_CAD_KYC_PHONE        = os.getenv('FINCRA_CAD_KYC_PHONE', '')
-FINCRA_CAD_KYC_ADDRESS      = os.getenv('FINCRA_CAD_KYC_ADDRESS', '')  # JSON
-FINCRA_CAD_KYC_NATIONALITY  = os.getenv('FINCRA_CAD_KYC_NATIONALITY', '')
-FINCRA_CAD_KYC_BIRTH_DATE   = os.getenv('FINCRA_CAD_KYC_BIRTH_DATE', '')  # YYYY-MM-DD
-FINCRA_CAD_KYC_OCCUPATION   = os.getenv('FINCRA_CAD_KYC_OCCUPATION', '')
-FINCRA_CAD_KYC_ACCOUNT_DESTINATION = os.getenv('FINCRA_CAD_KYC_ACCOUNT_DESTINATION', 'wallet')
-FINCRA_CAD_KYC_TAX_COUNTRY  = os.getenv('FINCRA_CAD_KYC_TAX_COUNTRY', '')
-FINCRA_CAD_KYC_TAX_NUMBER   = os.getenv('FINCRA_CAD_KYC_TAX_NUMBER', '')
-FINCRA_CAD_KYC_MONTHLY_TX_VOLUME = os.getenv('FINCRA_CAD_KYC_MONTHLY_TX_VOLUME', '')
-FINCRA_CAD_KYC_MONTHLY_TX_COUNT = os.getenv('FINCRA_CAD_KYC_MONTHLY_TX_COUNT', '')
-FINCRA_CAD_KYC_SOURCE_OF_INCOME = os.getenv('FINCRA_CAD_KYC_SOURCE_OF_INCOME', '')
-FINCRA_CAD_KYC_EMPLOYMENT_STATUS = os.getenv('FINCRA_CAD_KYC_EMPLOYMENT_STATUS', '')
-FINCRA_CAD_KYC_INCOME_BAND  = os.getenv('FINCRA_CAD_KYC_INCOME_BAND', '')  # JSON {"lower":..,"upper":..}
-FINCRA_CAD_KYC_DOCUMENT     = os.getenv('FINCRA_CAD_KYC_DOCUMENT', '')     # JSON
-FINCRA_CAD_KYC_JSON         = os.getenv('FINCRA_CAD_KYC_JSON', '')         # full JSON override
-# Proof-of-identity / address documents (URLs Fincra can fetch).
-FINCRA_CAD_MEANS_OF_ID      = os.getenv('FINCRA_CAD_MEANS_OF_ID', '[]')    # JSON list of URLs
-FINCRA_CAD_UTILITY_BILL     = os.getenv('FINCRA_CAD_UTILITY_BILL', '')
-FINCRA_CAD_BANK_STATEMENT   = os.getenv('FINCRA_CAD_BANK_STATEMENT', '')
+# ── Stripe Payment Gateway ──────────────────────────────────
+STRIPE_SECRET_KEY      = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+# Signing secret (whsec_...) of the webhook endpoint registered in the Stripe
+# dashboard for POST /webhooks/stripe/ .
+STRIPE_WEBHOOK_SECRET  = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+# All amounts in the app (activation fee, shift bookings) are in CAD.
+STRIPE_CURRENCY        = os.getenv('STRIPE_CURRENCY', 'cad')
 
 # Security settings for production
 if not DEBUG:

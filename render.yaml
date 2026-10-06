@@ -20,6 +20,14 @@ services:
         sync: false
       - key: IMAGEKIT_URL_ENDPOINT
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_CURRENCY
+        value: cad
 
 databases:
   - name: getmecare-db
