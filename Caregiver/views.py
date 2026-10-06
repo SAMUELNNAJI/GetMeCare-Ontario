@@ -1,3 +1,5 @@
+import time
+
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
@@ -169,7 +171,6 @@ def contact(request):
         message    = request.POST.get('message', '').strip()
 
         from django.contrib import messages as dj_messages
-        import time
 
         # ── 1. Honeypot: bots fill in the hidden "website" field ──
         honeypot = request.POST.get('website', '').strip()
