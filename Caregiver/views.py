@@ -168,6 +168,37 @@ def contact(request):
         subject    = request.POST.get('subject', '').strip()
         message    = request.POST.get('message', '').strip()
 
+        from django.contrib import messages as dj_messages
+        import time
+
+        # ── 1. Honeypot: bots fill in the hidden "website" field ──
+        honeypot = request.POST.get('website', '').strip()
+        if honeypot:
+            # Silently succeed — don't tell bots they were blocked
+            dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
+            return render(request, 'Caregiver/contact.html')
+
+        # ── 2. Timing check: reject if submitted in under 4 seconds ──
+        try:
+            loaded_at = int(request.POST.get('form_loaded_at', 0))
+            elapsed   = int(time.time()) - loaded_at
+        except (ValueError, TypeError):
+            elapsed = 999
+        if elapsed < 4:
+            dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
+            return render(request, 'Caregiver/contact.html')
+
+        # ── 3. Rate limit: max 3 submissions per IP per hour ──
+        import hashlib
+        from django.core.cache import cache
+        ip_raw   = (request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+        ip_key   = 'contact_rl_' + hashlib.md5(ip_raw.encode()).hexdigest()
+        rl_count = cache.get(ip_key, 0)
+        if rl_count >= 3:
+            dj_messages.error(request, 'Too many messages sent. Please wait a while before trying again.')
+            return render(request, 'Caregiver/contact.html')
+        cache.set(ip_key, rl_count + 1, timeout=3600)  # 1 hour window
+
         if first_name and last_name and email and role and subject and message:
             from GETMECARE.email_utils import send_transactional_email, _wrap, SITE_NAME
 
@@ -224,13 +255,10 @@ def contact(request):
             )
 
             if ok:
-                from django.contrib import messages as dj_messages
                 dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
             else:
-                from django.contrib import messages as dj_messages
                 dj_messages.error(request, "Sorry, there was a problem sending your message. Please email us directly at getmecareontario@gmail.com.")
         else:
-            from django.contrib import messages as dj_messages
             dj_messages.error(request, 'Please fill in all required fields.')
 
         return render(request, 'Caregiver/contact.html')

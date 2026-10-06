@@ -104,6 +104,13 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
       <button type="submit" class="btn-submit" id="contactSubmitBtn">
         <i class="fas fa-paper-plane"></i> Send Message
       </button>
+      {# ── Honeypot: hidden field bots fill in, humans leave blank ── #}
+      <div style="display:none !important;visibility:hidden;position:absolute;left:-9999px;" aria-hidden="true">
+        <label for="website">Leave this blank</label>
+        <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+      </div>
+      {# ── Timing field: set by JS on page load, checked server-side ── #}
+      <input type="hidden" name="form_loaded_at" id="formLoadedAt" value="">
     </form>
 
     {% if messages %}
@@ -224,6 +231,11 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
       }
       // Allow form to submit normally (no e.preventDefault() here)
     });
+
+    // ── Timing: stamp when the page loaded so server can reject instant submits ──
+    var tsField = document.getElementById("formLoadedAt");
+    if (tsField) tsField.value = Math.floor(Date.now() / 1000);
+
   })();
 </script>
 {% endblock %}
