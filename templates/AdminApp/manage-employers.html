@@ -5,7 +5,7 @@
 /* ═══ PAGE HEADER ═══ */
 .mp-header {
   display:flex; align-items:center; justify-content:space-between;
-  flex-wrap:wrap; gap:14px; margin-bottom:24px;
+  flex-wrap:wrap; gap:14px; margin-bottom:20px;
 }
 .mp-header-left h1 {
   font-size:1.45rem; font-weight:800; color:#0f1f17; letter-spacing:-.3px;
@@ -19,6 +19,20 @@
   box-shadow:0 1px 3px rgba(0,0,0,.05);
 }
 .mp-stat-pill .pill-val { font-size:.95rem; font-weight:800; color:#1b3a2d; }
+
+/* ── Filter tabs ── */
+.ftab {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 16px; border-radius:20px; font-size:.8rem; font-weight:600;
+  text-decoration:none; border:1.5px solid #dde4d9;
+  background:#fff; color:#555; transition:all .15s;
+}
+.ftab:hover { border-color:#1b7d4f; color:#1b7d4f; }
+.ftab.active-tab { background:#1b7d4f; color:#fff; border-color:#1b7d4f; }
+.ftab.tab-suspended.active-tab { background:#c96000; border-color:#c96000; }
+.ftab.tab-deact.active-tab     { background:#c62828; border-color:#c62828; }
+.ftab-count { background:rgba(0,0,0,.1); border-radius:20px; padding:1px 7px; font-size:.7rem; font-weight:700; }
+.ftab.active-tab .ftab-count { background:rgba(255,255,255,.25); }
 
 /* ═══ CARD GRID ═══ */
 .emp-grid {
@@ -232,17 +246,40 @@
   </div>
 </div>
 
+{# ── Filter tabs ── #}
+<div class="filter-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+  <a href="?status=all{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab {% if status_filter == 'all' %}active-tab{% endif %}">
+    <i class="fas fa-list"></i> All <span class="ftab-count">{{ counts.all }}</span>
+  </a>
+  <a href="?status=active{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab {% if status_filter == 'active' %}active-tab{% endif %}">
+    <i class="fas fa-check-circle"></i> Active <span class="ftab-count">{{ counts.active }}</span>
+  </a>
+  <a href="?status=inactive{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab {% if status_filter == 'inactive' %}active-tab{% endif %}">
+    <i class="fas fa-clock"></i> Not Activated <span class="ftab-count">{{ counts.inactive }}</span>
+  </a>
+  <a href="?status=suspended{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab tab-suspended {% if status_filter == 'suspended' %}active-tab{% endif %}">
+    <i class="fas fa-pause-circle"></i> Suspended <span class="ftab-count">{{ counts.suspended }}</span>
+  </a>
+  <a href="?status=deactivated{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab tab-deact {% if status_filter == 'deactivated' %}active-tab{% endif %}">
+    <i class="fas fa-ban"></i> Deactivated <span class="ftab-count">{{ counts.deactivated }}</span>
+  </a>
+</div>
+
 {# ── Search bar ── #}
 <form method="get" action="" style="margin-bottom:16px;">
+  <input type="hidden" name="status" value="{{ status_filter }}">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <div class="mp-search-box">
       <i class="fas fa-search"></i>
-      <input type="text" name="q" placeholder="Search by name, email, payment ref, status…" value="{{ search_q|default:'' }}" autofocus>
+      <input type="text" name="q" placeholder="Search by name, email, payment ref, status…" value="{{ search_q|default:'' }}">
     </div>
     {% if search_q %}
-    <a href="{% url 'AdminApp:manage_employers' %}" class="mp-clear-btn">
-      <i class="fas fa-times"></i> Clear
-    </a>
+    <a href="?status={{ status_filter }}" class="mp-clear-btn"><i class="fas fa-times"></i> Clear</a>
     {% endif %}
   </div>
 </form>
@@ -393,24 +430,21 @@
 {% if page_obj.has_other_pages %}
 <nav class="adm-pagination" aria-label="Employers pagination">
   {% if page_obj.has_previous %}
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page=1" title="First"><i class="fas fa-angles-left"></i></a>
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page=1"><i class="fas fa-angles-left"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
   {% else %}
     <span class="disabled"><i class="fas fa-angles-left"></i></span>
     <span class="disabled"><i class="fas fa-chevron-left"></i></span>
   {% endif %}
-
   {% for num in page_obj.paginator.page_range %}
-    {% if page_obj.number == num %}
-      <span class="current">{{ num }}</span>
+    {% if page_obj.number == num %}<span class="current">{{ num }}</span>
     {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
-      <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ num }}">{{ num }}</a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ num }}">{{ num }}</a>
     {% endif %}
   {% endfor %}
-
   {% if page_obj.has_next %}
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.paginator.num_pages }}" title="Last"><i class="fas fa-angles-right"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.paginator.num_pages }}"><i class="fas fa-angles-right"></i></a>
   {% else %}
     <span class="disabled"><i class="fas fa-chevron-right"></i></span>
     <span class="disabled"><i class="fas fa-angles-right"></i></span>

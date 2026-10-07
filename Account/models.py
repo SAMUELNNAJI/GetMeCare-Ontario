@@ -53,6 +53,17 @@ class CaregiverProfile(models.Model):
         (STATUS_REJECTED, 'Rejected'),
     ]
 
+    # ── Account moderation status (separate from verification status) ──
+    ACCOUNT_ACTIVE      = 'active'
+    ACCOUNT_SUSPENDED   = 'suspended'
+    ACCOUNT_DEACTIVATED = 'deactivated'
+
+    ACCOUNT_STATUS_CHOICES = [
+        (ACCOUNT_ACTIVE,      'Active'),
+        (ACCOUNT_SUSPENDED,   'Suspended'),
+        (ACCOUNT_DEACTIVATED, 'Deactivated'),
+    ]
+
     user        = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
@@ -128,9 +139,36 @@ class CaregiverProfile(models.Model):
         default=False,
         help_text='Set to True permanently when caregiver dismisses the activation modal',
     )
+    # ── Admin moderation fields ───────────────────────────────
+    account_status    = models.CharField(
+        max_length=20,
+        choices=ACCOUNT_STATUS_CHOICES,
+        default=ACCOUNT_ACTIVE,
+        help_text='Admin-controlled moderation status',
+    )
+    status_reason     = models.TextField(
+        blank=True,
+        help_text='Reason given to caregiver for suspension/deactivation',
+    )
+    status_changed_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text='When account_status was last changed by admin',
+    )
 
     def __str__(self):
         return f"{self.user.get_full_name()} — {self.get_status_display()}"
+
+    @property
+    def is_suspended(self):
+        return self.account_status == self.ACCOUNT_SUSPENDED
+
+    @property
+    def is_deactivated(self):
+        return self.account_status == self.ACCOUNT_DEACTIVATED
+
+    @property
+    def is_moderation_restricted(self):
+        return self.account_status in (self.ACCOUNT_SUSPENDED, self.ACCOUNT_DEACTIVATED)
 
     @property
     def skills_list(self):

@@ -2,36 +2,41 @@
 {% block title %}Manage Caregivers — Admin{% endblock %}
 {% block extra_head %}
 <style>
-/* ═══ PAGE HEADER ═══ */
-.mc-header {
-  display:flex; align-items:center; justify-content:space-between;
-  flex-wrap:wrap; gap:14px; margin-bottom:24px;
-}
+/* ── Page header ── */
+.mc-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:20px; }
 .mc-header-left h1 { font-size:1.45rem; font-weight:800; color:#0f1f17; letter-spacing:-.3px; }
 .mc-header-left p  { font-size:.83rem; color:#7a8c80; margin-top:3px; }
-.mc-stat-pills { display:flex; gap:10px; flex-wrap:wrap; }
-.mc-stat-pill {
-  display:flex; align-items:center; gap:8px;
-  background:#fff; border:1px solid #e4ece7; border-radius:40px;
-  padding:7px 14px; font-size:.78rem; font-weight:600; color:#444;
-  box-shadow:0 1px 3px rgba(0,0,0,.05);
-}
-.mc-stat-pill .pill-val { font-size:.95rem; font-weight:800; color:#1b3a2d; }
 
-/* ── search ── */
+/* ── Filter tabs ── */
+.filter-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.ftab {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 16px; border-radius:20px; font-size:.8rem; font-weight:600;
+  text-decoration:none; border:1.5px solid #dde4d9;
+  background:#fff; color:#555; transition:all .15s;
+}
+.ftab:hover { border-color:#1b7d4f; color:#1b7d4f; }
+.ftab.active-tab { background:#1b7d4f; color:#fff; border-color:#1b7d4f; }
+.ftab.tab-pending  { }
+.ftab.tab-pending.active-tab  { background:#c96000; border-color:#c96000; }
+.ftab.tab-suspended.active-tab{ background:#c96000; border-color:#c96000; }
+.ftab.tab-deact.active-tab    { background:#c62828; border-color:#c62828; }
+.ftab-count {
+  background:rgba(0,0,0,.1); border-radius:20px;
+  padding:1px 7px; font-size:.7rem; font-weight:700;
+}
+.ftab.active-tab .ftab-count { background:rgba(255,255,255,.25); }
+
+/* ── Search ── */
 .mc-search-box {
-  display:flex; align-items:center; gap:9px;
-  background:#fff; border:1.5px solid #dde4d9; border-radius:12px;
-  padding:9px 16px; flex:1; max-width:400px;
-  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  display:flex; align-items:center; gap:9px; background:#fff;
+  border:1.5px solid #dde4d9; border-radius:12px; padding:9px 16px;
+  flex:1; max-width:400px; box-shadow:0 1px 4px rgba(0,0,0,.05);
   transition:border-color .15s;
 }
 .mc-search-box:focus-within { border-color:#1b7d4f; box-shadow:0 0 0 3px rgba(27,125,79,.1); }
 .mc-search-box i { color:#9aaa9e; font-size:.84rem; flex-shrink:0; }
-.mc-search-box input {
-  border:none; outline:none; background:transparent;
-  font-size:.875rem; color:#333; width:100%; font-family:inherit;
-}
+.mc-search-box input { border:none; outline:none; background:transparent; font-size:.875rem; color:#333; width:100%; font-family:inherit; }
 .mc-search-box input::placeholder { color:#bbb; }
 .mc-clear-btn {
   display:inline-flex; align-items:center; gap:6px;
@@ -40,50 +45,44 @@
   font-weight:600; text-decoration:none; transition:background .15s;
 }
 .mc-clear-btn:hover { background:#ffcdd2; }
-.mc-search-result-pill {
+.mc-result-pill {
   display:inline-flex; align-items:center; gap:8px;
   background:#e6f5ee; color:#1b5e35; border:1px solid #b2dfca;
-  border-radius:20px; padding:6px 14px; font-size:.8rem;
-  margin-bottom:16px;
+  border-radius:20px; padding:6px 14px; font-size:.8rem; margin-bottom:14px;
 }
 
-/* ═══ CARD GRID ═══ */
-.cg-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(340px,1fr));
-  gap:16px;
-}
-
+/* ── Card grid ── */
+.cg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
 .cg-card {
   background:#fff; border:1px solid #e8ede9; border-radius:16px;
   overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.05);
-  transition:box-shadow .2s, transform .2s;
-  display:flex; flex-direction:column;
+  transition:box-shadow .2s,transform .2s; display:flex; flex-direction:column;
 }
 .cg-card:hover { box-shadow:0 6px 24px rgba(27,58,45,.1); transform:translateY(-2px); }
 
-.cg-accent         { height:4px; }
+.cg-accent { height:4px; }
 .cg-accent-active  { background:linear-gradient(90deg,#1b7d4f,#2daa70); }
 .cg-accent-pending { background:linear-gradient(90deg,#c96000,#f0a040); }
 .cg-accent-rejected{ background:linear-gradient(90deg,#c62828,#e05252); }
 .cg-accent-inact   { background:linear-gradient(90deg,#9aaa9e,#c8d8c8); }
+.cg-accent-suspend { background:linear-gradient(90deg,#c96000,#f0a040); }
+.cg-accent-deact   { background:linear-gradient(90deg,#c62828,#e05252); }
 
 .cg-card-body { padding:18px 20px 12px; flex:1; }
 
-/* top row */
 .cg-top { display:flex; align-items:flex-start; gap:14px; margin-bottom:14px; }
 .cg-av {
-  width:50px; height:50px; border-radius:50%;
-  color:#fff; font-size:1rem; font-weight:800;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; box-shadow:0 2px 8px rgba(27,58,45,.22);
-  overflow:hidden; text-decoration:none;
+  width:50px; height:50px; border-radius:50%; color:#fff;
+  font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; box-shadow:0 2px 8px rgba(27,58,45,.22); overflow:hidden; text-decoration:none;
 }
 .cg-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .cg-av-active  { background:linear-gradient(135deg,#1b3a2d,#2d7a50); }
 .cg-av-pending { background:linear-gradient(135deg,#c96000,#f0a040); }
 .cg-av-rejected{ background:linear-gradient(135deg,#c62828,#e05252); }
 .cg-av-inact   { background:linear-gradient(135deg,#6b7c72,#9aaa9e); }
+.cg-av-suspend { background:linear-gradient(135deg,#c96000,#f0a040); }
+.cg-av-deact   { background:linear-gradient(135deg,#c62828,#e05252); }
 
 .cg-name-block { flex:1; min-width:0; }
 .cg-name  { font-size:.945rem; font-weight:700; color:#0f1f17; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -91,175 +90,136 @@
 .cg-name a:hover{ color:#1b7d4f; }
 .cg-email { font-size:.74rem; color:#9aaa9e; margin-top:2px; }
 
-.cg-sbadge {
-  display:inline-flex; align-items:center; gap:5px; border-radius:20px;
-  padding:4px 10px; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0;
-}
+.cg-sbadge { display:inline-flex; align-items:center; gap:5px; border-radius:20px; padding:4px 10px; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0; }
 .csb-active  { background:#e6f5ee; color:#1b7d4f; }
 .csb-pending { background:#fff3e0; color:#c96000; }
 .csb-rejected{ background:#fdecea; color:#c62828; }
 .csb-inact   { background:#f0f0f0; color:#777; }
+.csb-suspend { background:#fff3e0; color:#c96000; }
+.csb-deact   { background:#fdecea; color:#c62828; }
 .csb-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
 .csd-active  { background:#1b7d4f; }
 .csd-pending { background:#c96000; animation:cpulse 2s infinite; }
 .csd-rejected{ background:#c62828; }
 .csd-inact   { background:#bbb; }
+.csd-suspend { background:#c96000; animation:cpulse 2s infinite; }
+.csd-deact   { background:#c62828; }
 @keyframes cpulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* meta grid */
 .cg-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
 .cg-meta-item { background:#f8faf7; border-radius:9px; padding:8px 11px; }
 .cg-meta-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; }
 .cg-meta-val { font-size:.81rem; font-weight:600; color:#1a1a1a; margin-top:2px; }
 
-/* doc pills */
 .cg-docs { margin-bottom:12px; }
 .cg-docs-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
 .cg-docs-pills { display:flex; gap:5px; flex-wrap:wrap; }
-.dp {
-  display:inline-flex; align-items:center; gap:4px;
-  font-size:.7rem; font-weight:700; border-radius:6px; padding:3px 9px;
-}
+.dp { display:inline-flex; align-items:center; gap:4px; font-size:.7rem; font-weight:700; border-radius:6px; padding:3px 9px; }
 .dp-ok   { background:#e6f5ee; color:#1b7d4f; }
 .dp-pend { background:#fff3e0; color:#c96000; }
 .dp-rej  { background:#fdecea; color:#c62828; }
-.dp-miss { background:#f5f5f5; color:#ccc; border:1px dashed #e0e0e0; }
 
-/* skills */
 .cg-skills { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
 .skill-tag { font-size:.7rem; font-weight:600; background:#eef4f1; color:#2d5a42; border-radius:20px; padding:3px 10px; }
 
-/* actions */
-.cg-actions {
-  padding:12px 20px 15px; border-top:1px solid #f2f4f0;
-  display:flex; gap:7px; flex-wrap:wrap; align-items:center;
+.cg-reason {
+  background:#fffbf2; border:1px solid #f5d78a; border-radius:9px;
+  padding:8px 11px; margin-bottom:10px; font-size:.77rem; color:#7a4900; line-height:1.5;
 }
+.cg-reason.deact { background:#fff5f5; border-color:#ffcdd2; color:#7f1414; }
+.cg-reason-lbl { font-weight:700; font-size:.64rem; text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+
+/* ── Actions ── */
+.cg-actions { padding:12px 20px 15px; border-top:1px solid #f2f4f0; display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
 .cc-btn {
   display:inline-flex; align-items:center; gap:5px; border-radius:8px;
   padding:7px 13px; font-size:.775rem; font-weight:600; cursor:pointer;
   border:none; font-family:inherit; text-decoration:none;
-  transition:opacity .15s, transform .1s;
+  transition:opacity .15s,transform .1s;
 }
 .cc-btn:hover { opacity:.88; transform:translateY(-1px); }
-.ccb-green { background:#1b7d4f; color:#fff; }
-.ccb-blue  { background:#e8f0fe; color:#1a56c4; }
-.ccb-ghost { background:#f0f2ee; color:#333; border:1px solid #dde2d8; }
-.ccb-warn  { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; cursor:default; }
+.ccb-green   { background:#1b7d4f; color:#fff; }
+.ccb-blue    { background:#e8f0fe; color:#1a56c4; }
+.ccb-ghost   { background:#f0f2ee; color:#333; border:1px solid #dde2d8; }
+.ccb-warn    { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; cursor:default; }
+.ccb-suspend { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; }
+.ccb-deact   { background:#fdecea; color:#c62828; border:1px solid #ffcdd2; }
 
-/* empty */
-.cg-empty { grid-column:1/-1; text-align:center; padding:52px 0; color:#c0ccc4; font-size:.88rem; }
-.cg-empty i { font-size:2.8rem; display:block; margin-bottom:10px; }
-
-/* ═══ DOCUMENT MODAL ═══ */
-.docs-backdrop {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.55); z-index:900;
-  align-items:center; justify-content:center; padding:20px;
+/* ── Pagination ── */
+.adm-pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:28px; flex-wrap:wrap; }
+.adm-pagination a, .adm-pagination span {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:36px; height:36px; border-radius:9px; font-size:.82rem;
+  font-weight:600; text-decoration:none; transition:background .15s,color .15s;
 }
+.adm-pagination a { background:#fff; color:#444; border:1px solid #dde4d9; }
+.adm-pagination a:hover { background:#e6f5ee; color:#1b7d4f; border-color:#b2dfca; }
+.adm-pagination span.current { background:#1b7d4f; color:#fff; border:1px solid #1b7d4f; }
+.adm-pagination span.disabled { background:#f5f5f5; color:#ccc; border:1px solid #eee; cursor:default; }
+.adm-page-info { text-align:center; font-size:.78rem; color:#9aaa9e; margin-top:10px; }
+
+/* ── Moderation modal ── */
+.mod-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:900; align-items:center; justify-content:center; padding:20px; }
+.mod-backdrop.open { display:flex; }
+.mod-box { background:#fff; border-radius:18px; max-width:460px; width:100%; padding:32px 28px 26px; box-shadow:0 24px 72px rgba(0,0,0,.22); animation:modIn .25s ease; }
+@keyframes modIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.mod-icon { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; margin-bottom:14px; }
+.mod-icon-s { background:#fff3e0; color:#c96000; }
+.mod-icon-d { background:#fdecea; color:#c62828; }
+.mod-title { font-size:1.05rem; font-weight:800; color:#1a1a1a; margin-bottom:6px; }
+.mod-sub   { font-size:.845rem; color:#666; margin-bottom:18px; line-height:1.55; }
+.mod-box label { font-size:.8rem; font-weight:700; color:#555; display:block; margin-bottom:7px; }
+.mod-box textarea { width:100%; min-height:88px; border:1.5px solid #dde4d9; border-radius:10px; padding:10px 12px; font-family:inherit; font-size:.845rem; color:#333; resize:vertical; outline:none; transition:border-color .15s; }
+.mod-box textarea:focus { border-color:#1b7d4f; }
+.mod-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
+.mod-cancel  { background:#f0f2ee; color:#555; border:1px solid #dde2d8; border-radius:9px; padding:9px 20px; font-size:.845rem; font-weight:600; cursor:pointer; font-family:inherit; }
+.mod-cancel:hover { background:#e4e7e0; }
+.mod-ok-s { background:#c96000; color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:.845rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.mod-ok-s:hover { background:#a85000; }
+.mod-ok-d { background:#c62828; color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:.845rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.mod-ok-d:hover { background:#a01f1f; }
+
+/* ── Doc modal ── */
+.docs-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:900; align-items:center; justify-content:center; padding:20px; }
 .docs-backdrop.open { display:flex; }
-.docs-modal {
-  background:#fff; border-radius:18px;
-  max-width:580px; width:100%; max-height:88vh;
-  display:flex; flex-direction:column;
-  box-shadow:0 24px 72px rgba(0,0,0,.22);
-  animation:docsIn .25s ease;
-  overflow:hidden;
-}
+.docs-modal { background:#fff; border-radius:18px; max-width:580px; width:100%; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 24px 72px rgba(0,0,0,.22); animation:docsIn .25s ease; overflow:hidden; }
 @keyframes docsIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-.docs-modal-header {
-  display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
-  padding:22px 24px 16px; border-bottom:1px solid #f2f4f0; flex-shrink:0;
-}
-.docs-modal-title {
-  font-size:1rem; font-weight:800; color:#0f1f17;
-  display:flex; align-items:center; gap:8px;
-}
+.docs-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:22px 24px 16px; border-bottom:1px solid #f2f4f0; flex-shrink:0; }
+.docs-modal-title { font-size:1rem; font-weight:800; color:#0f1f17; display:flex; align-items:center; gap:8px; }
 .docs-modal-sub { font-size:.76rem; color:#9aaa9e; margin-top:3px; }
-.docs-modal-close {
-  width:32px; height:32px; border-radius:50%; border:none;
-  background:#f0f2ee; color:#666; cursor:pointer; font-size:.9rem;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; transition:background .15s;
-}
-.docs-modal-close:hover { background:#e4e7e0; color:#333; }
+.docs-modal-close { width:32px; height:32px; border-radius:50%; border:none; background:#f0f2ee; color:#666; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s; }
+.docs-modal-close:hover { background:#e4e7e0; }
 .docs-modal-body { flex:1; overflow-y:auto; padding:16px 24px; }
-.docs-modal-body::-webkit-scrollbar { width:5px; }
-.docs-modal-body::-webkit-scrollbar-track { background:#f8faf7; border-radius:4px; }
-.docs-modal-body::-webkit-scrollbar-thumb { background:#c8d8c8; border-radius:4px; }
-.docs-modal-footer {
-  padding:14px 24px 18px; border-top:1px solid #f2f4f0;
-  display:flex; gap:10px; flex-shrink:0;
-}
-
-/* ── doc row ── */
-.doc-row-item {
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:13px 0; border-bottom:1px solid #f5f7f4;
-}
+.docs-modal-footer { padding:14px 24px 18px; border-top:1px solid #f2f4f0; display:flex; gap:10px; flex-shrink:0; }
+.doc-row-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid #f5f7f4; }
 .doc-row-item:last-child { border-bottom:none; }
 .doc-row-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
-.doc-row-icon {
-  width:40px; height:40px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:.95rem; flex-shrink:0;
-}
+.doc-row-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.95rem; flex-shrink:0; }
 .doc-icon-ok   { background:#e6f5ee; color:#1b7d4f; }
 .doc-icon-rej  { background:#fdecea; color:#c62828; }
 .doc-icon-pend { background:#fff3e0; color:#c96000; }
 .doc-row-info { min-width:0; }
 .doc-row-name { font-size:.855rem; font-weight:700; color:#1a1a1a; }
 .doc-row-meta { font-size:.72rem; color:#9aaa9e; margin-top:2px; }
-.doc-row-note {
-  font-size:.74rem; color:#666; margin-top:4px;
-  background:#f8faf7; border-radius:6px; padding:4px 8px;
-  display:flex; align-items:center; gap:5px;
-}
-.doc-row-right {
-  display:flex; align-items:center; gap:8px; flex-shrink:0;
-}
-.doc-status-badge {
-  display:inline-flex; align-items:center; gap:4px;
-  border-radius:20px; padding:4px 9px;
-  font-size:.7rem; font-weight:700; white-space:nowrap;
-}
+.doc-row-note { font-size:.74rem; color:#666; margin-top:4px; background:#f8faf7; border-radius:6px; padding:4px 8px; display:flex; align-items:center; gap:5px; }
+.doc-row-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.doc-status-badge { display:inline-flex; align-items:center; gap:4px; border-radius:20px; padding:4px 9px; font-size:.7rem; font-weight:700; white-space:nowrap; }
 .dsb-ok   { background:#e6f5ee; color:#1b7d4f; }
 .dsb-rej  { background:#fdecea; color:#c62828; }
 .dsb-pend { background:#fff3e0; color:#c96000; }
-.doc-view-btn {
-  display:inline-flex; align-items:center; gap:5px;
-  background:#1b7d4f; color:#fff; border-radius:7px;
-  padding:5px 11px; font-size:.74rem; font-weight:600;
-  text-decoration:none; transition:background .15s;
-}
+.doc-view-btn { display:inline-flex; align-items:center; gap:5px; background:#1b7d4f; color:#fff; border-radius:7px; padding:5px 11px; font-size:.74rem; font-weight:600; text-decoration:none; transition:background .15s; }
 .doc-view-btn:hover { background:#155f3c; }
-.docs-empty {
-  text-align:center; padding:36px 0; color:#c0ccc4; font-size:.86rem;
-}
+.docs-empty { text-align:center; padding:36px 0; color:#c0ccc4; font-size:.86rem; }
 .docs-empty i { font-size:2rem; display:block; margin-bottom:8px; }
 
-/* ═══ PAGINATION ═══ */
-.adm-pagination {
-  display:flex; align-items:center; justify-content:center;
-  gap:6px; margin-top:28px; flex-wrap:wrap;
-}
-.adm-pagination a,
-.adm-pagination span {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-width:36px; height:36px; border-radius:9px;
-  font-size:.82rem; font-weight:600; text-decoration:none;
-  transition:background .15s, color .15s;
-}
-.adm-pagination a { background:#fff; color:#444; border:1px solid #dde4d9; }
-.adm-pagination a:hover { background:#e6f5ee; color:#1b7d4f; border-color:#b2dfca; }
-.adm-pagination span.current {
-  background:#1b7d4f; color:#fff; border:1px solid #1b7d4f;
-}
-.adm-pagination span.disabled { background:#f5f5f5; color:#ccc; border:1px solid #eee; cursor:default; }
-.adm-page-info { text-align:center; font-size:.78rem; color:#9aaa9e; margin-top:10px; }
+.cg-empty { grid-column:1/-1; text-align:center; padding:52px 0; color:#c0ccc4; font-size:.88rem; }
+.cg-empty i { font-size:2.8rem; display:block; margin-bottom:10px; }
 
 @media(max-width:680px){
   .cg-grid{grid-template-columns:1fr;}
   .mc-header{flex-direction:column;align-items:flex-start;}
+  .filter-tabs{gap:6px;}
+  .ftab{padding:6px 12px;font-size:.75rem;}
 }
 </style>
 {% endblock %}
@@ -269,35 +229,57 @@
 <div class="mc-header">
   <div class="mc-header-left">
     <h1><i class="fas fa-user-nurse" style="color:#1b7d4f;font-size:1.2rem;margin-right:8px"></i>Manage Caregivers</h1>
-    <p>Review documents, verify and activate caregiver accounts</p>
-  </div>
-  <div class="mc-stat-pills">
-    <div class="mc-stat-pill">
-      <i class="fas fa-users" style="color:#1b7d4f"></i>
-      <span class="pill-val">{{ total_count }}</span> total
-    </div>
+    <p>Review, verify, suspend or deactivate caregiver accounts</p>
   </div>
 </div>
 
-{# ── Search bar ── #}
-<form method="get" action="" style="margin-bottom:16px;">
+{# ── Filter tabs ── #}
+<div class="filter-tabs">
+  <a href="?status=all{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab {% if status_filter == 'all' %}active-tab{% endif %}">
+    <i class="fas fa-list"></i> All
+    <span class="ftab-count">{{ counts.all }}</span>
+  </a>
+  <a href="?status=active{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab {% if status_filter == 'active' %}active-tab{% endif %}">
+    <i class="fas fa-check-circle"></i> Verified
+    <span class="ftab-count">{{ counts.active }}</span>
+  </a>
+  <a href="?status=pending{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab tab-pending {% if status_filter == 'pending' %}active-tab{% endif %}">
+    <i class="fas fa-clock"></i> Pending
+    <span class="ftab-count">{{ counts.pending }}</span>
+  </a>
+  <a href="?status=suspended{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab tab-suspended {% if status_filter == 'suspended' %}active-tab{% endif %}">
+    <i class="fas fa-pause-circle"></i> Suspended
+    <span class="ftab-count">{{ counts.suspended }}</span>
+  </a>
+  <a href="?status=deactivated{% if search_q %}&q={{ search_q }}{% endif %}"
+     class="ftab tab-deact {% if status_filter == 'deactivated' %}active-tab{% endif %}">
+    <i class="fas fa-ban"></i> Deactivated
+    <span class="ftab-count">{{ counts.deactivated }}</span>
+  </a>
+</div>
+
+{# ── Search ── #}
+<form method="get" action="" style="margin-bottom:14px;">
+  <input type="hidden" name="status" value="{{ status_filter }}">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <div class="mc-search-box">
       <i class="fas fa-search"></i>
-      <input type="text" name="q" placeholder="Search by name, email, city, skills, status…" value="{{ search_q|default:'' }}" autofocus>
+      <input type="text" name="q" placeholder="Search by name, email, city, skills…" value="{{ search_q|default:'' }}">
     </div>
     {% if search_q %}
-    <a href="{% url 'AdminApp:manage_caregivers' %}" class="mc-clear-btn">
-      <i class="fas fa-times"></i> Clear
-    </a>
+    <a href="?status={{ status_filter }}" class="mc-clear-btn"><i class="fas fa-times"></i> Clear</a>
     {% endif %}
   </div>
 </form>
 
 {% if search_q %}
-<div class="mc-search-result-pill">
+<div class="mc-result-pill">
   <i class="fas fa-filter"></i>
-  Showing <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} for <strong>"{{ search_q }}"</strong>
+  <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} for <strong>"{{ search_q }}"</strong>
 </div>
 {% endif %}
 
@@ -307,45 +289,49 @@
 </div>
 {% endfor %}
 
+{# ── Cards ── #}
 <div class="cg-grid">
 {% for p in profiles %}
 
   <div class="cg-card">
-
-    {# accent bar #}
     <div class="cg-accent
-      {% if p.status == 'active' %}cg-accent-active
+      {% if p.account_status == 'suspended' %}cg-accent-suspend
+      {% elif p.account_status == 'deactivated' %}cg-accent-deact
+      {% elif p.status == 'active' %}cg-accent-active
       {% elif p.status == 'pending_admin_review' %}cg-accent-pending
       {% elif p.status == 'rejected' %}cg-accent-rejected
       {% else %}cg-accent-inact{% endif %}">
     </div>
 
     <div class="cg-card-body">
-
-      {# top row #}
       <div class="cg-top">
-        <a href="{% url 'caregiver_profile' p.pk %}" class="cg-av
-          {% if p.status == 'active' %}cg-av-active
-          {% elif p.status == 'pending_admin_review' %}cg-av-pending
-          {% elif p.status == 'rejected' %}cg-av-rejected
-          {% else %}cg-av-inact{% endif %}"
-          title="View public profile">
-          {% if p.profile_image %}
-            <img src="{{ p.profile_image.url }}" alt="{{ p.user.get_full_name }}">
-          {% else %}
-            {% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
+        <a href="{% if p.status == 'active' %}{% url 'caregiver_profile' p.pk %}{% else %}#{% endif %}"
+           class="cg-av
+           {% if p.account_status == 'suspended' %}cg-av-suspend
+           {% elif p.account_status == 'deactivated' %}cg-av-deact
+           {% elif p.status == 'active' %}cg-av-active
+           {% elif p.status == 'pending_admin_review' %}cg-av-pending
+           {% elif p.status == 'rejected' %}cg-av-rejected
+           {% else %}cg-av-inact{% endif %}">
+          {% if p.profile_image %}<img src="{{ p.profile_image.url }}" alt="">
+          {% else %}{% if p.user.first_name %}{{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}{% else %}{{ p.user.username|slice:":2"|upper }}{% endif %}
           {% endif %}
         </a>
-
         <div class="cg-name-block">
           <div class="cg-name">
-            <a href="{% url 'caregiver_profile' p.pk %}">{{ p.user.get_full_name|default:p.user.username }}</a>
+            {% if p.status == 'active' %}<a href="{% url 'caregiver_profile' p.pk %}">{% endif %}
+            {{ p.user.get_full_name|default:p.user.username }}
+            {% if p.status == 'active' %}</a>{% endif %}
           </div>
           <div class="cg-email">{{ p.user.email }}</div>
         </div>
-
-        {% if p.status == 'active' %}
-          <span class="cg-sbadge csb-active"><span class="csb-dot csd-active"></span> Active</span>
+        {# status badge — moderation overrides verification #}
+        {% if p.account_status == 'suspended' %}
+          <span class="cg-sbadge csb-suspend"><span class="csb-dot csd-suspend"></span> Suspended</span>
+        {% elif p.account_status == 'deactivated' %}
+          <span class="cg-sbadge csb-deact"><span class="csb-dot csd-deact"></span> Deactivated</span>
+        {% elif p.status == 'active' %}
+          <span class="cg-sbadge csb-active"><span class="csb-dot csd-active"></span> Verified</span>
         {% elif p.status == 'pending_admin_review' %}
           <span class="cg-sbadge csb-pending"><span class="csb-dot csd-pending"></span> Pending</span>
         {% elif p.status == 'rejected' %}
@@ -355,7 +341,6 @@
         {% endif %}
       </div>
 
-      {# meta grid #}
       <div class="cg-meta">
         <div class="cg-meta-item">
           <div class="cg-meta-lbl"><i class="fas fa-map-marker-alt" style="margin-right:3px"></i>City</div>
@@ -371,7 +356,6 @@
         </div>
       </div>
 
-      {# document pills #}
       <div class="cg-docs">
         <div class="cg-docs-lbl"><i class="fas fa-folder" style="margin-right:3px"></i>Documents</div>
         <div class="cg-docs-pills">
@@ -381,13 +365,9 @@
             {% for d in docs %}
               {% if d.doc_type == dtype %}
                 <span class="dp {% if d.status == 'approved' %}dp-ok{% elif d.status == 'rejected' %}dp-rej{% else %}dp-pend{% endif %}"
-                  title="{% if dtype == 'psw_certificate' %}PSW Certificate{% elif dtype == 'vulnerable_sector_check' %}Vulnerable Sector Check{% elif dtype == 'government_id' %}Government ID{% elif dtype == 'first_aid' %}First Aid/CPR{% else %}Resume/CV{% endif %} — {{ d.get_status_display }}">
+                  title="{{ d.get_doc_type_display }} — {{ d.get_status_display }}">
                   <i class="fas fa-{% if d.status == 'approved' %}check{% elif d.status == 'rejected' %}times{% else %}clock{% endif %}"></i>
-                  {% if dtype == "psw_certificate" %}PSW
-                  {% elif dtype == "vulnerable_sector_check" %}VSC
-                  {% elif dtype == "government_id" %}ID
-                  {% elif dtype == "first_aid" %}FA
-                  {% else %}CV{% endif %}
+                  {% if dtype == "psw_certificate" %}PSW{% elif dtype == "vulnerable_sector_check" %}VSC{% elif dtype == "government_id" %}ID{% elif dtype == "first_aid" %}FA{% else %}CV{% endif %}
                 </span>
               {% endif %}
             {% endfor %}
@@ -397,75 +377,92 @@
         </div>
       </div>
 
-      {# skills #}
       {% if p.skills %}
       <div class="cg-skills">
-        {% for skill in p.skills_list|slice:":4" %}
-          <span class="skill-tag">{{ skill }}</span>
-        {% endfor %}
-        {% if p.skills_list|length > 4 %}
-          <span class="skill-tag" style="background:#e8ede9;color:#5a7a60">+{{ p.skills_list|length|add:"-4" }} more</span>
-        {% endif %}
+        {% for skill in p.skills_list|slice:":4" %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+        {% if p.skills_list|length > 4 %}<span class="skill-tag" style="background:#e8ede9;color:#5a7a60">+{{ p.skills_list|length|add:"-4" }} more</span>{% endif %}
       </div>
       {% endif %}
 
-    </div>{# /cg-card-body #}
+      {% if p.status_reason %}
+      <div class="cg-reason {% if p.account_status == 'deactivated' %}deact{% endif %}">
+        <div class="cg-reason-lbl">
+          {% if p.account_status == 'suspended' %}<i class="fas fa-pause-circle"></i> Suspension reason
+          {% else %}<i class="fas fa-ban"></i> Deactivation reason{% endif %}
+        </div>
+        {{ p.status_reason }}
+      </div>
+      {% endif %}
+    </div>
 
-    {# actions #}
     <div class="cg-actions">
-      {% if p.status == 'pending_admin_review' %}
+      {# Activate #}
+      {% if p.status == 'pending_admin_review' and p.account_status == 'active' %}
         {% if p.has_all_required_documents and p.hourly_rate %}
         <form method="post" action="{% url 'AdminApp:activate_caregiver' p.pk %}" style="margin:0">
-          {% csrf_token %}
-          <button type="submit" class="cc-btn ccb-green"><i class="fas fa-check"></i> Activate</button>
+          {% csrf_token %}<button type="submit" class="cc-btn ccb-green"><i class="fas fa-check"></i> Activate</button>
         </form>
         {% elif not p.hourly_rate %}
-        <span class="cc-btn ccb-warn" title="Caregiver has not set an hourly rate">
-          <i class="fas fa-dollar-sign"></i> No Rate Set
-        </span>
+        <span class="cc-btn ccb-warn" title="No hourly rate set"><i class="fas fa-dollar-sign"></i> No Rate</span>
         {% else %}
-        <span class="cc-btn ccb-warn" title="Not all required documents have been uploaded">
-          <i class="fas fa-exclamation-triangle"></i> Incomplete Docs
-        </span>
+        <span class="cc-btn ccb-warn" title="Incomplete documents"><i class="fas fa-exclamation-triangle"></i> Incomplete Docs</span>
         {% endif %}
-      {% elif p.status == 'active' %}
+      {% elif p.status == 'active' and p.account_status == 'active' %}
       <span style="font-size:.78rem;color:#1b7d4f;font-weight:600;display:flex;align-items:center;gap:5px;">
-        <i class="fas fa-check-circle"></i> Verified &amp; Active
+        <i class="fas fa-check-circle"></i> Verified
       </span>
       {% endif %}
 
-      {# Docs button — opens inline document modal #}
-      <button type="button" class="cc-btn ccb-blue"
-        onclick="openDocsModal('docsModal-{{ p.pk }}')">
+      {# Reactivate #}
+      {% if p.account_status == 'suspended' or p.account_status == 'deactivated' %}
+      <form method="post" action="{% url 'AdminApp:reactivate_caregiver' p.pk %}" style="margin:0">
+        {% csrf_token %}<button type="submit" class="cc-btn ccb-green"><i class="fas fa-undo"></i> Reactivate</button>
+      </form>
+      {% endif %}
+
+      {# Suspend #}
+      {% if p.account_status != 'suspended' and p.account_status != 'deactivated' %}
+      <button type="button" class="cc-btn ccb-suspend"
+        onclick="openMod('cgSuspend',{{ p.pk }},'{{ p.user.get_full_name|escapejs }}')">
+        <i class="fas fa-pause-circle"></i> Suspend
+      </button>
+      {% endif %}
+
+      {# Deactivate #}
+      {% if p.account_status != 'deactivated' %}
+      <button type="button" class="cc-btn ccb-deact"
+        onclick="openMod('cgDeact',{{ p.pk }},'{{ p.user.get_full_name|escapejs }}')">
+        <i class="fas fa-ban"></i> Deactivate
+      </button>
+      {% endif %}
+
+      {# Docs modal button #}
+      <button type="button" class="cc-btn ccb-blue" onclick="openDocsModal('docsModal-{{ p.pk }}')">
         <i class="fas fa-folder-open"></i> Docs
       </button>
 
-      {% if p.status == 'active' %}
+      {# Profile (active only) #}
+      {% if p.status == 'active' and p.account_status == 'active' %}
       <a href="{% url 'caregiver_profile' p.pk %}" class="cc-btn ccb-ghost">
         <i class="fas fa-eye"></i> Profile
       </a>
       {% endif %}
+
       <a href="{% url 'admin_support_start' p.user.pk %}" class="cc-btn ccb-green">
         <i class="fas fa-comment"></i> Chat
       </a>
     </div>
+  </div>
 
-  </div>{# /cg-card #}
-
-  {# ── Document modal for this caregiver ── #}
+  {# Docs modal #}
   <div class="docs-backdrop" id="docsModal-{{ p.pk }}">
     <div class="docs-modal">
       <div class="docs-modal-header">
         <div>
-          <div class="docs-modal-title">
-            <i class="fas fa-folder-open" style="color:#1b7d4f"></i>
-            Documents — {{ p.user.get_full_name|default:p.user.username }}
-          </div>
+          <div class="docs-modal-title"><i class="fas fa-folder-open" style="color:#1b7d4f"></i> Documents — {{ p.user.get_full_name|default:p.user.username }}</div>
           <div class="docs-modal-sub">{{ p.user.email }}</div>
         </div>
-        <button type="button" class="docs-modal-close" onclick="closeDocsModal('docsModal-{{ p.pk }}')">
-          <i class="fas fa-times"></i>
-        </button>
+        <button type="button" class="docs-modal-close" onclick="closeDocsModal('docsModal-{{ p.pk }}')"><i class="fas fa-times"></i></button>
       </div>
       <div class="docs-modal-body">
         {% with docs=p.user.documents.all %}
@@ -473,55 +470,33 @@
           {% for d in docs %}
           <div class="doc-row-item">
             <div class="doc-row-left">
-              <div class="doc-row-icon
-                {% if d.status == 'approved' %}doc-icon-ok
-                {% elif d.status == 'rejected' %}doc-icon-rej
-                {% else %}doc-icon-pend{% endif %}">
-                <i class="fas fa-file-{% if d.file.name|slice:'-3:' == 'pdf' %}pdf{% else %}image{% endif %}"></i>
+              <div class="doc-row-icon {% if d.status == 'approved' %}doc-icon-ok{% elif d.status == 'rejected' %}doc-icon-rej{% else %}doc-icon-pend{% endif %}">
+                <i class="fas fa-file"></i>
               </div>
               <div class="doc-row-info">
                 <div class="doc-row-name">{{ d.get_doc_type_display }}</div>
-                <div class="doc-row-meta">
-                  Uploaded {{ d.uploaded_at|date:"M d, Y" }}
-                  {% if d.reviewed_at %}&nbsp;&bull;&nbsp; Reviewed {{ d.reviewed_at|date:"M d, Y" }}{% endif %}
-                </div>
-                {% if d.note %}
-                <div class="doc-row-note"><i class="fas fa-comment-alt"></i> {{ d.note }}</div>
-                {% endif %}
+                <div class="doc-row-meta">Uploaded {{ d.uploaded_at|date:"M d, Y" }}{% if d.reviewed_at %} &bull; Reviewed {{ d.reviewed_at|date:"M d, Y" }}{% endif %}</div>
+                {% if d.note %}<div class="doc-row-note"><i class="fas fa-comment-alt"></i> {{ d.note }}</div>{% endif %}
               </div>
             </div>
             <div class="doc-row-right">
-              <span class="doc-status-badge
-                {% if d.status == 'approved' %}dsb-ok
-                {% elif d.status == 'rejected' %}dsb-rej
-                {% else %}dsb-pend{% endif %}">
+              <span class="doc-status-badge {% if d.status == 'approved' %}dsb-ok{% elif d.status == 'rejected' %}dsb-rej{% else %}dsb-pend{% endif %}">
                 {% if d.status == 'approved' %}<i class="fas fa-check-circle"></i> Approved
                 {% elif d.status == 'rejected' %}<i class="fas fa-times-circle"></i> Rejected
                 {% else %}<i class="fas fa-clock"></i> Pending{% endif %}
               </span>
-              {% if d.file %}
-              <a href="{% url 'AdminApp:serve_document' d.pk %}" target="_blank"
-                class="doc-view-btn" title="View file">
-                <i class="fas fa-external-link-alt"></i> View
-              </a>
-              {% endif %}
+              {% if d.file %}<a href="{% url 'AdminApp:serve_document' d.pk %}" target="_blank" class="doc-view-btn"><i class="fas fa-external-link-alt"></i> View</a>{% endif %}
             </div>
           </div>
           {% endfor %}
         {% else %}
-          <div class="docs-empty">
-            <i class="fas fa-folder-open"></i>
-            No documents uploaded yet.
-          </div>
+          <div class="docs-empty"><i class="fas fa-folder-open"></i> No documents uploaded yet.</div>
         {% endif %}
         {% endwith %}
       </div>
       <div class="docs-modal-footer">
-        <a href="{% url 'AdminApp:review_documents' %}" class="cc-btn ccb-blue" style="font-size:.8rem;">
-          <i class="fas fa-list-check"></i> Go to Documents Review
-        </a>
-        <button type="button" class="cc-btn ccb-ghost" style="font-size:.8rem;"
-          onclick="closeDocsModal('docsModal-{{ p.pk }}')">Close</button>
+        <a href="{% url 'AdminApp:review_documents' %}" class="cc-btn ccb-blue" style="font-size:.8rem;"><i class="fas fa-list-check"></i> Go to Documents Review</a>
+        <button type="button" class="cc-btn ccb-ghost" style="font-size:.8rem;" onclick="closeDocsModal('docsModal-{{ p.pk }}')">Close</button>
       </div>
     </div>
   </div>
@@ -529,74 +504,116 @@
 {% empty %}
   <div class="cg-empty">
     <i class="fas fa-user-nurse"></i>
-    {% if search_q %}No caregivers match "{{ search_q }}"{% else %}No caregiver profiles found.{% endif %}
+    {% if search_q %}No caregivers match "{{ search_q }}"{% else %}No caregivers in this category.{% endif %}
   </div>
 {% endfor %}
 </div>
 
-{# ═══ Pagination ═══ #}
+{# ── Pagination ── #}
 {% if page_obj.has_other_pages %}
-<nav class="adm-pagination" aria-label="Caregivers pagination">
+<nav class="adm-pagination">
   {% if page_obj.has_previous %}
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page=1" title="First"><i class="fas fa-angles-left"></i></a>
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page=1"><i class="fas fa-angles-left"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
   {% else %}
     <span class="disabled"><i class="fas fa-angles-left"></i></span>
     <span class="disabled"><i class="fas fa-chevron-left"></i></span>
   {% endif %}
-
   {% for num in page_obj.paginator.page_range %}
-    {% if page_obj.number == num %}
-      <span class="current">{{ num }}</span>
+    {% if page_obj.number == num %}<span class="current">{{ num }}</span>
     {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
-      <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ num }}">{{ num }}</a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ num }}">{{ num }}</a>
     {% endif %}
   {% endfor %}
-
   {% if page_obj.has_next %}
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
-    <a href="?{% if search_q %}q={{ search_q }}&{% endif %}page={{ page_obj.paginator.num_pages }}" title="Last"><i class="fas fa-angles-right"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+    <a href="?status={{ status_filter }}{% if search_q %}&q={{ search_q }}{% endif %}&page={{ page_obj.paginator.num_pages }}"><i class="fas fa-angles-right"></i></a>
   {% else %}
     <span class="disabled"><i class="fas fa-chevron-right"></i></span>
     <span class="disabled"><i class="fas fa-angles-right"></i></span>
   {% endif %}
 </nav>
-<p class="adm-page-info">
-  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &nbsp;&bull;&nbsp; {{ total_count }} caregiver{{ total_count|pluralize }} total
-</p>
+<p class="adm-page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &bull; {{ total_count }} caregiver{{ total_count|pluralize }} total</p>
 {% endif %}
+
+{# ══ Suspend Modal ══ #}
+<div class="mod-backdrop" id="cgSuspendModal">
+  <div class="mod-box">
+    <div class="mod-icon mod-icon-s"><i class="fas fa-pause-circle"></i></div>
+    <div class="mod-title">Suspend Caregiver Account</div>
+    <p class="mod-sub">You are about to suspend <strong id="cgSuspName"></strong>.<br>They will be removed from search results and notified by email. Only support chat remains accessible.</p>
+    <form method="post" id="cgSuspForm">{% csrf_token %}
+      <label for="cgSuspReason">Reason <span style="color:#c62828">*</span></label>
+      <textarea id="cgSuspReason" name="reason" placeholder="Explain why this account is being suspended…" required></textarea>
+      <div class="mod-actions">
+        <button type="button" class="mod-cancel" onclick="closeMod('cgSuspend')">Cancel</button>
+        <button type="submit" class="mod-ok-s"><i class="fas fa-pause-circle"></i> Confirm Suspension</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ══ Deactivate Modal ══ #}
+<div class="mod-backdrop" id="cgDeactModal">
+  <div class="mod-box">
+    <div class="mod-icon mod-icon-d"><i class="fas fa-ban"></i></div>
+    <div class="mod-title">Deactivate Caregiver Account</div>
+    <p class="mod-sub">You are about to deactivate <strong id="cgDeactName"></strong>.<br>Their profile will be removed and they will be locked out. Only support chat remains accessible.</p>
+    <form method="post" id="cgDeactForm">{% csrf_token %}
+      <label for="cgDeactReason">Reason <span style="color:#c62828">*</span></label>
+      <textarea id="cgDeactReason" name="reason" placeholder="Explain why this account is being deactivated…" required></textarea>
+      <div class="mod-actions">
+        <button type="button" class="mod-cancel" onclick="closeMod('cgDeact')">Cancel</button>
+        <button type="submit" class="mod-ok-d"><i class="fas fa-ban"></i> Confirm Deactivation</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 (function(){
-  function openDocsModal(id){
-    var el = document.getElementById(id);
-    if(el){ el.classList.add('open'); document.body.style.overflow='hidden'; }
-  }
-  function closeDocsModal(id){
-    var el = document.getElementById(id);
-    if(el){ el.classList.remove('open'); document.body.style.overflow=''; }
-  }
-  // close on backdrop click
-  document.addEventListener('click', function(e){
-    if(e.target.classList.contains('docs-backdrop')){
-      e.target.classList.remove('open');
-      document.body.style.overflow='';
+  /* ── Moderation modals ── */
+  function openMod(key, id, name){
+    if(key==='cgSuspend'){
+      document.getElementById('cgSuspName').textContent=name;
+      document.getElementById('cgSuspForm').action='/admin-panel/caregivers/'+id+'/suspend/';
+      document.getElementById('cgSuspReason').value='';
+      document.getElementById('cgSuspendModal').classList.add('open');
+    } else {
+      document.getElementById('cgDeactName').textContent=name;
+      document.getElementById('cgDeactForm').action='/admin-panel/caregivers/'+id+'/deactivate/';
+      document.getElementById('cgDeactReason').value='';
+      document.getElementById('cgDeactModal').classList.add('open');
     }
+    document.body.style.overflow='hidden';
+  }
+  function closeMod(key){
+    var id=key==='cgSuspend'?'cgSuspendModal':'cgDeactModal';
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow='';
+  }
+  ['cgSuspendModal','cgDeactModal'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener('click',function(e){if(e.target===el){el.classList.remove('open');document.body.style.overflow='';}});
   });
-  // close on Escape
-  document.addEventListener('keydown', function(e){
+
+  /* ── Docs modals ── */
+  function openDocsModal(id){var el=document.getElementById(id);if(el){el.classList.add('open');document.body.style.overflow='hidden';}}
+  function closeDocsModal(id){var el=document.getElementById(id);if(el){el.classList.remove('open');document.body.style.overflow='';}}
+  document.addEventListener('click',function(e){
+    if(e.target.classList.contains('docs-backdrop')){e.target.classList.remove('open');document.body.style.overflow='';}
+  });
+  document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
-      document.querySelectorAll('.docs-backdrop.open').forEach(function(el){
-        el.classList.remove('open');
-      });
+      document.querySelectorAll('.mod-backdrop.open,.docs-backdrop.open').forEach(function(el){el.classList.remove('open');});
       document.body.style.overflow='';
     }
   });
-  window.openDocsModal  = openDocsModal;
-  window.closeDocsModal = closeDocsModal;
+  window.openMod=openMod; window.closeMod=closeMod;
+  window.openDocsModal=openDocsModal; window.closeDocsModal=closeDocsModal;
 })();
 </script>
 {% endblock %}

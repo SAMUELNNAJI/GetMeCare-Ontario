@@ -1086,3 +1086,104 @@ def send_hourly_rate_reminder_email(user) -> bool:
         to_email=user.email,
         html_body=_wrap(content),
     )
+
+
+# ──────────────────────────────────────────────────────────────
+# 21. Caregiver account suspended by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_caregiver_suspended_email(caregiver, reason: str) -> bool:
+    support_url = f'{SITE_URL}/chatbot/support/'
+    changed_str = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#c62828;">Your caregiver account has been suspended</h2>
+    <p>Hi {caregiver.first_name or caregiver.username}, we are writing to inform you
+       that your <strong>{SITE_NAME}</strong> caregiver account has been
+       <strong>temporarily suspended</strong> by our admin team.</p>
+    <div class="info-box" style="border-left-color:#c62828;background:#fdecea;">
+      <p><strong>Account:</strong> {caregiver.get_full_name()}</p>
+      <p><strong>Email:</strong> {caregiver.email}</p>
+      <p><strong>Status:</strong> Suspended</p>
+      <p><strong>Effective:</strong> {changed_str}</p>
+      <p><strong>Reason:</strong><br />{reason or 'No reason provided.'}</p>
+    </div>
+    <p>While your account is suspended you will not be able to appear in search
+       results or receive new bookings. You can still access your
+       <strong>support chat</strong> to contact our team.</p>
+    <p>If you believe this is a mistake or would like to appeal, please reach out
+       through the support chat or email
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    <a class="btn" href="{support_url}" style="background:#c62828;">Contact Support</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your caregiver account has been suspended',
+        to_email=caregiver.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 22. Caregiver account deactivated by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_caregiver_deactivated_email(caregiver, reason: str) -> bool:
+    support_url = f'{SITE_URL}/chatbot/support/'
+    changed_str = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#7b1fa2;">Your caregiver account has been deactivated</h2>
+    <p>Hi {caregiver.first_name or caregiver.username}, we are writing to inform you
+       that your <strong>{SITE_NAME}</strong> caregiver account has been
+       <strong>deactivated</strong> by our admin team.</p>
+    <div class="info-box" style="border-left-color:#7b1fa2;background:#f3e8ff;">
+      <p><strong>Account:</strong> {caregiver.get_full_name()}</p>
+      <p><strong>Email:</strong> {caregiver.email}</p>
+      <p><strong>Status:</strong> Deactivated</p>
+      <p><strong>Effective:</strong> {changed_str}</p>
+      <p><strong>Reason:</strong><br />{reason or 'No reason provided.'}</p>
+    </div>
+    <p>Your profile has been removed from the platform. You can still access your
+       <strong>support chat</strong> to contact our team.</p>
+    <p>If you have questions or would like to appeal, contact us through the
+       support chat or email
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    <a class="btn" href="{support_url}" style="background:#7b1fa2;">Contact Support</a>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your caregiver account has been deactivated',
+        to_email=caregiver.email,
+        html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# 23. Caregiver account reactivated by admin
+# ──────────────────────────────────────────────────────────────
+
+def send_caregiver_reactivated_email(caregiver) -> bool:
+    dashboard_url = f'{SITE_URL}/caregiver-acc/'
+    changed_str   = timezone.localtime(timezone.now()).strftime('%B %d, %Y at %I:%M %p')
+
+    content = f"""
+    <h2 style="color:#1a6b4a;">Your caregiver account has been reactivated</h2>
+    <p>Hi {caregiver.first_name or caregiver.username}, great news — your
+       <strong>{SITE_NAME}</strong> caregiver account has been
+       <strong>reactivated</strong> by our admin team.</p>
+    <div class="info-box">
+      <p><strong>Account:</strong> {caregiver.get_full_name()}</p>
+      <p><strong>Email:</strong> {caregiver.email}</p>
+      <p><strong>Status:</strong> Active</p>
+      <p><strong>Reactivated on:</strong> {changed_str}</p>
+    </div>
+    <p>Your profile is now visible to employers again and you can receive
+       new bookings as normal.</p>
+    <a class="btn" href="{dashboard_url}">Go to My Dashboard</a>
+    <p style="margin-top:24px;">Questions? Contact us at
+       <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.</p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Your caregiver account has been reactivated',
+        to_email=caregiver.email,
+        html_body=_wrap(content),
+    )

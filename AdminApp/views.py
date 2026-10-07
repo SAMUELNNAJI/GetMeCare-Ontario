@@ -202,8 +202,30 @@ def manage_users(request):
 
 @admin_required
 def manage_caregivers(request):
-    q = request.GET.get('q', '').strip()
-    profiles = CaregiverProfile.objects.select_related('user').order_by('-created_at')
+    q          = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', 'all')
+
+    base_qs = CaregiverProfile.objects.select_related('user').order_by('-created_at')
+
+    # ── count badges (always on unfiltered base) ──
+    counts = {
+        'all':         base_qs.count(),
+        'active':      base_qs.filter(status=CaregiverProfile.STATUS_ACTIVE, account_status='active').count(),
+        'pending':     base_qs.filter(status=CaregiverProfile.STATUS_PENDING).count(),
+        'suspended':   base_qs.filter(account_status='suspended').count(),
+        'deactivated': base_qs.filter(account_status='deactivated').count(),
+    }
+
+    profiles = base_qs
+    if status_filter == 'active':
+        profiles = profiles.filter(status=CaregiverProfile.STATUS_ACTIVE, account_status='active')
+    elif status_filter == 'pending':
+        profiles = profiles.filter(status=CaregiverProfile.STATUS_PENDING)
+    elif status_filter == 'suspended':
+        profiles = profiles.filter(account_status='suspended')
+    elif status_filter == 'deactivated':
+        profiles = profiles.filter(account_status='deactivated')
+
     if q:
         profiles = profiles.filter(
             Q(user__first_name__icontains=q) |
@@ -214,17 +236,20 @@ def manage_caregivers(request):
             Q(skills__icontains=q) |
             Q(status__icontains=q)
         )
+
     from django.core.paginator import Paginator
     paginator   = Paginator(profiles, 12)
     page_number = request.GET.get('page', 1)
     page_obj    = paginator.get_page(page_number)
 
     ctx = _admin_sidebar()
-    ctx['profiles']    = page_obj          # template iterates page_obj
-    ctx['page_obj']    = page_obj
-    ctx['doc_types']   = REQUIRED_DOC_TYPES
-    ctx['search_q']    = q
-    ctx['total_count'] = paginator.count
+    ctx['profiles']       = page_obj
+    ctx['page_obj']       = page_obj
+    ctx['doc_types']      = REQUIRED_DOC_TYPES
+    ctx['search_q']       = q
+    ctx['status_filter']  = status_filter
+    ctx['counts']         = counts
+    ctx['total_count']    = paginator.count
     return render(request, 'AdminApp/manage-caregivers.html', ctx)
 
 
@@ -233,10 +258,30 @@ def manage_employers(request):
     from django.db.models import Q
     from django.core.paginator import Paginator
 
-    q = request.GET.get('q', '').strip()
-    profiles = EmployerProfile.objects.select_related('user').exclude(
+    q             = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', 'all')
+
+    base_qs = EmployerProfile.objects.select_related('user').exclude(
         Q(user__is_superuser=True) | Q(user__is_staff=True)
     ).order_by('-created_at')
+
+    counts = {
+        'all':         base_qs.count(),
+        'active':      base_qs.filter(is_active=True, account_status='active').count(),
+        'inactive':    base_qs.filter(is_active=False, account_status='active').count(),
+        'suspended':   base_qs.filter(account_status='suspended').count(),
+        'deactivated': base_qs.filter(account_status='deactivated').count(),
+    }
+
+    profiles = base_qs
+    if status_filter == 'active':
+        profiles = profiles.filter(is_active=True, account_status='active')
+    elif status_filter == 'inactive':
+        profiles = profiles.filter(is_active=False, account_status='active')
+    elif status_filter == 'suspended':
+        profiles = profiles.filter(account_status='suspended')
+    elif status_filter == 'deactivated':
+        profiles = profiles.filter(account_status='deactivated')
 
     if q:
         profiles = profiles.filter(
@@ -253,10 +298,12 @@ def manage_employers(request):
     page_obj    = paginator.get_page(page_number)
 
     ctx = _admin_sidebar()
-    ctx['profiles']    = page_obj
-    ctx['page_obj']    = page_obj
-    ctx['search_q']    = q
-    ctx['total_count'] = paginator.count
+    ctx['profiles']      = page_obj
+    ctx['page_obj']      = page_obj
+    ctx['search_q']      = q
+    ctx['status_filter'] = status_filter
+    ctx['counts']        = counts
+    ctx['total_count']   = paginator.count
     return render(request, 'AdminApp/manage-employers.html', ctx)
 
 
@@ -1017,3 +1064,107 @@ def reactivate_employer(request, profile_id):
         f'{profile.user.get_full_name()} has been reactivated. They have been notified by email.'
     )
     return redirect('AdminApp:manage_employers')
+
+
+# ──────────────────────────────────────────────────────────────
+# Caregiver moderation — suspend / deactivate / reactivate
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def suspend_caregiver(request, profile_id):
+    """Suspend a caregiver account with a mandatory reason."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_caregivers')
+
+    from GETMECARE.email_utils import send_caregiver_suspended_email
+
+    profile = get_object_or_404(CaregiverProfile, pk=profile_id)
+    reason  = request.POST.get('reason', '').strip()
+
+    if not reason:
+        messages.error(request, 'Please provide a reason for suspending this account.')
+        return redirect('AdminApp:manage_caregivers')
+
+    profile.account_status    = CaregiverProfile.ACCOUNT_SUSPENDED
+    profile.status_reason     = reason
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_caregiver_suspended_email(profile.user, reason)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Suspension email failed for caregiver %s', profile.user.pk
+        )
+
+    messages.warning(
+        request,
+        f'{profile.user.get_full_name()} has been suspended. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_caregivers')
+
+
+@admin_required
+def deactivate_caregiver(request, profile_id):
+    """Deactivate a caregiver account with a mandatory reason."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_caregivers')
+
+    from GETMECARE.email_utils import send_caregiver_deactivated_email
+
+    profile = get_object_or_404(CaregiverProfile, pk=profile_id)
+    reason  = request.POST.get('reason', '').strip()
+
+    if not reason:
+        messages.error(request, 'Please provide a reason for deactivating this account.')
+        return redirect('AdminApp:manage_caregivers')
+
+    profile.account_status    = CaregiverProfile.ACCOUNT_DEACTIVATED
+    profile.status_reason     = reason
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_caregiver_deactivated_email(profile.user, reason)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Deactivation email failed for caregiver %s', profile.user.pk
+        )
+
+    messages.warning(
+        request,
+        f'{profile.user.get_full_name()} has been deactivated. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_caregivers')
+
+
+@admin_required
+def reactivate_caregiver(request, profile_id):
+    """Reactivate a suspended or deactivated caregiver account."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_caregivers')
+
+    from GETMECARE.email_utils import send_caregiver_reactivated_email
+
+    profile = get_object_or_404(CaregiverProfile, pk=profile_id)
+
+    profile.account_status    = CaregiverProfile.ACCOUNT_ACTIVE
+    profile.status_reason     = ''
+    profile.status_changed_at = timezone.now()
+    profile.save(update_fields=['account_status', 'status_reason', 'status_changed_at'])
+
+    try:
+        send_caregiver_reactivated_email(profile.user)
+    except Exception:
+        import logging as _log
+        _log.getLogger(__name__).exception(
+            'Reactivation email failed for caregiver %s', profile.user.pk
+        )
+
+    messages.success(
+        request,
+        f'{profile.user.get_full_name()} has been reactivated. They have been notified by email.'
+    )
+    return redirect('AdminApp:manage_caregivers')

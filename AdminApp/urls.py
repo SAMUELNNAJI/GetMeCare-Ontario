@@ -18,7 +18,10 @@ urlpatterns = [
     path('admin-panel/documents/<int:doc_id>/reject/',        views.reject_document,    name='reject_document'),
     path('admin-panel/documents/<int:doc_id>/revoke/',        views.revoke_document,    name='revoke_document'),
     path('admin-panel/documents/<int:doc_id>/view/',          views.serve_document,     name='serve_document'),
-    path('admin-panel/caregivers/<int:profile_id>/activate/', views.activate_caregiver, name='activate_caregiver'),
+    path('admin-panel/caregivers/<int:profile_id>/activate/',    views.activate_caregiver,    name='activate_caregiver'),
+    path('admin-panel/caregivers/<int:profile_id>/suspend/',     views.suspend_caregiver,     name='suspend_caregiver'),
+    path('admin-panel/caregivers/<int:profile_id>/deactivate/',  views.deactivate_caregiver,  name='deactivate_caregiver'),
+    path('admin-panel/caregivers/<int:profile_id>/reactivate/',  views.reactivate_caregiver,  name='reactivate_caregiver'),
     path('admin-panel/shifts/',                               views.manage_shifts,      name='manage_shifts'),
     # Payout queue
     path('admin-panel/payouts/',                              views.payout_queue,       name='payout_queue'),

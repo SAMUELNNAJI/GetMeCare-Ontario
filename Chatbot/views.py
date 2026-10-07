@@ -524,6 +524,12 @@ def _get_chat_block_reason(user):
         except CaregiverProfile.DoesNotExist:
             return ('Account:caregiver_dashboard',
                     "Your caregiver profile is not set up yet. Please complete your profile before messaging.")
+
+        # Suspended or deactivated — can only use support chat
+        if profile.is_moderation_restricted:
+            return ('CareGiverAcc:dashboard',
+                    "Your account is currently restricted. You can only access the support chat.")
+
         if profile.status != CaregiverProfile.STATUS_ACTIVE:
             status_label = profile.get_status_display()
             return ('Account:caregiver_dashboard',

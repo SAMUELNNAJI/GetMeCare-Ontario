@@ -13,7 +13,8 @@ CONTACT_FORM_INBOX = 'getmecareontario@gmail.com'
 
 def home(request):
     verified_caregivers = CaregiverProfile.objects.filter(
-        status=CaregiverProfile.STATUS_ACTIVE
+        status=CaregiverProfile.STATUS_ACTIVE,
+        account_status='active',
     ).select_related('user').order_by('-created_at')[:3]
     return render(request, 'Caregiver/index.html', {
         'verified_caregivers': verified_caregivers,
@@ -23,7 +24,8 @@ def home(request):
 def browse(request):
     """Browse caregivers — paginated 20, with city / care-type / rate filters."""
     qs = CaregiverProfile.objects.filter(
-        status=CaregiverProfile.STATUS_ACTIVE
+        status=CaregiverProfile.STATUS_ACTIVE,
+        account_status='active',
     ).select_related('user').order_by('user__first_name')
 
     # ── Filters ──────────────────────────────────────────────
@@ -63,7 +65,7 @@ def browse(request):
     # Build distinct city list for filter sidebar
     cities = (
         CaregiverProfile.objects
-        .filter(status=CaregiverProfile.STATUS_ACTIVE)
+        .filter(status=CaregiverProfile.STATUS_ACTIVE, account_status='active')
         .exclude(city='')
         .values_list('city', flat=True)
         .distinct()
@@ -281,6 +283,7 @@ def caregiver_profile(request, pk):
         CaregiverProfile.objects.select_related('user'),
         pk=pk,
         status=CaregiverProfile.STATUS_ACTIVE,
+        account_status='active',
     )
     return render(request, 'Caregiver/caregiver-profile.html', {
         'profile': profile,

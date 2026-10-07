@@ -524,6 +524,55 @@ GetMeCare{% endblock %} {% block extra_head %}
   </div>
 </div>
 
+<!-- Moderation banner — shown BEFORE any other alert -->
+{% if account_status == 'suspended' %}
+<div style="background:#fff3e0;border:1.5px solid #f5d78a;border-radius:14px;padding:22px 24px;margin-bottom:22px;">
+  <div style="display:flex;align-items:flex-start;gap:16px;">
+    <div style="width:42px;height:42px;border-radius:50%;background:#fff3cd;border:1.5px solid #f5d78a;display:flex;align-items:center;justify-content:center;color:#c96000;font-size:1.1rem;flex-shrink:0;">
+      <i class="fas fa-pause-circle"></i>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:1rem;font-weight:700;color:#7a3c00;margin-bottom:5px;">Your account has been suspended</div>
+      <p style="font-size:.855rem;color:#7a3c00;line-height:1.55;margin-bottom:{% if account_status_reason %}10px{% else %}14px{% endif %};">
+        Your caregiver account is currently <strong>suspended</strong>. You will not appear in search results and cannot message employers or accept new bookings.
+      </p>
+      {% if account_status_reason %}
+      <div style="background:#fff8e1;border:1px solid #f5d78a;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#5a3000;">
+        <strong>Reason:</strong> {{ account_status_reason }}
+      </div>
+      {% endif %}
+      <p style="font-size:.82rem;color:#a05000;margin-bottom:14px;">If you believe this is a mistake, please contact our support team.</p>
+      <a href="{% url 'support_chat' %}" style="display:inline-flex;align-items:center;gap:8px;background:#c96000;color:#fff;border-radius:9px;padding:10px 22px;font-size:.855rem;font-weight:700;text-decoration:none;">
+        <i class="fas fa-headset"></i> Contact Support
+      </a>
+    </div>
+  </div>
+</div>
+{% elif account_status == 'deactivated' %}
+<div style="background:#fdecea;border:1.5px solid #ffcdd2;border-radius:14px;padding:22px 24px;margin-bottom:22px;">
+  <div style="display:flex;align-items:flex-start;gap:16px;">
+    <div style="width:42px;height:42px;border-radius:50%;background:#fdecea;border:1.5px solid #ffcdd2;display:flex;align-items:center;justify-content:center;color:#c62828;font-size:1.1rem;flex-shrink:0;">
+      <i class="fas fa-ban"></i>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:1rem;font-weight:700;color:#7f1414;margin-bottom:5px;">Your account has been deactivated</div>
+      <p style="font-size:.855rem;color:#7f1414;line-height:1.55;margin-bottom:{% if account_status_reason %}10px{% else %}14px{% endif %};">
+        Your caregiver account has been <strong>deactivated</strong>. Your profile has been removed from the platform.
+      </p>
+      {% if account_status_reason %}
+      <div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:#7f1414;">
+        <strong>Reason:</strong> {{ account_status_reason }}
+      </div>
+      {% endif %}
+      <p style="font-size:.82rem;color:#b71c1c;margin-bottom:14px;">If you have questions or want to appeal, please contact support.</p>
+      <a href="{% url 'support_chat' %}" style="display:inline-flex;align-items:center;gap:8px;background:#c62828;color:#fff;border-radius:9px;padding:10px 22px;font-size:.855rem;font-weight:700;text-decoration:none;">
+        <i class="fas fa-headset"></i> Contact Support
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Alert banner -->
 {% if profile.status == 'pending_admin_review' %}
 <div class="dash-alert">

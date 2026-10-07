@@ -20,6 +20,31 @@ def caregiver_required(view_func):
     return wrapper
 
 
+def caregiver_moderation_check(view_func):
+    """
+    Decorator: redirect suspended/deactivated caregivers back to their
+    dashboard for every view except the dashboard itself.
+    Only support chat remains accessible (handled separately in Chatbot views).
+    """
+    @login_required(login_url='Account:login')
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_caregiver:
+            try:
+                profile = request.user.caregiver_profile
+            except CaregiverProfile.DoesNotExist:
+                return view_func(request, *args, **kwargs)
+            if profile.is_moderation_restricted:
+                messages.warning(
+                    request,
+                    'Your account is currently restricted. '
+                    'Please contact support if you have any questions.'
+                )
+                return redirect('CareGiverAcc:dashboard')
+        return view_func(request, *args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+
 def _sidebar_context(user):
     """Return the context variables required by base_caregiver.html sidebar."""
     profile, _ = CaregiverProfile.objects.get_or_create(user=user)
@@ -64,6 +89,10 @@ def _sidebar_context(user):
         'onboarding_pct':  onboarding_pct,
         'checklist':       checklist,
         'upcoming_shifts_count': upcoming_shifts_count,
+        # moderation
+        'account_status':        profile.account_status,
+        'account_status_reason': profile.status_reason,
+        'is_moderation_restricted': profile.is_moderation_restricted,
     }
 
 
@@ -245,6 +274,7 @@ def dashboard(request):
 
 
 @caregiver_required
+@caregiver_moderation_check
 def my_schedule(request):
     from django.core.paginator import Paginator
     from datetime import datetime as dt
@@ -336,6 +366,7 @@ def my_schedule(request):
 
 
 @caregiver_required
+@caregiver_moderation_check
 def earnings(request):
     logs = ShiftLog.objects.filter(
         shift__caregiver=request.user,
@@ -356,6 +387,7 @@ def earnings(request):
 
 
 @caregiver_required
+@caregiver_moderation_check
 def documents(request):
     from Account.forms import DocumentUploadForm, ProfileImageForm, REQUIRED_DOC_TYPES
 
@@ -461,6 +493,7 @@ def documents(request):
 
 
 @caregiver_required
+@caregiver_moderation_check
 def reupload_document(request, doc_id):
     """Replace a rejected document with a new file and reset it to pending."""
     doc = get_object_or_404(CaregiverDocument, pk=doc_id, user=request.user)
@@ -489,6 +522,7 @@ def reupload_document(request, doc_id):
 
 
 @caregiver_required
+@caregiver_moderation_check
 def serve_document(request, doc_id):
     """Serve the caregiver's own document inline in the browser."""
     import mimetypes, os

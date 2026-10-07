@@ -200,6 +200,16 @@ def clock_out(request):
 def edit_profile(request):
     user = request.user
     profile = None
+
+    # Block suspended/deactivated caregivers from editing their profile
+    if user.is_caregiver:
+        try:
+            _prof = user.caregiver_profile
+            if _prof.is_moderation_restricted:
+                messages.warning(request, 'Your account is currently restricted. Please contact support.')
+                return redirect('CareGiverAcc:dashboard')
+        except Exception:
+            pass
     profile_form = None
     image_form = None
     bank_form = None

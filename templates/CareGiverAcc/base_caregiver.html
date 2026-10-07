@@ -422,6 +422,16 @@
 
   <nav class="cg-nav">
     <a href="{% url 'CareGiverAcc:dashboard' %}"  {% if request.resolver_match.url_name == 'dashboard'  %}class="active"{% endif %}><i class="fas fa-th-large"></i> Overview</a>
+    {% if is_moderation_restricted %}
+    {# ── Restricted: only support chat accessible ── #}
+    <a href="{% url 'support_chat' %}" {% if request.resolver_match.url_name == 'support_chat' or request.resolver_match.url_name == 'support_chat_detail' %}class="active"{% endif %} style="color:#f0a040;font-weight:700"><i class="fas fa-headset"></i> Contact Support{% if support_unread_count %}<span class="nav-unread-badge">{{ support_unread_count }}</span>{% endif %}</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-lock"></i> Documents</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-user-edit"></i> Edit profile</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-clock"></i> Shift tracker</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-wallet"></i> Earnings</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-comments"></i> Messages</a>
+    <a style="opacity:.3;cursor:not-allowed;pointer-events:none"><i class="fas fa-briefcase"></i> Browse jobs</a>
+    {% else %}
     <a href="{% url 'CareGiverAcc:documents' %}"  {% if request.resolver_match.url_name == 'documents'  %}class="active"{% endif %}><i class="fas fa-file-alt"></i> Documents</a>
     <a href="{% url 'Account:edit_profile' %}"><i class="fas fa-user-edit"></i> Edit profile</a>
     <a href="{% url 'CareGiverAcc:my_schedule' %}" {% if request.resolver_match.url_name == 'my_schedule' %}class="active"{% endif %}><i class="fas fa-clock"></i> Shift tracker{% if upcoming_shifts_count %}<span class="nav-unread-badge">{{ upcoming_shifts_count }}</span>{% endif %}</a>
@@ -429,6 +439,7 @@
     <a href="{% url 'chat_list' %}" {% if request.resolver_match.url_name == 'chat_list' or request.resolver_match.url_name == 'chat_room' %}class="active"{% endif %}><i class="fas fa-comments"></i> Messages{% if total_unread %}<span class="nav-unread-badge">{{ total_unread }}</span>{% endif %}</a>
     <a href="{% url 'support_chat' %}" {% if request.resolver_match.url_name == 'support_chat' or request.resolver_match.url_name == 'support_chat_detail' %}class="active"{% endif %}><i class="fas fa-headset"></i> Support{% if support_unread_count %}<span class="nav-unread-badge">{{ support_unread_count }}</span>{% endif %}</a>
     <a href="{% url 'browse_jobs' %}" {% if request.resolver_match.url_name == 'browse_jobs' %}class="active"{% endif %}><i class="fas fa-briefcase"></i> Browse jobs</a>
+    {% endif %}
   </nav>
 
   <div class="cg-sb-stats">
