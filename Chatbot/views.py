@@ -1018,6 +1018,23 @@ def support_chat_poll(request, chat_id):
 # ── Admin support views ──────────────────────────────────────
 
 @staff_member_required
+def admin_support_start(request, user_id):
+    """
+    Admin clicks 'Chat' on any user — finds or creates their support chat
+    and redirects admin straight into it on the admin support panel.
+    """
+    from Account.models import CustomUser
+    user = get_object_or_404(CustomUser, pk=user_id)
+
+    # Get the most recent unresolved chat, or create a fresh one
+    chat = SupportChat.objects.filter(user=user, is_resolved=False).order_by('-updated_at').first()
+    if not chat:
+        chat = SupportChat.objects.create(user=user)
+
+    return redirect(f'/chatbot/admin/support/?chat={chat.pk}')
+
+
+@staff_member_required
 def admin_support(request):
     """Admin dashboard — see all active support chats."""
     chats = SupportChat.objects.filter(is_resolved=False).select_related('user').order_by('-updated_at')

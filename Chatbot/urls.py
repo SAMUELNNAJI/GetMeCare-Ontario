@@ -32,6 +32,7 @@ urlpatterns = [
 
     # Admin support chat
     path('admin/support/', views.admin_support, name='admin_support'),
+    path('admin/support/start/<int:user_id>/', views.admin_support_start, name='admin_support_start'),
     path('admin/support/<int:chat_id>/reply/', views.admin_support_reply, name='admin_support_reply'),
     path('admin/support/<int:chat_id>/poll/', views.admin_support_poll, name='admin_support_poll'),
     path('admin/support/<int:chat_id>/resolve/', views.admin_support_resolve, name='admin_support_resolve'),

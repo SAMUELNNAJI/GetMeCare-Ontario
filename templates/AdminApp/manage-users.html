@@ -140,7 +140,7 @@
           <td>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               {% if u.id != request.user.id and not u.is_superuser and not u.is_staff %}
-              <a href="{% url 'chat_start' u.id %}" class="adm-btn adm-btn-green" style="padding:6px 12px;font-size:.75rem;">
+              <a href="{% url 'admin_support_start' u.id %}" class="adm-btn adm-btn-green" style="padding:6px 12px;font-size:.75rem;">
                 <i class="fas fa-comment"></i> Chat
               </a>
               {% endif %}
