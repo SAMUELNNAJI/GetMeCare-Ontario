@@ -230,5 +230,8 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GetMeCare Ontario <noreply
 CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'info@getmecare-ontario.com')
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'info@getmecare-ontario.com')
 
-# Password reset emails use Django's built-in views; they pick up DEFAULT_FROM_EMAIL.
-# The subject/body are controlled by the templates in templates/registration/.
+# ── Contact form — Gmail SMTP (bypasses ZeptoMail to save credits) ──
+# Use a Gmail App Password (not your real password):
+# Google Account → Security → 2-Step Verification → App passwords
+GMAIL_USER         = os.getenv('GMAIL_USER', '')
+GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD', '')

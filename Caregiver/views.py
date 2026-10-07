@@ -203,59 +203,52 @@ def contact(request):
         cache.set(ip_key, rl_count + 1, timeout=3600)  # 1 hour window
 
         if first_name and last_name and email and role and subject and message:
-            from GETMECARE.email_utils import send_transactional_email, _wrap, SITE_NAME
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
 
-            # ── Branded HTML email to admin ───────────────────
-            html_content = f"""
-            <h2>New Contact Form Submission</h2>
-            <p>A visitor has submitted the contact form on <strong>{SITE_NAME}</strong>.</p>
-            <div class="info-box">
-              <p><strong>Name:</strong> {first_name} {last_name}</p>
-              <p><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
-              <p><strong>Phone:</strong> {phone if phone else 'Not provided'}</p>
-              <p><strong>Role:</strong> {role}</p>
-              <p><strong>Subject:</strong> {subject}</p>
-            </div>
-            <p><strong>Message:</strong></p>
-            <div class="info-box" style="white-space:pre-wrap;">{message}</div>
-            <p style="margin-top:16px;">
-              Reply directly to this email or write to
-              <a href="mailto:{email}">{email}</a> to respond.
-            </p>
-            """
-
-            ok = send_transactional_email(
-                subject   = f'[Contact Form] {subject} — {first_name} {last_name}',
-                to_email  = CONTACT_FORM_INBOX,   # getmecareontario@gmail.com
-                html_body = _wrap(html_content),
-                plain_body = (
-                    f"New contact form submission\n\n"
-                    f"Name: {first_name} {last_name}\n"
-                    f"Email: {email}\n"
-                    f"Phone: {phone or 'Not provided'}\n"
-                    f"Role: {role}\n\n"
-                    f"Subject: {subject}\n\n"
-                    f"Message:\n{message}"
-                ),
+            # ── Send directly via Gmail SMTP — bypasses ZeptoMail entirely ──
+            plain_body = (
+                f"New contact form submission\n\n"
+                f"Name: {first_name} {last_name}\n"
+                f"Email: {email}\n"
+                f"Phone: {phone or 'Not provided'}\n"
+                f"Role: {role}\n\n"
+                f"Subject: {subject}\n\n"
+                f"Message:\n{message}"
             )
 
-            # ── Auto-reply to sender ──────────────────────────
-            reply_content = f"""
-            <h2>We received your message!</h2>
-            <p>Hi {first_name}, thank you for reaching out to {SITE_NAME}.</p>
-            <p>We have received your message and our team will get back to you
-               within <strong>1–2 business days</strong>.</p>
-            <div class="info-box">
-              <p><strong>Your subject:</strong> {subject}</p>
-            </div>
-            <p>If your matter is urgent, you can also email us directly at
-               <a href="mailto:{CONTACT_FORM_INBOX}">{CONTACT_FORM_INBOX}</a>.</p>
-            """
-            send_transactional_email(
-                subject   = f'[{SITE_NAME}] We received your message — {subject}',
-                to_email  = email,
-                html_body = _wrap(reply_content),
-            )
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = f'[Contact Form] {subject} — {first_name} {last_name}'
+            msg['From']    = CONTACT_FORM_INBOX
+            msg['To']      = CONTACT_FORM_INBOX
+            msg['Reply-To'] = email  # reply goes straight to the visitor
+
+            msg.attach(MIMEText(plain_body, 'plain'))
+
+            ok = False
+            try:
+                from django.conf import settings as _s
+                gmail_user = getattr(_s, 'GMAIL_USER', '')
+                gmail_pass = getattr(_s, 'GMAIL_APP_PASSWORD', '')
+                if gmail_user and gmail_pass:
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=15) as server:
+                        server.login(gmail_user, gmail_pass)
+                        server.sendmail(gmail_user, [CONTACT_FORM_INBOX], msg.as_string())
+                    ok = True
+                else:
+                    # Fallback: still use Django mail if Gmail not configured
+                    from GETMECARE.email_utils import send_transactional_email, _wrap, SITE_NAME as SN
+                    ok = send_transactional_email(
+                        subject    = f'[Contact Form] {subject} — {first_name} {last_name}',
+                        to_email   = CONTACT_FORM_INBOX,
+                        html_body  = _wrap(f'<h2>Contact Form</h2><pre>{plain_body}</pre>'),
+                        plain_body = plain_body,
+                    )
+            except Exception:
+                import logging as _log
+                _log.getLogger(__name__).exception('Contact form email failed')
+                ok = False
 
             if ok:
                 dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
