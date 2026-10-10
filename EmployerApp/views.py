@@ -26,6 +26,24 @@ from GETMECARE.email_utils import (
 logger = logging.getLogger(__name__)
 
 
+# ──────────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────────
+
+def _employer_needs_activation(profile) -> bool:
+    """
+    True when this employer still needs to pay/be activated.
+    Returns False (i.e. skip the gate) when:
+      - the fee is currently OFF (SiteSettings), OR
+      - the employer is fee-exempt (registered when fee was off), OR
+      - the employer has already paid / been manually activated
+    """
+    if profile.is_active or profile.fee_exempt:
+        return False
+    from AdminApp.models import SiteSettings
+    return SiteSettings.get().activation_fee_enabled
+
+
 def employer_required(view_func):
     """Decorator: must be logged in AND have employer role."""
     @login_required(login_url='Account:login')
@@ -74,7 +92,7 @@ def _employer_ctx(user):
     ).count()
     return {
         'emp_profile':            profile,
-        'is_activated':           profile.is_active,
+        'is_activated':           profile.is_active or profile.fee_exempt or not __import__('AdminApp.models', fromlist=['SiteSettings']).SiteSettings.get().activation_fee_enabled,
         'total_completed':        total_completed,
         'open_jobs_count':        open_jobs,
         'unseen_payments':        unseen_payments,
@@ -277,10 +295,19 @@ def close_job(request, job_id):
 @employer_moderation_check
 def activate_account(request):
     """Show the Stripe checkout option for the one-time activation fee.
-
-    GetMeCare collects activation payments via Stripe Checkout
-    (credit / debit cards, charged in CAD).
+    If the fee is disabled or employer is fee-exempt, auto-activate and redirect.
     """
+    profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
+
+    # If fee is off or they are exempt — auto-activate and send to dashboard
+    if not _employer_needs_activation(profile):
+        if not profile.is_active:
+            profile.is_active          = True
+            profile.activation_paid_at = timezone.now()
+            profile.payment_reference  = 'free-access'
+            profile.save(update_fields=['is_active', 'activation_paid_at', 'payment_reference'])
+        return redirect('EmployerApp:dashboard')
+
     ctx = _employer_ctx(request.user)
     ctx['activation_fee'] = EmployerProfile.ACTIVATION_FEE
     return render(request, 'EmployerApp/activate.html', ctx)
@@ -323,6 +350,17 @@ def stripe_activation_checkout(request):
         return redirect('EmployerApp:activate_account')
 
     profile, _ = EmployerProfile.objects.get_or_create(user=request.user)
+
+    # Guard: fee is off or employer is exempt — just activate for free
+    if not _employer_needs_activation(profile):
+        if not profile.is_active:
+            profile.is_active          = True
+            profile.activation_paid_at = timezone.now()
+            profile.payment_reference  = 'free-access'
+            profile.save(update_fields=['is_active', 'activation_paid_at', 'payment_reference'])
+        messages.info(request, 'Your account is already active.')
+        return redirect('EmployerApp:dashboard')
+
     if profile.is_active:
         messages.info(request, 'Your account is already active.')
         return redirect('EmployerApp:dashboard')

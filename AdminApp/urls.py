@@ -43,4 +43,6 @@ urlpatterns = [
     path('admin-panel/services/<int:service_id>/edit/',       views.service_edit,   name='service_edit'),
     path('admin-panel/services/<int:service_id>/delete/',     views.service_delete, name='service_delete'),
     path('services/api/',                                      views.public_services, name='public_services'),
+    # Site settings
+    path('admin-panel/toggle-activation-fee/', views.toggle_activation_fee, name='toggle_activation_fee'),
 ]

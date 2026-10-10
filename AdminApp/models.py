@@ -1,6 +1,36 @@
 from django.db import models
 
 
+class SiteSettings(models.Model):
+    """
+    Singleton model — only one row ever exists (pk=1).
+    Use SiteSettings.get() everywhere instead of querying directly.
+    """
+    activation_fee_enabled = models.BooleanField(
+        default=True,
+        help_text=(
+            'When ON: new employers must pay the $39.99 activation fee. '
+            'When OFF: all employers get instant free access. '
+            'Existing fee-exempt employers are never affected by toggling this back ON.'
+        ),
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name        = 'Site Settings'
+        verbose_name_plural = 'Site Settings'
+
+    def __str__(self):
+        state = 'ON' if self.activation_fee_enabled else 'OFF'
+        return f'Site Settings (activation fee: {state})'
+
+    @classmethod
+    def get(cls):
+        """Return the singleton row, creating it if it does not exist."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
 class Faq(models.Model):
     """A single FAQ (question & answer) shown on the site FAQ page."""
 

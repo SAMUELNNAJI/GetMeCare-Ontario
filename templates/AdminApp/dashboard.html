@@ -317,6 +317,41 @@ GetMeCare{% endblock %} {% block extra_head %}
   </a>
 </div>
 
+<!-- Activation Fee Toggle -->
+<div style="margin-bottom:18px;">
+  <div style="background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;{% if activation_fee_enabled %}background:#e6f5ee;color:#1b7d4f;{% else %}background:#fff3e0;color:#c96000;{% endif %}">
+        <i class="fas fa-{% if activation_fee_enabled %}lock{% else %}lock-open{% endif %}"></i>
+      </div>
+      <div>
+        <div style="font-size:.9rem;font-weight:700;color:#1a1a1a;">$39.99 Activation Fee</div>
+        <div style="font-size:.78rem;color:#888;margin-top:2px;">
+          {% if activation_fee_enabled %}
+            <span style="color:#1b7d4f;font-weight:600;"><i class="fas fa-circle" style="font-size:.5rem;vertical-align:middle;margin-right:4px;"></i>ON</span>
+            &mdash; New employers must pay before accessing the platform
+          {% else %}
+            <span style="color:#c96000;font-weight:600;"><i class="fas fa-circle" style="font-size:.5rem;vertical-align:middle;margin-right:4px;animation:pulse 1.5s infinite;"></i>OFF</span>
+            &mdash; All employers get free instant access
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'AdminApp:toggle_activation_fee' %}">
+      {% csrf_token %}
+      <button type="submit"
+        style="display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:9px 22px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;{% if activation_fee_enabled %}background:#fdecea;color:#c62828;{% else %}background:#e6f5ee;color:#1b7d4f;{% endif %}"
+        onclick="return confirm('{% if activation_fee_enabled %}Turn OFF the activation fee? New employers will get free access immediately.{% else %}Turn ON the $39.99 activation fee? New employers will need to pay. Existing fee-exempt users keep their access.{% endif %}')">
+        {% if activation_fee_enabled %}
+          <i class="fas fa-toggle-off"></i> Turn OFF fee
+        {% else %}
+          <i class="fas fa-toggle-on"></i> Turn ON fee
+        {% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- KPI Stats -->
 <div class="adm-stats">
   <div class="adm-stat">

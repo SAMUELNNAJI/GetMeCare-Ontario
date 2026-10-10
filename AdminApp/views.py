@@ -179,6 +179,7 @@ def dashboard(request):
         'activities':          activities,
         'search_q':            q,
         'search_users_count':  recent_users.count(),
+        'activation_fee_enabled': __import__('AdminApp.models', fromlist=['SiteSettings']).SiteSettings.get().activation_fee_enabled,
     })
     return render(request, 'AdminApp/dashboard.html', ctx)
 
@@ -1168,3 +1169,29 @@ def reactivate_caregiver(request, profile_id):
         f'{profile.user.get_full_name()} has been reactivated. They have been notified by email.'
     )
     return redirect('AdminApp:manage_caregivers')
+
+
+# ──────────────────────────────────────────────────────────────
+# Site Settings — activation fee toggle
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def toggle_activation_fee(request):
+    """POST — flip the activation fee on/off."""
+    if request.method != 'POST':
+        return redirect('AdminApp:dashboard')
+
+    from AdminApp.models import SiteSettings
+    settings_obj = SiteSettings.get()
+    settings_obj.activation_fee_enabled = not settings_obj.activation_fee_enabled
+    settings_obj.save(update_fields=['activation_fee_enabled', 'updated_at'])
+
+    state = 'enabled' if settings_obj.activation_fee_enabled else 'disabled'
+    messages.success(
+        request,
+        f'Activation fee has been {state}. '
+        + ('New employers must now pay $39.99 to access the platform.'
+           if settings_obj.activation_fee_enabled
+           else 'New employers will get instant free access. Existing fee-exempt employers keep their access.')
+    )
+    return redirect('AdminApp:dashboard')

@@ -30,7 +30,7 @@ def redirect_for_user(user):
     if user.is_caregiver:
         return redirect('CareGiverAcc:dashboard')
     if user.is_employer:
-        return redirect('EmployerApp:dashboard')
+        return redirect('EmployerApp:post_job')
     return redirect('home')
 
 
@@ -72,6 +72,18 @@ def signup(request):
             # Auto-create CaregiverProfile when role is caregiver
             if user.is_caregiver:
                 CaregiverProfile.objects.get_or_create(user=user)
+            # Auto-activate employer and mark fee-exempt if fee is currently OFF
+            if user.is_employer:
+                from AdminApp.models import SiteSettings
+                from Account.models import EmployerProfile
+                fee_on = SiteSettings.get().activation_fee_enabled
+                ep, _ = EmployerProfile.objects.get_or_create(user=user)
+                if not fee_on:
+                    ep.is_active          = True
+                    ep.fee_exempt         = True
+                    ep.activation_paid_at = timezone.now()
+                    ep.payment_reference  = 'free-access'
+                    ep.save(update_fields=['is_active', 'fee_exempt', 'activation_paid_at', 'payment_reference'])
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             # Send welcome email (non-blocking — failure won't break signup)
             try:

@@ -142,8 +142,7 @@
 <a href="{% url 'EmployerApp:activate_account' %}" class="dash-alert-btn">Activate now</a>
 </div>
 {% endif %}
-{% endif %}{# end is_moderation_restricted #}
-<div class="dash-stats">
+{% endif %}{# end is_moderation_restricted #}<div class="dash-stats">
 <div class="dash-stat"><div class="dash-stat-icon si-blue"><i class="fas fa-calendar-check"></i></div><div class="dash-stat-val">{{ total_scheduled }}</div><div class="dash-stat-lbl">Upcoming Shifts</div>{% if total_scheduled %}<div class="dash-stat-sub muted">this week</div>{% endif %}</div>
 <div class="dash-stat"><div class="dash-stat-icon si-orange"><i class="fas fa-clock"></i></div><div class="dash-stat-val">{{ total_active }}</div><div class="dash-stat-lbl">Active Now</div>{% if total_active %}<div class="dash-stat-sub">in progress</div>{% endif %}</div>
 <div class="dash-stat"><div class="dash-stat-icon si-green"><i class="fas fa-check-circle"></i></div><div class="dash-stat-val">{{ total_completed }}</div><div class="dash-stat-lbl">Completed</div><div class="dash-stat-sub muted">all time</div></div>

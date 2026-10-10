@@ -481,6 +481,12 @@ class EmployerProfile(models.Model):
         null=True, blank=True,
         help_text='Last time an "activate your account" reminder was sent',
     )
+    # Grandfathering: set True when employer registers while fee is OFF.
+    # Once True, they always have free access even if fee is turned back ON.
+    fee_exempt = models.BooleanField(
+        default=False,
+        help_text='True when employer registered while activation fee was disabled — permanent free access.',
+    )
     # ── Moderation fields ─────────────────────────────────────
     account_status     = models.CharField(
         max_length=20,
