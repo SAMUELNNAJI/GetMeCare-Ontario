@@ -605,6 +605,15 @@ def activate_caregiver(request, profile_id):
         )
         return redirect('AdminApp:manage_caregivers')
 
+    # Guard: city must be set before activation
+    if not profile.city:
+        messages.error(
+            request,
+            f'Cannot activate {profile.user.get_full_name()} — '
+            f'they have not set their city yet. Ask them to update their profile first.'
+        )
+        return redirect('AdminApp:manage_caregivers')
+
     was_active = profile.status == CaregiverProfile.STATUS_ACTIVE
     profile.status = CaregiverProfile.STATUS_ACTIVE
     profile.save()

@@ -157,8 +157,11 @@ class EditCaregiverProfileForm(forms.ModelForm):
         },
     )
     city = forms.CharField(
-        max_length=100, required=False,
+        max_length=100, required=True,
         widget=forms.TextInput(attrs={'placeholder': 'e.g. Ottawa'}),
+        error_messages={
+            'required': 'Please enter your city — employers use this to find local caregivers.',
+        },
     )
     skills = forms.CharField(
         required=False,

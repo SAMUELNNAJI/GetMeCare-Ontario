@@ -242,8 +242,8 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
               <i class="fas fa-map-marker-alt"></i> {{ profile.city|default:"Ontario" }}
             </p>
             <div class="psw-rating">
-              <i class="fas fa-star"></i><strong>4.9</strong
-              ><span>(34 reviews)</span>
+              <i class="fas fa-shield-alt" style="color:#1b7d4f;font-size:.75rem"></i>
+              <strong style="color:#1b7d4f">Admin Verified</strong>
             </div>
           </div>
         </div>
@@ -261,7 +261,7 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
           {% endfor %}
         </div>
         <div class="psw-card-footer">
-          <span class="psw-rate-label">${{ profile.hourly_rate|default:"0.00" }} CAD / hr</span>
+          <span class="psw-rate-label">{% if profile.hourly_rate and profile.hourly_rate > 0 %}${{ profile.hourly_rate }} CAD / hr{% else %}<span style="color:#888;font-size:.82rem">Rate on request</span>{% endif %}</span>
           <span class="psw-availability"
             ><i class="far fa-clock"></i> Flexible</span
           >

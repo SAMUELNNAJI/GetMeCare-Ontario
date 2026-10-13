@@ -398,12 +398,14 @@
     <div class="cg-actions">
       {# Activate #}
       {% if p.status == 'pending_admin_review' and p.account_status == 'active' %}
-        {% if p.has_all_required_documents and p.hourly_rate %}
+        {% if p.has_all_required_documents and p.hourly_rate and p.city %}
         <form method="post" action="{% url 'AdminApp:activate_caregiver' p.pk %}" style="margin:0">
           {% csrf_token %}<button type="submit" class="cc-btn ccb-green"><i class="fas fa-check"></i> Activate</button>
         </form>
         {% elif not p.hourly_rate %}
         <span class="cc-btn ccb-warn" title="No hourly rate set"><i class="fas fa-dollar-sign"></i> No Rate</span>
+        {% elif not p.city %}
+        <span class="cc-btn ccb-warn" title="No city set"><i class="fas fa-map-marker-alt"></i> No City</span>
         {% else %}
         <span class="cc-btn ccb-warn" title="Incomplete documents"><i class="fas fa-exclamation-triangle"></i> Incomplete Docs</span>
         {% endif %}

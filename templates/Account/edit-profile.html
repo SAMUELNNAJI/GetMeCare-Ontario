@@ -699,8 +699,10 @@ GetMeCare{% endblock %} {% block extra_head %}
         </div>
         <div class="ep-row">
           <div class="form-group">
-            <label for="{{ profile_form.city.id_for_label }}">City / Municipality</label>
-            {{ profile_form.city }} {% if profile_form.city.errors %}
+            <label for="{{ profile_form.city.id_for_label }}">City / Municipality <span style="color:#c62828;font-size:.8rem">*&nbsp;Required</span></label>
+            {{ profile_form.city }}
+            <div class="help" style="color:#c96000"><i class="fas fa-exclamation-circle" style="margin-right:4px"></i>Employers search by city — you must set this before your account can be activated.</div>
+            {% if profile_form.city.errors %}
             <div class="field-error">{{ profile_form.city.errors|join:", " }}</div>
             {% endif %}
           </div>
