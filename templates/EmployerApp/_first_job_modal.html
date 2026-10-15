@@ -1,0 +1,119 @@
+<style>
+.fj-backdrop{position:fixed;inset:0;background:rgba(10,25,18,.62);z-index:600;display:flex;align-items:center;justify-content:center;padding:18px;animation:fjFade .25s ease}
+@keyframes fjFade{from{opacity:0}to{opacity:1}}
+.fj-modal{background:#fff;border-radius:22px;max-width:520px;width:100%;max-height:92vh;overflow-y:auto;text-align:center;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:fjIn .32s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes fjIn{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+body.fj-locked{overflow:hidden}
+.fj-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.9);border:none;width:30px;height:30px;border-radius:50%;color:#888;font-size:.8rem;cursor:pointer;z-index:2}
+.fj-close:hover{background:#fff;color:#333}
+.fj-hero{background:linear-gradient(135deg,#1b3a2d 0%,#2d7a50 100%);padding:30px 28px 24px;border-radius:22px 22px 0 0;color:#fff;position:relative;overflow:hidden}
+.fj-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(240,160,64,.25)}
+.fj-badge{display:inline-block;background:#f0a040;color:#1b3a2d;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:5px 14px;margin-bottom:12px}
+.fj-hero h2{font-size:1.45rem;font-weight:800;line-height:1.25;margin:0 0 8px;color:#fff}
+.fj-hero p{font-size:.85rem;color:#cfe6d8;margin:0;line-height:1.55}
+.fj-body{padding:24px 28px 26px}
+.fj-count{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff8ec;border:1.5px dashed #f0a040;border-radius:12px;padding:10px 14px;font-size:.82rem;color:#7a4a00;font-weight:600;margin-bottom:16px}
+.fj-count i{color:#e07b00}
+.fj-steps{text-align:left;margin:0 0 18px;padding:0;list-style:none}
+.fj-steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #f2f4f0;font-size:.85rem;color:#333}
+.fj-steps li:last-child{border-bottom:none}
+.fj-step-n{width:26px;height:26px;border-radius:50%;background:#e6f5ee;color:#1b7d4f;font-weight:800;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.fj-steps b{color:#1a1a1a}
+.fj-proof{display:flex;gap:8px;margin-bottom:18px}
+.fj-proof div{flex:1;background:#f6f8f6;border-radius:12px;padding:10px 6px}
+.fj-proof strong{display:block;font-size:1.05rem;color:#1b3a2d}
+.fj-proof span{font-size:.68rem;color:#888}
+.fj-cta{display:block;width:100%;background:linear-gradient(135deg,#e07b00,#f0a040);color:#fff;border:none;border-radius:12px;padding:15px;font-size:1rem;font-weight:800;cursor:pointer;text-decoration:none;box-shadow:0 6px 20px rgba(224,123,0,.35)}
+.fj-cta:hover{color:#fff;box-shadow:0 10px 26px rgba(224,123,0,.45)}
+.fj-cta i{margin-right:8px}
+.fj-timer{font-size:.75rem;color:#c96000;font-weight:700;margin-top:10px}
+.fj-later{display:inline-block;margin-top:12px;background:none;border:none;color:#aaa;font-size:.8rem;cursor:pointer;text-decoration:underline;font-family:inherit}
+.fj-later:hover{color:#666}
+.fj-note{font-size:.68rem;color:#bbb;margin-top:10px}
+.fj-confirm{display:none;padding:8px 0 2px}
+.fj-confirm.show{display:block;animation:fjFade .25s ease}
+.fj-confirm p{font-size:.88rem;color:#333;font-weight:600;margin-bottom:14px}
+.fj-confirm-btns{display:flex;gap:10px}
+.fj-confirm-btns a,.fj-confirm-btns button{flex:1;border-radius:10px;padding:11px;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+.fj-yes{background:#1b3a2d;color:#fff;border:none;display:block}
+.fj-yes:hover{background:#142e21;color:#fff}
+.fj-no{background:#fff;border:1.5px solid #dde2d8;color:#666}
+.fj-no:hover{background:#f2f4f0}
+</style>
+<div class="fj-backdrop" id="firstJobModal">
+<div class="fj-modal" role="dialog" aria-modal="true" aria-labelledby="fjTitle">
+<button class="fj-close" id="fjCloseX" aria-label="Close"><i class="fas fa-times"></i></button>
+<div class="fj-hero">
+<span class="fj-badge">{% if first_job_weekly_mode %}Weekly nudge - post again{% else %}Welcome aboard{% endif %}</span>
+<h2 id="fjTitle">{% if first_job_weekly_mode %}Ready for your next great hire?{% else %}You are one step away from meeting your caregiver{% endif %}</h2>
+<p>{% if first_job_weekly_mode %}Employers who post regularly get hired 3x faster. Your next posting takes less than a minute.{% else %}Post your first job in under 60 seconds - verified caregivers across Ontario are ready to help your family today.{% endif %}</p>
+</div>
+<div class="fj-body" id="fjMainBody">
+<div class="fj-count"><i class="fas fa-users"></i> 142+ verified caregivers waiting near you</div>
+<ul class="fj-steps">
+<li><span class="fj-step-n">1</span><span><b>Describe the care you need</b> - title, city and care type</span></li>
+<li><span class="fj-step-n">2</span><span><b>Set your rate and hours</b> - caregivers see it upfront</span></li>
+<li><span class="fj-step-n">3</span><span><b>Hit Post Job</b> - go live instantly and get responses</span></li>
+</ul>
+<div class="fj-proof">
+<div><strong>60s</strong><span>to post</span></div>
+<div><strong>Free*</strong><span>once activated</span></div>
+<div><strong>142+</strong><span>caregivers</span></div>
+</div>
+{% if is_activated %}
+<a href="{% url 'EmployerApp:post_job' %}" class="fj-cta"><i class="fas fa-plus-circle"></i> Create My Job Post Now</a>
+{% else %}
+<a href="{% url 'EmployerApp:activate_account' %}" class="fj-cta"><i class="fas fa-bolt"></i> Activate and Post My First Job</a>
+{% endif %}
+<div class="fj-timer"><i class="fas fa-clock"></i> Caregivers respond fastest to jobs posted today</div>
+<button class="fj-later" id="fjLaterBtn" type="button">I will do it later</button>
+<div class="fj-note">{% if first_job_weekly_mode %}Gentle weekly reminder - post anytime.{% else %}We will remind you daily by email until your first post - it stops automatically once you post.{% endif %}</div>
+</div>
+<div class="fj-body fj-confirm" id="fjConfirmBody">
+<p>Wait - caregivers cannot find you until you post.<br>Are you sure you want to miss out?</p>
+<div class="fj-confirm-btns">
+{% if is_activated %}
+<a href="{% url 'EmployerApp:post_job' %}" class="fj-yes">Yes, post now</a>
+{% else %}
+<a href="{% url 'EmployerApp:activate_account' %}" class="fj-yes">Yes, continue</a>
+{% endif %}
+<button class="fj-no" id="fjConfirmLater" type="button">Not now</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+var modal=document.getElementById("firstJobModal");
+if(!modal) return;
+document.body.classList.add("fj-locked");
+var main=document.getElementById("fjMainBody");
+var confirmBox=document.getElementById("fjConfirmBody");
+var later=document.getElementById("fjLaterBtn");
+var closeX=document.getElementById("fjCloseX");
+var confirmLater=document.getElementById("fjConfirmLater");
+function showConfirm(){
+if(main) main.style.display="none";
+if(confirmBox) confirmBox.classList.add("show");
+}
+function unlockAndGo(url){
+document.body.classList.remove("fj-locked");
+window.location.href=url;
+}
+function dismiss(){
+unlockAndGo("{% url 'EmployerApp:dismiss_first_job' %}");
+}
+if(later) later.addEventListener("click", showConfirm);
+if(closeX) closeX.addEventListener("click", showConfirm);
+if(confirmLater) confirmLater.addEventListener("click", dismiss);
+modal.addEventListener("click", function(e){ if(e.target===modal) showConfirm(); });
+document.addEventListener("keydown", function(e){
+if(e.key==="Escape"){ e.preventDefault(); showConfirm(); }
+});
+Array.prototype.forEach.call(document.querySelectorAll(".fj-cta, .fj-yes"), function(a){
+a.addEventListener("click", function(){ document.body.classList.remove("fj-locked"); });
+});
+setTimeout(function(){ if(modal) modal.scrollIntoView(); }, 50);
+})();
+</script>
+

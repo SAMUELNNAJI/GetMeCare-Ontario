@@ -481,6 +481,17 @@ class EmployerProfile(models.Model):
         null=True, blank=True,
         help_text='Last time an "activate your account" reminder was sent',
     )
+    # ── First-job-post nudge tracking ──────────────────────────
+    # Daily reminder email until the employer creates their first JobPosting,
+    # then stops. Modal popup: aggressive until first post, weekly after.
+    last_first_job_reminder_sent = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time a "post your first job" reminder email was sent',
+    )
+    last_first_job_modal_shown = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Last time the "create job post" popup was shown (weekly throttle)',
+    )
     # Grandfathering: set True when employer registers while fee is OFF.
     # Once True, they always have free access even if fee is turned back ON.
     fee_exempt = models.BooleanField(

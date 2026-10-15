@@ -12,6 +12,8 @@ urlpatterns = [
     path('employer/jobs/<int:job_id>/close/',   views.close_job,          name='close_job'),
     path('employer/activate/',                  views.activate_account,   name='activate_account'),
     path('employer/pay-later/',                 views.pay_later,          name='pay_later'),
+    path('employer/snooze-first-job/',          views.snooze_first_job_modal,  name='snooze_first_job'),
+    path('employer/dismiss-first-job/',         views.dismiss_first_job_modal, name='dismiss_first_job'),
     # Booking flow
     path('employer/book/<int:proposal_pk>/',              views.book_caregiver,    name='book_caregiver'),
     path('employer/checkout/<int:shift_pk>/',             views.payment_checkout,  name='payment_checkout'),

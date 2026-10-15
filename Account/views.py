@@ -30,7 +30,9 @@ def redirect_for_user(user):
     if user.is_caregiver:
         return redirect('CareGiverAcc:dashboard')
     if user.is_employer:
-        return redirect('EmployerApp:post_job')
+        # Route through the dashboard so the first-job-post popup greets
+        # brand-new employers on signup (dashboard decides the modal).
+        return redirect('EmployerApp:dashboard')
     return redirect('home')
 
 

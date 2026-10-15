@@ -232,6 +232,9 @@
 </div>
 </div>
 {% endif %}
+{% if show_first_job_modal %}
+{% include "EmployerApp/_first_job_modal.html" %}
+{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function(){var days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],idx=new Date().getDay(),labels=[];for(var i=6;i>=0;i--){var d=(idx-i+7)%7;labels.push(days[d===0?6:d-1]);}var lr=document.getElementById("chart-day-labels");if(lr){lr.innerHTML=labels.map(function(l){return"<span>"+l+"</span>";}).join("");}var cv=document.getElementById("weeklyShiftsChart");if(!cv)return;var ctx=cv.getContext("2d"),g=ctx.createLinearGradient(0,0,0,110);g.addColorStop(0,"rgba(27,125,79,0.2)");g.addColorStop(1,"rgba(27,125,79,0.0)");var data=[0,0,0,0,0,0,{{ total_scheduled|default:0 }}];new Chart(ctx,{type:"line",data:{labels:labels,datasets:[{data:data,borderColor:"#1b7d4f",borderWidth:2.5,backgroundColor:g,fill:true,tension:0.4,pointBackgroundColor:function(c){var mx=Math.max.apply(null,data);return data[c.dataIndex]===mx?"#f0a040":"#fff";},pointBorderColor:"#1b7d4f",pointBorderWidth:2,pointRadius:4,pointHoverRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,beginAtZero:true}}}});})();

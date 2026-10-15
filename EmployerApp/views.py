@@ -78,6 +78,45 @@ def employer_moderation_check(view_func):
     return wrapper
 
 
+def _first_job_nudge_ctx(user, profile, request=None) -> dict:
+    """Context for the irresistible 'create your first job post' popup.
+
+    Rules (per requirements):
+      • New signups + old employers with ZERO JobPostings → popup shows.
+      • Once ANY JobPosting exists → popup shows only once a week.
+      • Activation modal still takes precedence when account is not activated.
+      • Dismissal only snoozes (session flag); weekly DB throttle in
+        EmployerProfile.last_first_job_modal_shown persists across logins.
+
+    Works for employers who signed up but never created an EmployerProfile
+    (profile is created on the fly by _employer_ctx).
+    """
+    from datetime import timedelta
+
+    has_posted = JobPosting.objects.filter(employer=user).exists()
+    now = timezone.now()
+
+    show = False
+    weekly_mode = has_posted  # True → "once a week" cadence, False → aggressive
+    if request is not None and request.session.get('first_job_modal_snoozed'):
+        show = False
+    else:
+        last_shown = getattr(profile, 'last_first_job_modal_shown', None)
+        if not has_posted:
+            # Zero posts: show on signup/first visit, or if not shown in last 24h.
+            # The DB timestamp stops it re-appearing on every refresh/page.
+            show = last_shown is None or last_shown <= (now - timedelta(hours=24))
+        else:
+            # Has posted before: gentle once-a-week reminder to post again.
+            show = last_shown is None or last_shown <= (now - timedelta(days=7))
+
+    return {
+        'show_first_job_modal': show,
+        'first_job_weekly_mode': weekly_mode,
+        'has_posted_job': has_posted,
+    }
+
+
 def _employer_ctx(user):
     """Shared context for base_employer.html sidebar."""
     profile, _ = EmployerProfile.objects.get_or_create(user=user)
@@ -178,6 +217,24 @@ def dashboard(request):
         'search_q':          q,
         'search_shifts_count': search_shifts_count,
         'search_jobs_count': search_jobs_count,
+    })
+    # ── First-job-post nudge popup ──────────────────────────────────
+    # Activation modal wins when the account still needs activation; the
+    # first-job popup queues up right after (next visit / next day).
+    # Stamp last_first_job_modal_shown so the throttle persists across
+    # logins, and clear the session snooze once the throttle window passes.
+    nudge = _first_job_nudge_ctx(user, ctx['emp_profile'], request)
+    show_first_job = nudge['show_first_job_modal'] and not ctx['show_modal']
+    if show_first_job:
+        try:
+            ctx['emp_profile'].last_first_job_modal_shown = timezone.now()
+            ctx['emp_profile'].save(update_fields=['last_first_job_modal_shown'])
+        except Exception:
+            logger.exception('Failed to stamp first-job modal shown for user %s', user.pk)
+    ctx.update({
+        'show_first_job_modal': show_first_job,
+        'first_job_weekly_mode': nudge['first_job_weekly_mode'],
+        'has_posted_job': nudge['has_posted_job'],
     })
     return render(request, 'EmployerApp/dashboard.html', ctx)
 
@@ -456,6 +513,30 @@ def stripe_activation_callback(request):
 def pay_later(request):
     """Dismiss the activation modal and set a session flag."""
     request.session['modal_dismissed'] = True
+    return redirect('EmployerApp:dashboard')
+
+
+@employer_required
+def snooze_first_job_modal(request):
+    """Snooze the first-job popup for this session (page won't nag on refresh).
+
+    The DB throttle (last_first_job_modal_shown) already stopped it
+    re-appearing on every page load — this just lets the employer browse
+    in peace until next login / next throttle window.
+    """
+    request.session['first_job_modal_snoozed'] = True
+    return redirect('EmployerApp:dashboard')
+
+
+@employer_required
+def dismiss_first_job_modal(request):
+    """'Maybe later' — same as snooze: hide for this session only."""
+    request.session['first_job_modal_snoozed'] = True
+    messages.info(
+        request,
+        'No problem — your first job post is saved for later. '
+        'We\'ll remind you again soon.',
+    )
     return redirect('EmployerApp:dashboard')
 
 

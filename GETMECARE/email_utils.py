@@ -1187,3 +1187,55 @@ def send_caregiver_reactivated_email(caregiver) -> bool:
         to_email=caregiver.email,
         html_body=_wrap(content),
     )
+
+
+# ──────────────────────────────────────────────────────────────
+# 24. First-job-post reminder  (daily until employer posts first job)
+#     Stops automatically once ANY JobPosting exists for the employer.
+# ──────────────────────────────────────────────────────────────
+
+def send_first_job_post_reminder_email(employer, days_waiting: int | None = None) -> bool:
+    """Remind an employer with zero job posts to create their first posting.
+
+    Sent daily by the send_first_job_reminders management command until the
+    employer creates their first JobPosting — then it stops on its own
+    (the command skips employers that have any JobPosting row).
+    """
+    post_job_url = f'{SITE_URL}/employer/post-job/'
+    waiting_line = (
+        f'<p>You signed up <strong>{days_waiting} day{"s" if days_waiting != 1 else ""} ago</strong> '
+        f'but haven\'t posted a job yet — verified caregivers in Ontario are waiting to hear from you.</p>'
+        if days_waiting else
+        '<p>You haven\'t posted a job yet — verified caregivers in Ontario are waiting to hear from you.</p>'
+    )
+
+    content = f"""
+    <h2>Post your first job — it takes 60 seconds</h2>
+    <p>Hi {employer.first_name or employer.username},</p>
+    {waiting_line}
+    <div class="info-box" style="border-left-color:#c96000;background:#fffbf2;">
+      <p><strong>Why post today?</strong></p>
+      <ul style="padding-left:20px;line-height:2;margin-top:6px;">
+        <li>Your listing goes live instantly in front of verified caregivers</li>
+        <li>Caregivers can reach out to you directly about your posting</li>
+        <li>Posting is free once your account is activated — unlimited listings</li>
+      </ul>
+    </div>
+    <p><strong>How it works (3 quick steps):</strong></p>
+    <ol style="padding-left:20px;line-height:2;font-size:14px;">
+      <li>Click the button below and add a title, city &amp; care type</li>
+      <li>Set your hourly rate and weekly hours</li>
+      <li>Hit <strong>Post Job</strong> — done, caregivers can find you</li>
+    </ol>
+    <a class="btn" href="{post_job_url}" style="background:#c96000;">Post My First Job Now</a>
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      You're receiving this reminder because you haven't created a job posting yet.
+      It stops automatically once you post your first job.
+      Questions? Contact us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f'[{SITE_NAME}] Post your first job — caregivers are waiting',
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )

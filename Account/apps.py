@@ -23,7 +23,7 @@ class AccountConfig(AppConfig):
             'migrate', 'makemigrations', 'test',
             'collectstatic', 'shell', 'dbshell',
             'createsuperuser', 'send_reminder_emails',
-            'send_profile_photo_reminders',
+            'send_profile_photo_reminders', 'send_first_job_reminders',
         }
         argv = sys.argv
         if len(argv) > 1 and argv[1] in _skip_commands:
@@ -69,9 +69,18 @@ def _start_scheduler():
             replace_existing=True,
             misfire_grace_time=3600,   # allow up to 1 hr late
         )
+        scheduler.add_job(
+            func=_run_first_job_reminder_command,
+            trigger=IntervalTrigger(hours=24),
+            id='send_first_job_reminders',
+            name='Send every-24-hour reminder emails to employers with zero job postings',
+            replace_existing=True,
+            misfire_grace_time=3600,   # allow up to 1 hr late
+        )
         scheduler.start()
         logger.info('[Scheduler] send_reminder_emails job started — runs every 48 h')
         logger.info('[Scheduler] send_profile_photo_reminders job started — runs every 24 h')
+        logger.info('[Scheduler] send_first_job_reminders job started — runs every 24 h')
     except Exception:
         # Never crash Django startup because of the scheduler
         logger.exception('[Scheduler] Failed to start background scheduler')
@@ -95,3 +104,13 @@ def _run_photo_reminder_command():
         logger.info('[Scheduler] send_profile_photo_reminders completed')
     except Exception:
         logger.exception('[Scheduler] send_profile_photo_reminders job failed')
+
+
+def _run_first_job_reminder_command():
+    """Wrapper called by APScheduler — runs the first-job reminder command in-process."""
+    try:
+        from django.core import management
+        management.call_command('send_first_job_reminders', verbosity=0)
+        logger.info('[Scheduler] send_first_job_reminders completed')
+    except Exception:
+        logger.exception('[Scheduler] send_first_job_reminders job failed')
