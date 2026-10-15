@@ -72,11 +72,7 @@ body.fj-locked{overflow:hidden}
 <div class="fj-body fj-confirm" id="fjConfirmBody">
 <p>Wait - caregivers cannot find you until you post.<br>Are you sure you want to miss out?</p>
 <div class="fj-confirm-btns">
-{% if is_activated %}
 <a href="{% url 'EmployerApp:post_job' %}" class="fj-yes">Yes, post now</a>
-{% else %}
-<a href="{% url 'EmployerApp:activate_account' %}" class="fj-yes">Yes, continue</a>
-{% endif %}
 <button class="fj-no" id="fjConfirmLater" type="button">Not now</button>
 </div>
 </div>
@@ -101,7 +97,7 @@ document.body.classList.remove("fj-locked");
 window.location.href=url;
 }
 function dismiss(){
-unlockAndGo("{% url 'EmployerApp:dismiss_first_job' %}");
+unlockAndGo("{% url 'EmployerApp:post_job' %}");
 }
 if(later) later.addEventListener("click", showConfirm);
 if(closeX) closeX.addEventListener("click", showConfirm);

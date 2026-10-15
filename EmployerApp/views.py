@@ -518,26 +518,26 @@ def pay_later(request):
 
 @employer_required
 def snooze_first_job_modal(request):
-    """Snooze the first-job popup for this session (page won't nag on refresh).
+    """Snooze the first-job popup for this session, then funnel to post-job.
 
-    The DB throttle (last_first_job_modal_shown) already stopped it
-    re-appearing on every page load — this just lets the employer browse
-    in peace until next login / next throttle window.
+    Every exit path from the modal lands on the post-job form so the
+    employer can't sidestep creating a posting. The DB throttle
+    (last_first_job_modal_shown) already stopped it re-appearing on
+    every page load — the session flag keeps it quiet afterwards.
     """
     request.session['first_job_modal_snoozed'] = True
-    return redirect('EmployerApp:dashboard')
+    return redirect('EmployerApp:post_job')
 
 
 @employer_required
 def dismiss_first_job_modal(request):
-    """'Maybe later' — same as snooze: hide for this session only."""
+    """'Not now' still funnels to the post-job form — no dashboard escape."""
     request.session['first_job_modal_snoozed'] = True
     messages.info(
         request,
-        'No problem — your first job post is saved for later. '
-        'We\'ll remind you again soon.',
+        'Let\'s get your first job posted — it takes under a minute.',
     )
-    return redirect('EmployerApp:dashboard')
+    return redirect('EmployerApp:post_job')
 
 
 # ──────────────────────────────────────────────────────────────
