@@ -370,6 +370,20 @@
     font-family: inherit;
   }
   .cr-modal-ok:hover { background: #145e3a; }
+  .cr-modal-cancel {
+    background: #fff;
+    color: #555;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 9px 28px;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+    font-family: inherit;
+  }
+  .cr-modal-cancel:hover { background: #f2f4f0; }
+  .cr-modal-actions { display: flex; gap: 10px; justify-content: center; }
 </style>
 {% endblock %}
 
@@ -469,7 +483,7 @@
 
 </div>
 
-<span id="last-msg-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+<span id="last-msg-pk" style="display:none">{% if chat_messages %}{{ chat_messages.last.pk }}{% else %}0{% endif %}</span>
 <span id="conv-id" style="display:none">{{ conv.pk }}</span>
 <span id="last-proposal-pk" style="display:none">{% if proposals %}{{ proposals.last.pk }}{% else %}0{% endif %}</span>
 <meta name="csrf-token" content="{{ csrf_token }}">
@@ -480,7 +494,10 @@
     <div class="cr-modal-icon" id="cr-modal-icon">⚠️</div>
     <div class="cr-modal-title" id="cr-modal-title"></div>
     <div class="cr-modal-body"  id="cr-modal-body"></div>
-    <button class="cr-modal-ok" id="cr-modal-ok">OK</button>
+    <div class="cr-modal-actions">
+      <button class="cr-modal-ok" id="cr-modal-ok">OK</button>
+      <button class="cr-modal-cancel" id="cr-modal-cancel" type="button">Cancel</button>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -504,6 +521,7 @@
   const modalBody    = document.getElementById('cr-modal-body');
   const modalIcon    = document.getElementById('cr-modal-icon');
   const modalOkBtn   = document.getElementById('cr-modal-ok');
+  const modalCancelBtn = document.getElementById('cr-modal-cancel');
 
   function showModal(message, title, icon) {
     modalIcon.textContent  = icon  || '⚠️';
@@ -513,9 +531,12 @@
     modalOkBtn.focus();
   }
 
-  modalOkBtn.addEventListener('click', function () {
+  function closeModal() {
     modalOverlay.classList.remove('open');
-  });
+  }
+
+  modalOkBtn.addEventListener('click', closeModal);
+  if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeModal);
   // Close on backdrop click
   modalOverlay.addEventListener('click', function (e) {
     if (e.target === modalOverlay) modalOverlay.classList.remove('open');

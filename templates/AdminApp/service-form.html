@@ -83,13 +83,6 @@
   </h1>
 </div>
 
-{% for msg in messages %}
-<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
-  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
-  {{ msg }}
-</div>
-{% endfor %}
-
 <div class="adm-card">
   <div class="adm-card-pad">
     <form method="post" enctype="multipart/form-data" style="display:grid;gap:18px">

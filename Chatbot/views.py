@@ -625,9 +625,14 @@ def chat_room(request, conv_id):
         chat_items.append({'type': 'proposal', 'obj': p, 'ts': p.created_at})
     chat_items.sort(key=lambda x: x['ts'])
 
+    # NOTE: context key is `chat_messages` (NOT `messages`) on purpose —
+    # `messages` is reserved for Django's flash-message framework. Using it
+    # here overwrote flash alerts site-wide (base templates loop over
+    # `messages` to render banners), which made chat bodies render as
+    # full-width notification strips above the thread.
     return render(request, 'chat/chat-room.html', {
         'conv': conv,
-        'messages': messages_qs,
+        'chat_messages': messages_qs,
         'proposals': proposals_qs,
         'chat_items': chat_items,
         'other': other,
@@ -786,11 +791,12 @@ def admin_chat_monitor(request):
 
     # Optional: filter by conversation
     selected_conv = None
-    messages = []
+    # NOTE: NOT `messages` — that name belongs to Django's flash framework.
+    chat_messages = []
     conv_id = request.GET.get('conv')
     if conv_id:
         selected_conv = get_object_or_404(DirectConversation, pk=conv_id)
-        messages = selected_conv.direct_messages.select_related('sender').all()
+        chat_messages = selected_conv.direct_messages.select_related('sender').all()
 
     conversations = []
     for conv in convs:
@@ -800,7 +806,7 @@ def admin_chat_monitor(request):
     return render(request, 'chat/admin-chat-monitor.html', {
         'conversations': conversations,
         'selected_conv': selected_conv,
-        'messages': messages,
+        'chat_messages': chat_messages,
     })
 
 
@@ -928,9 +934,10 @@ def support_chat_detail(request, chat_id):
     """Show a specific support chat for the current user."""
     chat = get_object_or_404(SupportChat, pk=chat_id, user=request.user)
     messages_qs = chat.messages.select_related('sender').all()
+    # NOTE: `chat_messages` (NOT `messages`) — see chat_room for why.
     return render(request, 'chat/support-chat.html', {
         'chat': chat,
-        'messages': messages_qs,
+        'chat_messages': messages_qs,
         'base_template': _chat_base(request.user),
     })
 
@@ -1047,17 +1054,17 @@ def admin_support(request):
     resolved = SupportChat.objects.filter(is_resolved=True).select_related('user').order_by('-updated_at')[:50]
 
     selected_chat = None
-    messages = []
+    chat_messages = []
     chat_id = request.GET.get('chat')
     if chat_id:
         selected_chat = get_object_or_404(SupportChat, pk=chat_id)
-        messages = selected_chat.messages.select_related('sender').all()
+        chat_messages = selected_chat.messages.select_related('sender').all()
 
     return render(request, 'chat/admin-support.html', {
         'chats': chats,
         'resolved': resolved,
         'selected_chat': selected_chat,
-        'messages': messages,
+        'chat_messages': chat_messages,
     })
 
 

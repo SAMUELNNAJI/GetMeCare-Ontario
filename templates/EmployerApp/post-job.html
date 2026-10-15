@@ -134,13 +134,6 @@
   <i class="fas fa-plus-circle" style="color: #1b3060; margin-right: 8px"></i>Post a Job
 </div>
 
-{% for msg in messages %}
-<div class="{% if msg.tags == 'success' %}msg-ok{% elif msg.tags == 'warning' %}msg-warn{% else %}msg-err{% endif %}">
-  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
-  {{ msg }}
-</div>
-{% endfor %}
-
 <form method="post" action="{% url 'EmployerApp:post_job' %}">
   {% csrf_token %}
 

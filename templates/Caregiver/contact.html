@@ -113,30 +113,6 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
       <input type="hidden" name="form_loaded_at" id="formLoadedAt" value="">
     </form>
 
-    {% if messages %}
-      {% for msg in messages %}
-        {% if 'error' in msg.tags %}
-        <div class="form-error-banner" style="background:#fdecea;color:#c62828;border:1px solid #ffcdd2;border-radius:9px;padding:14px 18px;margin-top:16px;font-size:.9rem;">
-          <i class="fas fa-exclamation-circle"></i> {{ msg }}
-        </div>
-        {% else %}
-        <div class="form-success" id="formSuccess" style="display:block;">
-          <div class="form-success-icon"><i class="fas fa-check"></i></div>
-          <h3>Message Sent!</h3>
-          <p>{{ msg }}</p>
-        </div>
-        {% endif %}
-      {% endfor %}
-    {% else %}
-    <div class="form-success" id="formSuccess" style="display:none;">
-      <div class="form-success-icon"><i class="fas fa-check"></i></div>
-      <h3>Message Sent!</h3>
-      <p>
-        Thanks for reaching out. Our admin team will review your message and
-        reply within 1 business day.
-      </p>
-    </div>
-    {% endif %}
   </div>
 
   <!-- RIGHT: Sidebar -->

@@ -149,15 +149,6 @@
   Book a Caregiver
 </div>
 
-{% if messages %}
-  {% for m in messages %}
-  <div class="alert {% if m.tags == 'error' %}alert-err{% else %}alert-warn{% endif %}">
-    <i class="fas fa-{% if m.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-    {{ m }}
-  </div>
-  {% endfor %}
-{% endif %}
-
 <form method="post" id="booking-form">
   {% csrf_token %}
   <input type="hidden" name="proposal_id" value="{{ proposal.pk }}">

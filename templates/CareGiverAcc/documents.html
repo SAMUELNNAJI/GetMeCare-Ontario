@@ -817,15 +817,6 @@ GetMeCare{% endblock %} {% block extra_head %}
   Documents
 </div>
 
-{% for msg in messages %}
-<div class="{% if msg.tags == 'success' %}msg-ok{% else %}msg-err{% endif %}">
-  <i
-    class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"
-  ></i>
-  {{ msg }}
-</div>
-{% endfor %}
-
 <!-- Profile Photo Upload Section (shown until photo is uploaded) -->
 {% if not has_profile_photo %}
 <div class="photo-upload-banner">

@@ -540,15 +540,6 @@ GetMeCare{% endblock %} {% block extra_head %}
   Profile
 </div>
 
-{% for msg in messages %}
-<div class="{% if msg.tags == 'success' %}msg-ok{% else %}msg-err{% endif %}">
-  <i
-    class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"
-  ></i>
-  {{ msg }}
-</div>
-{% endfor %}
-
 <div class="ep-grid">
   <!-- ── LEFT: avatar + status card ── -->
   <div class="ep-avatar-card">

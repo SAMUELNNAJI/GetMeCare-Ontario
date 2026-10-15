@@ -24,10 +24,6 @@
   <p style="font-size:.85rem;color:#888">Disputes and complaints you have raised with our support team.</p>
 </div>
 
-{% for msg in messages %}
-<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">{{ msg }}</div>
-{% endfor %}
-
 <!-- Summary -->
 <div class="ds-summary">
   <div class="ds-stat">

@@ -48,13 +48,6 @@
   <p style="font-size:.85rem;color:#888">All payments you have made — activation fee and shift bookings.</p>
 </div>
 
-<!-- Django messages -->
-{% for msg in messages %}
-<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
-  {{ msg }}
-</div>
-{% endfor %}
-
 <!-- Summary cards -->
 <div class="ph-summary">
   <div class="ph-stat">

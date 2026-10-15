@@ -285,11 +285,11 @@
         {{ selected_conv.participant_1.email }} &nbsp;|&nbsp;
         {{ selected_conv.participant_2.email }} &nbsp;·&nbsp;
         Started {{ selected_conv.created_at|date:"M d, Y" }}
-        &nbsp;·&nbsp; {{ messages|length }} message{{ messages|length|pluralize }}
+        &nbsp;·&nbsp; {{ chat_messages|length }} message{{ chat_messages|length|pluralize }}
       </p>
     </div>
     <div class="acm-messages">
-      {% for msg in messages %}
+      {% for msg in chat_messages %}
       <div class="acm-msg">
         <div class="acm-msg-av">
           {% if msg.sender.first_name %}{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}{% else %}{{ msg.sender.username|slice:":2"|upper }}{% endif %}

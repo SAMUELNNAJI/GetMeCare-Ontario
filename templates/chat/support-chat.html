@@ -216,6 +216,17 @@
     box-shadow: 0 4px 16px rgba(0,0,0,.2);
   }
   #sc-toast.show { display: block; }
+  .cr-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+  .cr-modal-overlay.open{display:flex}
+  .cr-modal{background:#fff;border-radius:14px;padding:28px 28px 22px;max-width:340px;width:calc(100% - 40px);box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center}
+  .cr-modal-icon{font-size:2rem;margin-bottom:12px}
+  .cr-modal-title{font-size:.95rem;font-weight:700;color:#1a1a1a;margin-bottom:8px}
+  .cr-modal-body{font-size:.85rem;color:#555;line-height:1.5;margin-bottom:20px}
+  .cr-modal-ok{background:#1b7d4f;color:#fff;border:none;border-radius:8px;padding:9px 28px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .cr-modal-ok:hover{background:#145e3a}
+  .cr-modal-cancel{background:#fff;color:#555;border:1.5px solid #ddd;border-radius:8px;padding:9px 28px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .cr-modal-cancel:hover{background:#f2f4f0}
+  .cr-modal-actions{display:flex;gap:10px;justify-content:center}
 </style>
 {% endblock %}
 
@@ -234,7 +245,7 @@
   </div>
 
   <div class="sc-messages" id="sc-msg-list">
-    {% for msg in messages %}
+    {% for msg in chat_messages %}
       {% include "chat/partials/support_message.html" with msg=msg me=request.user %}
     {% empty %}
       <div class="sc-empty" id="sc-empty">
@@ -257,8 +268,20 @@
 </div>
 
 <div id="sc-toast" role="alert"></div>
+<!-- Alert modal (replaces inline banners / browser alert) -->
+<div class="cr-modal-overlay sc-modal-overlay" id="sc-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sc-modal-title">
+  <div class="cr-modal sc-modal">
+    <div class="cr-modal-icon" id="sc-modal-icon">⚠️</div>
+    <div class="cr-modal-title" id="sc-modal-title"></div>
+    <div class="cr-modal-body" id="sc-modal-body"></div>
+    <div class="cr-modal-actions">
+      <button class="cr-modal-ok" id="sc-modal-ok">OK</button>
+      <button class="cr-modal-cancel" id="sc-modal-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
 <span id="sc-chat-id" style="display:none">{{ chat.pk }}</span>
-<span id="sc-last-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+<span id="sc-last-pk" style="display:none">{% if chat_messages %}{{ chat_messages.last.pk }}{% else %}0{% endif %}</span>
 <meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}
 
@@ -277,6 +300,27 @@
   var sending    = false;
   var pollActive = false;
   var toastTimer = null;
+
+  // ── Popup modal (replaces inline banners) ───────────────
+  var modalOverlay = document.getElementById('sc-modal-overlay');
+  var modalTitle   = document.getElementById('sc-modal-title');
+  var modalBody    = document.getElementById('sc-modal-body');
+  var modalIcon    = document.getElementById('sc-modal-icon');
+  var modalOk      = document.getElementById('sc-modal-ok');
+  var modalCancel  = document.getElementById('sc-modal-cancel');
+  function closeModal() { if (modalOverlay) modalOverlay.classList.remove('open'); }
+  function showModal(msg, title, icon) {
+    if (!modalOverlay) { showToast(msg); return; }
+    if (modalIcon) modalIcon.textContent = icon || '⚠️';
+    if (modalTitle) modalTitle.textContent = title || 'Notice';
+    if (modalBody) modalBody.textContent = msg;
+    modalOverlay.classList.add('open');
+    if (modalOk) modalOk.focus();
+  }
+  if (modalOk) modalOk.addEventListener('click', closeModal);
+  if (modalCancel) modalCancel.addEventListener('click', closeModal);
+  if (modalOverlay) modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
   list.scrollTop = list.scrollHeight;
 
@@ -342,7 +386,7 @@
         input.value = body;
         input.style.height = 'auto';
         input.style.height = Math.min(input.scrollHeight, 100) + 'px';
-        showToast(data.error || 'Failed to send. Please try again.');
+        showModal(data.error || 'Failed to send. Please try again.', 'Send Failed', '❌');
         return;
       }
       if (data.html && !document.getElementById('msg-' + data.pk)) {
@@ -351,7 +395,7 @@
         scrollBottom();
       }
     })
-    .catch(function () { input.value = body; showToast('Network error — please try again.'); })
+    .catch(function () { input.value = body; showModal('Network error — please try again.', 'Connection Error', '📡'); })
     .finally(function () { sending = false; if (btn) btn.disabled = false; input.focus(); });
   }
 

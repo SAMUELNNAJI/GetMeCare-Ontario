@@ -16,10 +16,6 @@
   {% else %}<span class="badge badge-grey" style="font-size:.8rem">Dismissed</span>{% endif %}
 </div>
 
-{% for msg in messages %}
-<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">{{ msg }}</div>
-{% endfor %}
-
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
 
   <!-- Employer card -->

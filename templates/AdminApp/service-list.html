@@ -24,13 +24,6 @@
   <p style="font-size:.85rem;color:#888">Manage all care services offered on the site.</p>
 </div>
 
-{% for msg in messages %}
-<div class="msg-{% if msg.tags == 'error' %}err{% elif msg.tags == 'warning' %}warn{% else %}ok{% endif %}" style="margin-bottom:14px">
-  <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% elif msg.tags == 'warning' %}exclamation-triangle{% else %}exclamation-circle{% endif %}"></i>
-  {{ msg }}
-</div>
-{% endfor %}
-
 <div class="adm-card">
   <div class="adm-card-pad">
     <div style="font-size:.92rem;font-weight:700;color:#1a1a1a;margin-bottom:16px;

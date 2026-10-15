@@ -365,7 +365,7 @@
         <p>
           {{ selected_chat.user.email }}
           &nbsp;·&nbsp; Started {{ selected_chat.created_at|date:"M d, Y" }}
-          &nbsp;·&nbsp; {{ messages|length }} message{{ messages|length|pluralize }}
+          &nbsp;·&nbsp; {{ chat_messages|length }} message{{ chat_messages|length|pluralize }}
         </p>
       </div>
       {% if not selected_chat.is_resolved %}
@@ -382,7 +382,7 @@
     </div>
 
     <div class="asc-messages" id="asc-msg-list">
-      {% for msg in messages %}
+      {% for msg in chat_messages %}
         {% include "chat/partials/support_message.html" with msg=msg me=request.user %}
       {% empty %}
         <div class="asc-empty" id="asc-no-msgs">
@@ -409,7 +409,7 @@
     {% endif %}
 
     <span id="asc-chat-id" style="display:none">{{ selected_chat.pk }}</span>
-    <span id="asc-last-pk" style="display:none">{% if messages %}{{ messages.last.pk }}{% else %}0{% endif %}</span>
+    <span id="asc-last-pk" style="display:none">{% if chat_messages %}{{ chat_messages.last.pk }}{% else %}0{% endif %}</span>
     <meta name="asc-csrf" content="{{ csrf_token }}">
 
     {% else %}

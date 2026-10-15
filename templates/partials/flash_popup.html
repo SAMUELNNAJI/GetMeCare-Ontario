@@ -1,0 +1,61 @@
+{# ── Flash-message popup (replaces inline banners site-wide) ── #}
+{# Renders Django messages as a dismissible modal with OK + Cancel. #}
+{% if messages %}
+<style>
+.gmc-flash-overlay{position:fixed;inset:0;background:rgba(10,25,18,.55);z-index:1200;display:none;align-items:center;justify-content:center;padding:20px}
+.gmc-flash-overlay.open{display:flex}
+.gmc-flash-modal{background:#fff;border-radius:16px;max-width:400px;width:100%;padding:28px 26px 22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.22)}
+.gmc-flash-icon{font-size:2rem;margin-bottom:10px}
+.gmc-flash-title{font-size:1rem;font-weight:800;color:#1a1a1a;margin-bottom:8px}
+.gmc-flash-body{font-size:.86rem;color:#555;line-height:1.55;margin-bottom:20px;max-height:40vh;overflow-y:auto}
+.gmc-flash-actions{display:flex;gap:10px;justify-content:center}
+.gmc-flash-ok{background:#1b7d4f;color:#fff;border:none;border-radius:9px;padding:10px 30px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+.gmc-flash-ok:hover{background:#145e3a}
+.gmc-flash-cancel{background:#fff;color:#555;border:1.5px solid #ddd;border-radius:9px;padding:10px 30px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+.gmc-flash-cancel:hover{background:#f2f4f0}
+</style>
+<div class="gmc-flash-overlay" id="gmcFlashOverlay" role="dialog" aria-modal="true" aria-labelledby="gmcFlashTitle">
+  <div class="gmc-flash-modal">
+    <div class="gmc-flash-icon" id="gmcFlashIcon">🔔</div>
+    <div class="gmc-flash-title" id="gmcFlashTitle">Notice</div>
+    <div class="gmc-flash-body" id="gmcFlashBody"></div>
+    <div class="gmc-flash-actions">
+      <button class="gmc-flash-ok" id="gmcFlashOk" type="button">OK</button>
+      <button class="gmc-flash-cancel" id="gmcFlashCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="gmcFlashData" style="display:none" aria-hidden="true">{% for m in messages %}<div data-tags="{{ m.tags }}" data-icon="{% if 'success' in m.tags %}✅{% elif 'warning' in m.tags %}⚠️{% elif 'error' in m.tags %}❌{% else %}🔔{% endif %}" data-title="{% if 'success' in m.tags %}Success{% elif 'warning' in m.tags %}Warning{% elif 'error' in m.tags %}Error{% else %}Notice{% endif %}">{{ m }}</div>{% endfor %}</div>
+<script>
+(function(){
+var overlay=document.getElementById("gmcFlashOverlay");
+if(!overlay) return;
+var queue=[];
+document.querySelectorAll("#gmcFlashData > div").forEach(function(el){
+queue.push({text:el.textContent.trim(),tags:el.getAttribute("data-tags")||"",icon:el.getAttribute("data-icon")||"🔔",title:el.getAttribute("data-title")||"Notice"});
+});
+if(!queue.length) return;
+var iconEl=document.getElementById("gmcFlashIcon");
+var titleEl=document.getElementById("gmcFlashTitle");
+var bodyEl=document.getElementById("gmcFlashBody");
+var okBtn=document.getElementById("gmcFlashOk");
+var cancelBtn=document.getElementById("gmcFlashCancel");
+var idx=0;
+function show(i){
+var item=queue[i];
+if(!item) return;
+iconEl.textContent=item.icon;
+titleEl.textContent=item.title;
+bodyEl.textContent=item.text;
+overlay.classList.add("open");
+okBtn.focus();
+}
+function next(){idx++;if(idx<queue.length){show(idx);}else{overlay.classList.remove("open");}}
+okBtn.addEventListener("click",next);
+cancelBtn.addEventListener("click",function(){overlay.classList.remove("open");});
+overlay.addEventListener("click",function(e){if(e.target===overlay)overlay.classList.remove("open");});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")overlay.classList.remove("open");});
+show(0);
+})();
+</script>
+{% endif %}
