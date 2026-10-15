@@ -14,7 +14,7 @@
     box-shadow: 0 1px 6px rgba(0,0,0,.08);
   }
 
-  /* ── Left: conversation list ── */
+/* ── Left: conversation list ── */
   .acm-sidebar {
     border-right: 1px solid #f0f0f0;
     overflow-y: auto;
@@ -285,7 +285,7 @@
         {{ selected_conv.participant_1.email }} &nbsp;|&nbsp;
         {{ selected_conv.participant_2.email }} &nbsp;·&nbsp;
         Started {{ selected_conv.created_at|date:"M d, Y" }}
-        &nbsp;·&nbsp; {{ chat_messages|length }} message{{ chat_messages|length|pluralize }}
+        &nbsp;·&nbsp; {{ messages|length }} message{{ messages|length|pluralize }}
       </p>
     </div>
     <div class="acm-messages">
