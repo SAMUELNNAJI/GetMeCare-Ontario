@@ -347,11 +347,13 @@
   <button class="adm-search-icon-btn" id="adm-search-icon-btn" aria-label="Open search">
     <i class="fas fa-search"></i>
   </button>
-  <a href="{% url 'home' %}" class="adm-back" style="margin-left:10px;">
-    <i class="fas fa-arrow-left"></i> Go back to site
-  </a>
   <div class="adm-topbar-space"></div>
-  <div class="adm-topbar-av">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
+  <div class="adm-topbar-right" style="display:flex;align-items:center;gap:12px;margin-left:auto;">
+    <a href="{% url 'home' %}" class="adm-back">
+      <i class="fas fa-arrow-left"></i> Go back to site
+    </a>
+    <div class="adm-topbar-av">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
+  </div>
 </div>
 <!-- Mobile search overlay -->
 <div class="adm-search-overlay" id="adm-search-overlay" role="dialog" aria-modal="true" aria-label="Search">
