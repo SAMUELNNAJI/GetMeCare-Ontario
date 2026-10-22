@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, CaregiverProfile, Shift, ShiftLog
+from .models import CustomUser, CaregiverProfile, Shift, ShiftLog, CaregiverReview
 
 
 @admin.register(CustomUser)
@@ -40,3 +40,10 @@ class ShiftLogAdmin(admin.ModelAdmin):
     list_filter   = ('payment_status', 'is_disputed')
     list_editable = ('payment_status',)
     search_fields = ('shift__caregiver__username',)
+
+
+@admin.register(CaregiverReview)
+class CaregiverReviewAdmin(admin.ModelAdmin):
+    list_display = ('shift', 'caregiver', 'employer', 'rating', 'created_at')
+    list_filter = ('rating',)
+    search_fields = ('caregiver__username', 'employer__username')

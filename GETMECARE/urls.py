@@ -23,6 +23,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap
+from GETMECARE import whatsapp_webhooks
 
 
 # ── Custom password-reset view — injects the real domain from the request
@@ -213,6 +214,7 @@ urlpatterns = [
     path('', include('EmployerApp.urls')),
     path('', include('CareGiverAcc.urls')),
     path('chatbot/', include('Chatbot.urls')),
+    path('webhooks/whatsapp/', whatsapp_webhooks.whatsapp_webhook, name='whatsapp_webhook'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # ── Error-page preview URLs (development only) ────────────────

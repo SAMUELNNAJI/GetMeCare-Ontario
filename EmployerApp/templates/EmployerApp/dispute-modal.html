@@ -1,0 +1,124 @@
+<!-- Dispute Modal -->
+<div class="modal fade" id="disputeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-flag text-danger"></i> Submit a Dispute</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="disputeForm" method="post" action="{% url 'EmployerApp:submit_dispute' %}">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="id_shift_pk" class="form-label">Shift ID (required)</label>
+                        <input type="text" name="shift_pk" id="id_shift_pk" class="form-control">
+                        <div class="form-text">Enter the ID of the shift you want to dispute (e.g. 7).</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_payment_pk" class="form-label">Payment ID (alternative)</label>
+                        <input type="text" name="payment_pk" id="id_payment_pk" class="form-control">
+                        <div class="form-text">Alternatively, enter the ID of a booking payment to dispute.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_category" class="form-label">Category</label>
+                        <select name="category" id="id_category" class="form-control">
+                            <option value="">-- Select a category --</option>
+                            <option value="service_quality">Poor Service Quality</option>
+                            <option value="no_show">Caregiver No-Show</option>
+                            <option value="late_arrival">Late Arrival</option>
+                            <option value="misconduct">Unprofessional / Misconduct</option>
+                            <option value="billing">Billing / Payment Issue</option>
+                            <option value="safety">Safety Concern</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_description" class="form-label">Description <span class="text-muted small">(min 10 characters)</span></label>
+                        <textarea name="description" id="id_description" class="form-control" rows="4" placeholder="Describe the issue in detail..."></textarea>
+                    </div>
+
+                    <div class="alert alert-danger" id="disputeError" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitDispute()">
+                    <i class="fas fa-paper-plane"></i> Submit Dispute
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitDispute() {
+    const form = document.getElementById('disputeForm');
+    const errorDiv = document.getElementById('disputeError');
+    errorDiv.style.display = 'none';
+
+    // Collect form data
+    const shift_pk = document.getElementById('id_shift_pk').value.trim();
+    const payment_pk = document.getElementById('id_payment_pk').value.trim();
+    const category = document.getElementById('id_category').value;
+    const description = document.getElementById('id_description').value.trim();
+
+    // Client-side validation (mirror Django's)
+    if (!shift_pk && !payment_pk) {
+        showError(errorDiv, 'Please provide either a Shift ID or a Payment ID.');
+        return;
+    }
+    if (!category) {
+        showError(errorDiv, 'Please select a category.');
+        return;
+    }
+    if (description.length < 10) {
+        showError(errorDiv, 'Please describe the issue (minimum 10 characters).');
+        return;
+    }
+
+    // Submit via fetch to handle JSON response
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken,
+        },
+        body: new URLSearchParams({
+            shift_pk: shift_pk,
+            payment_pk: payment_pk,
+            category: category,
+            description: description,
+        }),
+    })
+    .then(response => {
+        if (response.ok) {
+            // Success - reload the page or show a success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alert.innerHTML = '<i class="fas fa-check-circle"></i> Dispute submitted successfully. We will review it within 24 hours.';
+            alert.innerHTML += '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            document.querySelector('.page-header').insertAdjacentElement('beforebegin', alert);
+            bootstrap.Modal.getInstance(document.getElementById('disputeModal')).hide();
+            // Optionally reload the disputes list
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            response.text().then(text => {
+                showError(errorDiv, text || 'Failed to submit dispute. Please try again.');
+            });
+        }
+    })
+    .catch(err => {
+        showError(errorDiv, 'Network error: ' + err.message);
+    });
+}
+
+function showError(el, message) {
+    el.style.display = 'block';
+    el.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+}
+</script>

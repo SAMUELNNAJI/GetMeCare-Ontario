@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static gmc_tags %}
 {% block title %}Browse Caregivers – GetMeCare Ontario{% endblock %}
 {% block content %}
 
@@ -146,6 +146,7 @@
 <span class="bc-badge"><i class="fas fa-check-circle"></i> Ontario VSC Cleared</span>
 <span class="bc-badge"><i class="fas fa-check-circle"></i> PSW Certified</span>
 </div>
+<div aria-label="{% if profile.review_count %}{{ profile.avg_rating|floatformat:1 }} out of 5 stars{% else %}No verified ratings yet{% endif %}" style="margin:10px 0;color:#e49a19;font-size:.9rem;font-weight:700">{% if profile.review_count %}<i class="fas fa-star"></i> {{ profile.avg_rating|floatformat:1 }} <span style="color:#78857d;font-weight:500">/ 5 · {{ profile.review_count }} verified review{{ profile.review_count|pluralize }}</span>{% else %}<i class="far fa-star"></i> <span style="color:#78857d;font-weight:500">No verified ratings yet</span>{% endif %}</div>
 {% if profile.skills_list or profile.care_types_display %}
 <div class="bc-skills">{% for skill in profile.skills_list|slice:":3" %}<span class="stag">{{ skill }}</span>{% endfor %}{% for label in profile.care_types_display|slice:":2" %}<span class="stag">{{ label }}</span>{% endfor %}</div>
 {% endif %}
@@ -206,4 +207,5 @@ const mfb=document.getElementById('mobileFilterBtn'),sb=document.querySelector('
 if(mfb&&sb){mfb.addEventListener('click',()=>sb.classList.toggle('mobile-open'));}
 })();
 </script>
+
 {% endblock %}

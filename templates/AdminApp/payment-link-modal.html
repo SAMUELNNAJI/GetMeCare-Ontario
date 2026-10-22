@@ -1,0 +1,147 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Stripe Payment Link for Job #{{ job.pk }} — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pl-card {
+    background:#fff; border:1px solid #dde2d8; border-radius:14px;
+    padding:28px; max-width:680px; width:100%; margin:0 auto;
+    box-shadow:0 4px 20px rgba(0,0,0,.04); box-sizing:border-box;
+    overflow:hidden;
+  }
+  .pl-badge {
+    background:#e6f5ee; color:#1b7d4f; border-radius:20px;
+    padding:4px 12px; font-size:.78rem; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .pl-link-box {
+    display:flex; gap:8px; margin:14px 0; background:#f9faf8;
+    border:1px solid #dde2d8; border-radius:10px; padding:8px 12px;
+    align-items:center; width:100%; box-sizing:border-box; min-width:0;
+  }
+  .pl-link-input {
+    flex:1 1 auto; min-width:0; width:100%; border:none; background:transparent;
+    font-family:monospace; font-size:.82rem; color:#1b3a2d; outline:none;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .pl-btn-copy {
+    background:#1b7d4f; color:#fff; border:none; border-radius:8px;
+    padding:8px 14px; font-size:.8rem; font-weight:700; cursor:pointer;
+    flex-shrink:0; white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+    transition:background .15s;
+  }
+  .pl-btn-copy:hover { background:#14603c; }
+  .pl-btn-email {
+    width:100%; background:#1a6b4a; color:#fff; padding:12px;
+    border-radius:10px; font-size:.92rem; font-weight:700; border:none;
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+    gap:8px; transition:background .15s; box-sizing:border-box; text-decoration:none;
+  }
+  .pl-btn-email:hover { background:#14553a; }
+  .pl-btn-wa {
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; background:#25d366; color:#fff; padding:12px; border-radius:10px;
+    font-size:.92rem; font-weight:700; text-decoration:none; margin-top:10px;
+    box-sizing:border-box; transition:background .15s;
+  }
+  .pl-btn-wa:hover { background:#1ebd57; color:#fff; }
+  .pl-preview {
+    background:#f4f6f3; border-radius:10px; padding:14px; font-size:.82rem;
+    color:#333; white-space:pre-wrap; word-break:break-all; overflow-wrap:anywhere;
+    line-height:1.5; margin-top:10px; border-left:3px solid #25d366;
+    max-width:100%; box-sizing:border-box; overflow:hidden;
+  }
+  .pl-footer {
+    margin-top:24px; padding-top:18px; border-top:1px solid #eee;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:12px;
+  }
+  @media (max-width: 600px) {
+    .pl-card { padding:18px 14px; border-radius:10px; }
+    .pl-link-box { flex-direction:column; align-items:stretch; gap:8px; padding:10px; }
+    .pl-btn-copy { width:100%; justify-content:center; }
+    .pl-footer { flex-direction:column; align-items:stretch; text-align:center; }
+    .pl-footer a { width:100%; justify-content:center; }
+    .pl-btn-email, .pl-btn-wa { font-size:.85rem; padding:10px 8px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:14px">
+  <a href="{% url 'AdminApp:job_request_matches' job.pk %}" style="color:#666;text-decoration:none;font-size:.85rem;font-weight:600">
+    <i class="fas fa-arrow-left"></i> Back to Candidate Matches
+  </a>
+</div>
+
+<div class="pl-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <span class="pl-badge"><i class="fas fa-check-circle"></i> Stripe Session Generated</span>
+    <span style="font-size:1.1rem;font-weight:800;color:#1b3a2d">$39.00 CAD</span>
+  </div>
+
+  <h2 style="font-size:1.25rem;font-weight:800;color:#1a1a1a;margin-bottom:6px">
+    Verification Paylink ($39 CAD)
+  </h2>
+  <p style="font-size:.85rem;color:#666;margin:0 0 16px;line-height:1.4">
+    Send this dedicated Stripe checkout link to <strong>{{ job.employer.get_full_name|default:job.employer.username }}</strong> via Email or WhatsApp to collect the one-time $39 verification fee.
+  </p>
+
+  <label style="font-size:.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">
+    Direct Stripe Checkout Link
+  </label>
+  <div class="pl-link-box">
+    <input type="text" id="stripeCheckoutUrl" class="pl-link-input" value="{{ checkout_url }}" readonly>
+    <button type="button" class="pl-btn-copy" id="copyBtn" onclick="copyLink()">
+      <i class="far fa-copy"></i> Copy Link
+    </button>
+  </div>
+
+  <form method="post" action="{% url 'AdminApp:admin_email_paylink' job.pk %}" style="margin-top:12px">
+    {% csrf_token %}
+    <input type="hidden" name="checkout_url" value="{{ checkout_url }}">
+    {% if caregiver %}<input type="hidden" name="caregiver_id" value="{{ caregiver.pk }}">{% endif %}
+    <button type="submit" class="pl-btn-email">
+      <i class="fas fa-envelope" style="font-size:1.05rem"></i> Email $39 Paylink to Employer ({{ job.employer.email }})
+    </button>
+  </form>
+
+  {% if whatsapp_url %}
+    <a href="{{ whatsapp_url }}" target="_blank" class="pl-btn-wa">
+      <i class="fab fa-whatsapp" style="font-size:1.15rem"></i> Drop Paylink to WhatsApp Window (+{{ employer_phone_digits }})
+    </a>
+  {% else %}
+    <div style="background:#fff3cd;color:#856404;padding:12px;border-radius:8px;font-size:.83rem;margin-top:12px">
+      <i class="fas fa-exclamation-triangle"></i> No employer phone number is registered. Use the Email button above or copy the link.
+    </div>
+  {% endif %}
+
+  <div style="margin-top:20px">
+    <label style="font-size:.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em">
+      WhatsApp Message Preview
+    </label>
+    <div class="pl-preview">{{ wa_message }}</div>
+  </div>
+
+  <div class="pl-footer">
+    <span style="font-size:.8rem;color:#888">Once payment clears:</span>
+    <a href="{% url 'AdminApp:program_shift' %}?job_id={{ job.pk }}&employer_id={{ job.employer.pk }}{% if caregiver %}&caregiver_id={{ caregiver.pk }}{% endif %}"
+       style="display:inline-flex;align-items:center;gap:6px;background:#1b3a2d;color:#fff;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-calendar-plus"></i> Program Shift Parameters Now
+    </a>
+  </div>
+</div>
+
+<script>
+  function copyLink() {
+    const input = document.getElementById('stripeCheckoutUrl');
+    const btn = document.getElementById('copyBtn');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(function() {
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      setTimeout(() => { btn.innerHTML = '<i class="far fa-copy"></i> Copy Link'; }, 2500);
+    });
+  }
+</script>
+{% endblock %}

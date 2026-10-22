@@ -1,0 +1,120 @@
+{% load gmc_tags %}
+{% extends 'EmployerApp/base-employer.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-flag text-danger"></i> My Disputes</h2>
+    <div class="header-actions">
+        <a href="{% url 'EmployerApp:dashboard' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <strong>Dispute Summary</strong>
+        <span class="badge bg-info">Total: {{ disputes.count }}</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Caregiver</th>
+                    <th>Shift</th>
+                    <th>Payment</th>
+                    <th>Description</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for dispute in disputes %}
+                    <tr>
+                        <td><a href="{% url 'EmployerApp:my_disputes' %}">#{{ dispute.pk }}</a></td>
+                        <td>
+                            <span class="badge bg-{{ dispute.get_category_display|lower|replace:' ','_' }}">
+                                {{ dispute.get_category_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ dispute.status|status_badge_color }}">
+                                {{ dispute.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ dispute.caregiver.get_full_name }}</td>
+                        <td>
+                            {% if dispute.shift %}
+                                <a href="{% url 'EmployerApp:my_shifts' %}">#{{ dispute.shift.pk }}</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if dispute.payment %}
+                                <a href="{% url 'EmployerApp:payment_history' %}">#{{ dispute.payment.pk }}</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 200px;" title="{{ dispute.description }}">
+                            {{ dispute.description|truncatechars:60 }}
+                        </td>
+                        <td>{{ dispute.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="#" class="btn btn-outline-primary" title="View details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-warning" title="Add admin note">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            No disputes have been raised yet.
+                            <a href="#" class="text-decoration-none">
+                                <u>Submit a dispute</u>
+                            </a>
+                            .
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <strong>Dispute Status Breakdown</strong>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between">
+            <span>Open:</span>
+            <span class="badge bg-danger">{{ open_count }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+            <span>Under Review:</span>
+            <span class="badge bg-warning text-dark">{{ under_review_count }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+            <span>Resolved:</span>
+            <span class="badge bg-success">{{ resolved_count }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+            <span>Dismissed:</span>
+            <span class="badge bg-secondary">{{ dismissed_count }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

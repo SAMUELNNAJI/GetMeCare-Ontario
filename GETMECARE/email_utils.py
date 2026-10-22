@@ -32,7 +32,7 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-ADMIN_EMAIL: str = getattr(settings, 'ADMIN_EMAIL', 'info@getmecare-ontario.com')
+ADMIN_EMAIL: str = getattr(settings, 'ADMIN_EMAIL', 'getmecareontario@gmail.com')
 FROM_EMAIL: str  = getattr(settings, 'DEFAULT_FROM_EMAIL', 'GetMeCare Ontario <noreply@getmecare-ontario.com>')
 SITE_NAME         = 'GetMeCare Ontario'
 SITE_URL          = 'https://getmecare-ontario.com'
@@ -1238,4 +1238,187 @@ def send_first_job_post_reminder_email(employer, days_waiting: int | None = None
         subject=f'[{SITE_NAME}] Post your first job — caregivers are waiting',
         to_email=employer.email,
         html_body=_wrap(content),
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+# Operational & Matching Email Notifications (Gmail / Transactional)
+# ──────────────────────────────────────────────────────────────
+
+def send_admin_new_care_request_email(payload: dict) -> bool:
+    """Send an immediate operational alert to Admin Gmail when a new care request is submitted."""
+    admin_addr = getattr(settings, 'ADMIN_EMAIL', ADMIN_EMAIL)
+    job_id = payload.get('job_posting_id', '')
+    title = payload.get('title') or 'New care request'
+    name = payload.get('name') or 'A family'
+    email = payload.get('email', '')
+    phone = payload.get('phone', 'Not provided')
+    city = payload.get('city', 'Ontario')
+    care_type = payload.get('care_type', 'General Care')
+    rate = f"${payload['hourly_rate']}/hr" if payload.get('hourly_rate') else "Flexible"
+    care_desc = payload.get('care_request', '')
+    matching_url = f"{SITE_URL}/admin-panel/job-requests/{job_id}/matches/"
+
+    content = f"""
+    <h2>🆕 Action Required: New Care Request Received</h2>
+    <p>A new care request has just been submitted and is waiting for caregiver matching.</p>
+    <div class="info-box" style="border-left-color:#1a6b4a;background:#f0f9f4;">
+      <p style="margin:6px 0;"><strong>Job Posting:</strong> #{job_id} — {title}</p>
+      <p style="margin:6px 0;"><strong>Client / Family:</strong> {name}</p>
+      <p style="margin:6px 0;"><strong>Email:</strong> <a href="mailto:{email}">{email}</a></p>
+      <p style="margin:6px 0;"><strong>Phone:</strong> {phone}</p>
+      <p style="margin:6px 0;"><strong>City:</strong> {city}</p>
+      <p style="margin:6px 0;"><strong>Care Focus:</strong> {care_type}</p>
+      <p style="margin:6px 0;"><strong>Target Rate:</strong> {rate}</p>
+    </div>
+    <div style="background:#ffffff;border:1px solid #dde2d8;padding:12px 16px;border-radius:6px;margin:16px 0;">
+      <p style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin:0 0 6px;">Care Needs &amp; Instructions:</p>
+      <p style="font-size:14px;color:#333;margin:0;line-height:1.5;">{care_desc}</p>
+    </div>
+    <a class="btn" href="{matching_url}" style="background:#1a6b4a;color:#ffffff;display:inline-block;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;">Open Candidate Matching Desk</a>
+    <p style="margin-top:20px;font-size:12px;color:#888;">
+      This operational alert was dispatched automatically by the GetMeCare Ontario matching engine.
+    </p>
+    """
+    subject = f"🆕 [New Care Request] #{job_id} in {city} — {name}"
+    return send_transactional_email(
+        subject=subject,
+        to_email=admin_addr,
+        html_body=_wrap(content),
+    )
+
+
+def send_matched_candidates_to_employer_email(job, candidates: list, site_domain: str = None) -> bool:
+    """Send curated top-matched caregiver profiles directly to the employer's inbox."""
+    employer = job.employer
+    domain = site_domain or SITE_URL.replace('https://', '').replace('http://', '')
+    proto = 'https' if not domain.startswith('127.0.0.1') and not domain.startswith('localhost') else 'http'
+    candidates_cards = ""
+
+    for cand in candidates[:4]:
+        user = cand.user
+        cand_name = user.get_full_name() or user.username
+        profile_url = f"{proto}://{domain}/caregiver/{cand.pk}/"
+        care_types = ', '.join(cand.care_types_display) if hasattr(cand, 'care_types_display') and cand.care_types_display else (cand.care_type or 'Personal Support & Care')
+        skills = ', '.join(cand.skills_list[:3]) if hasattr(cand, 'skills_list') and cand.skills_list else (cand.skills or 'Personal Care, Companionship')
+        rate_str = f"${cand.hourly_rate} CAD/hr" if cand.hourly_rate else "Rate on request"
+        city_str = cand.city or "Ontario"
+
+        candidates_cards += f"""
+        <div style="background:#ffffff;border:1px solid #d8e4dc;border-radius:8px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align:top;">
+                <div style="font-size:16px;font-weight:700;color:#1b3a2d;margin-bottom:4px;">
+                  {cand_name} <span style="background:#e6f5ee;color:#1a6b4a;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:6px;">✓ VSC &amp; ID Verified</span>
+                </div>
+                <div style="font-size:13px;color:#555;margin-bottom:6px;">
+                  📍 {city_str} &nbsp;|&nbsp; 💰 <strong>{rate_str}</strong> &nbsp;|&nbsp; 🕒 {cand.hours_available or 'Flexible'} hrs/wk
+                </div>
+                <div style="font-size:13px;color:#444;margin-bottom:8px;">
+                  <strong>Care Focus:</strong> {care_types}<br/>
+                  <strong>Key Skills:</strong> {skills}
+                </div>
+                <a href="{profile_url}" style="display:inline-block;background:#1a6b4a;color:#ffffff;padding:8px 16px;border-radius:4px;font-size:13px;font-weight:700;text-decoration:none;margin-top:4px;">
+                  View Verified Profile &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+        """
+
+    content = f"""
+    <h2>We've Hand-Picked Verified Caregivers for Your Request</h2>
+    <p>Hi {employer.first_name or employer.username},</p>
+    <p>Our clinical coordination desk reviewed your care request for <strong>"{job.title}"</strong> in <strong>{job.city or 'Ontario'}</strong>. Below are the top verified, background-checked Personal Support Workers matching your requirements:</p>
+    
+    <div style="margin:20px 0;">
+      {candidates_cards}
+    </div>
+
+    <div class="info-box" style="border-left-color:#c96000;background:#fffbf2;">
+      <p style="margin:4px 0;"><strong>Next Steps:</strong></p>
+      <p style="margin:4px 0;font-size:13px;">1. Click the profiles above to review certifications, references, and availability.</p>
+      <p style="margin:4px 0;font-size:13px;">2. Once you find the right fit, finalize your booking directly through your <a href="{proto}://{domain}/employer/dashboard/">Employer Dashboard</a>.</p>
+    </div>
+
+    <p style="margin-top:20px; font-size:13px; color:#888;">
+      Need assistance or have specific clinical care guidelines? You can reply directly to this email or reach us at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+
+    subject = f"[{SITE_NAME}] Verified Caregiver Matches for Your Care Request — #{job.pk}"
+    return send_transactional_email(
+        subject=subject,
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )
+
+
+def send_single_candidate_profile_to_employer_email(job, profile, site_domain: str = None) -> bool:
+    """Send one recommended caregiver's verified profile overview to the employer via email."""
+    return send_matched_candidates_to_employer_email(job, [profile], site_domain=site_domain)
+
+
+def send_payment_link_to_employer_email(employer, job, caregiver, checkout_url: str) -> bool:
+    """Send the $39 CAD verification/match paylink to the employer via email."""
+    cand_name = caregiver.get_full_name() if caregiver else "your selected caregiver"
+    job_title = job.title if job else "Care Service"
+
+    content = f"""
+    <h2>Confirm Your Caregiver Booking — GetMeCare Ontario</h2>
+    <p>Hi {employer.first_name or employer.username},</p>
+    <p>Great news! Your booking request with <strong>{cand_name}</strong> for <em>"{job_title}"</em> is ready to be finalized.</p>
+    
+    <div class="info-box" style="border-left-color:#1a6b4a;background:#f0f9f4;">
+      <p style="margin:4px 0;"><strong>Booking Summary:</strong></p>
+      <p style="margin:4px 0;">• Caregiver: <strong>{cand_name}</strong> (VSC &amp; ID Cleared)</p>
+      <p style="margin:4px 0;">• Job / Request: <strong>#{job.pk if job else ''} — {job_title}</strong></p>
+      <p style="margin:4px 0;">• Match Verification Fee: <strong>$39.00 CAD</strong> (One-time)</p>
+    </div>
+
+    <p>To finalize your match and unlock shift parameter programming, please complete the secure payment below:</p>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a class="btn" href="{checkout_url}" style="background:#1a6b4a;color:#ffffff;padding:14px 32px;font-size:16px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;">
+        Complete Booking Payment ($39 CAD) &rarr;
+      </a>
+    </div>
+
+    <p style="font-size:13px;color:#555;line-height:1.6;">
+      <strong>What this covers:</strong> Direct caregiver booking lock, verified insurance &amp; criminal background check validation, dedicated care-coordinator support, and access to GPS-verified time-card tracking.
+    </p>
+
+    <p style="margin-top:24px;font-size:12px;color:#888;">
+      If you did not initiate this booking or have questions, contact our support desk immediately at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+
+    subject = f"[{SITE_NAME}] Complete Your Caregiver Match ($39 CAD) — Job #{job.pk if job else ''}"
+    return send_transactional_email(
+        subject=subject,
+        to_email=employer.email,
+        html_body=_wrap(content),
+    )
+
+
+def send_admin_general_alert_email(subject: str, message: str, event: str = '', payload: dict = None) -> bool:
+    """Send an operational notification directly to Admin's Gmail."""
+    admin_addr = getattr(settings, 'ADMIN_EMAIL', ADMIN_EMAIL)
+    formatted_msg = message.replace('\n', '<br/>')
+    content = f"""
+    <h2>System Notification — {event.replace('_', ' ').title() if event else 'Admin Alert'}</h2>
+    <div class="info-box" style="border-left-color:#1a6b4a;background:#f0f9f4;font-family:monospace;font-size:13px;line-height:1.6;">
+      {formatted_msg}
+    </div>
+    <p style="font-size:12px;color:#888;margin-top:16px;">
+      Dispatched by GetMeCare Ontario Admin Alerts Gateway.
+    </p>
+    """
+    return send_transactional_email(
+        subject=f"[GetMeCare Alert] {subject}",
+        to_email=admin_addr,
+        html_body=_wrap(content),
+        plain_body=message,
     )

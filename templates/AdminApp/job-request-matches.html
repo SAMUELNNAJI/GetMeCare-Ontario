@@ -1,0 +1,211 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Candidate Matching for Job #{{ job.pk }} — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .jrm-banner {
+    background:#fff; border:1px solid #dde2d8; border-radius:12px;
+    padding:18px 22px; margin-bottom:20px;
+  }
+  .jrm-card {
+    background:#fff; border:1px solid #dde2d8; border-radius:12px;
+    padding:18px; margin-bottom:14px; display:flex; gap:16px;
+    align-items:flex-start; flex-wrap:wrap; transition:border-color .15s, box-shadow .15s;
+  }
+  .jrm-card:hover {
+    border-color:#1b7d4f; box-shadow:0 4px 14px rgba(27,125,79,.08);
+  }
+  .jrm-av {
+    width:56px; height:56px; border-radius:12px;
+    background:linear-gradient(135deg,#1b3a2d,#2d5a42); color:#fff;
+    font-weight:700; font-size:1.2rem; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0; overflow:hidden;
+  }
+  .jrm-av img { width:100%; height:100%; object-fit:cover; }
+  .jrm-body { flex:1; min-width:260px; }
+  .jrm-name { font-size:1rem; font-weight:700; color:#1a1a1a; margin-bottom:2px; }
+  .jrm-meta { font-size:.8rem; color:#666; margin-bottom:6px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .jrm-skills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .jrm-skill-tag {
+    background:#f2f4f0; color:#444; border-radius:6px;
+    padding:2px 8px; font-size:.72rem; font-weight:600;
+  }
+  .jrm-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+  .jrm-btn-wa {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#25d366; color:#fff; padding:8px 14px;
+    border-radius:8px; font-size:.8rem; font-weight:700;
+    text-decoration:none; transition:background .15s;
+  }
+  .jrm-btn-wa:hover { background:#1ebd57; color:#fff; }
+  .jrm-btn-pay {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#f0a040; color:#1b3a2d; padding:8px 14px;
+    border-radius:8px; font-size:.8rem; font-weight:700;
+    text-decoration:none; transition:background .15s;
+  }
+  .jrm-btn-pay:hover { background:#e29332; }
+  .jrm-btn-prog {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#1b7d4f; color:#fff; padding:8px 14px;
+    border-radius:8px; font-size:.8rem; font-weight:700;
+    text-decoration:none; transition:background .15s;
+  }
+  .jrm-btn-prog:hover { background:#14603c; color:#fff; }
+  .jrm-preview-box {
+    background:#f9faf8; border:1px dashed #c8d8c8; border-radius:8px;
+    padding:10px 14px; font-family:monospace; font-size:.76rem;
+    color:#333; white-space:pre-wrap; margin-top:8px; display:none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px">
+  <a href="{% url 'AdminApp:job_requests' %}" style="color:#666;text-decoration:none;font-size:.85rem;font-weight:600">
+    <i class="fas fa-arrow-left"></i> Back to Job Requests
+  </a>
+</div>
+
+<div class="adm-page-title">
+  <i class="fas fa-user-check" style="color:#1b7d4f;margin-right:8px"></i>Candidate Matching — Job #{{ job.pk }}
+</div>
+
+<!-- Job Summary Banner -->
+<div class="jrm-banner">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px">
+    <div>
+      <div style="font-size:1.15rem;font-weight:800;color:#1b3a2d">{{ job.title }}</div>
+      <div style="font-size:.85rem;color:#555;margin-top:3px">
+        <strong>Family:</strong> {{ job.employer.get_full_name|default:job.employer.username }} ·
+        <strong>Location:</strong> {{ job.city|default:"Ontario" }} ·
+        <strong>Care Type:</strong> {{ job.get_care_type_display }} ·
+        <strong>Target Budget:</strong> {% if job.hourly_rate %}${{ job.hourly_rate }}/hr{% else %}Flexible{% endif %}
+      </div>
+      <div style="font-size:.82rem;color:#777;margin-top:6px;background:#f8faf6;padding:8px 12px;border-radius:8px;border-left:3px solid #1b7d4f">
+        "{{ job.description }}"
+      </div>
+    </div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div style="font-size:.82rem;color:#1b3a2d;font-weight:700">
+        <i class="fas fa-envelope"></i> Employer: {{ job.employer.email }}
+      </div>
+      {% if employer_phone_digits %}
+        <div style="font-size:.8rem;color:#666;font-weight:600">
+          <i class="fab fa-whatsapp"></i> Phone: +{{ employer_phone_digits }}
+        </div>
+      {% endif %}
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;justify-content:flex-end">
+        {% if employer_phone_digits %}
+        <a href="https://wa.me/{{ employer_phone_digits }}?text=Hello%20{{ job.employer.first_name|default:job.employer.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20regarding%20your%20care%20request%20#{{ job.pk }}%20({{ job.title|urlencode }})."
+           target="_blank" style="background:#25d366;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+          <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+        </a>
+        {% endif %}
+        <a href="{% url 'AdminApp:admin_email_candidates' job.pk %}"
+           onclick="return confirm('Send an email with the top matched caregivers to {{ job.employer.email }}?')"
+           style="background:#1a6b4a;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+          <i class="fas fa-envelope"></i> Email Matches to Employer
+        </a>
+        <a href="{% url 'AdminApp:admin_create_39_payment_link' job.pk %}" class="jrm-btn-pay">
+          <i class="fas fa-dollar-sign"></i> Generate $39 Paylink
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="font-size:.95rem;font-weight:700;color:#1b3a2d;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+  <i class="fas fa-users" style="color:#1b7d4f"></i> Matched Candidate Profiles from Database ({{ matched_candidates|length }})
+</h3>
+
+{% for item in matched_candidates %}
+{% with p=item.profile %}
+<div class="jrm-card">
+  <div class="jrm-av">
+    {% if p.profile_image %}
+      <img src="{{ p.profile_image.url }}" alt="{{ p.user.get_full_name }}">
+    {% else %}
+      {{ p.user.first_name|first|upper }}{{ p.user.last_name|first|upper }}
+    {% endif %}
+  </div>
+
+  <div class="jrm-body">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="jrm-name">{{ p.user.get_full_name }}</div>
+      <span style="background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:700">
+        <i class="fas fa-shield-alt"></i> VSC &amp; ID Verified
+      </span>
+      {% if p.hourly_rate %}
+        <span style="font-size:.88rem;font-weight:800;color:#1b7d4f;margin-left:auto">
+          ${{ p.hourly_rate }} CAD / hr
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="jrm-meta">
+      <span><i class="fas fa-map-marker-alt" style="color:#e05252"></i> {{ p.city|default:"Ontario" }}</span>
+      <span><i class="far fa-clock"></i> {{ p.hours_available|default:"Flexible" }} hrs/wk</span>
+      <span><i class="fas fa-heartbeat" style="color:#4caf7d"></i> {{ p.care_types_display|join:", "|default:p.care_type }}</span>
+      <a href="{% url 'caregiver_profile' p.pk %}" target="_blank" style="color:#1b7d4f;font-weight:600;text-decoration:none">
+        <i class="fas fa-external-link-alt" style="font-size:.65rem"></i> View Public Profile
+      </a>
+    </div>
+
+    <div class="jrm-skills">
+      {% for skill in p.skills_list %}
+        <span class="jrm-skill-tag">{{ skill }}</span>
+      {% endfor %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="jrm-actions">
+      <a href="{% url 'AdminApp:admin_email_candidates' job.pk %}?caregiver_id={{ p.user.pk }}"
+         onclick="return confirm('Email {{ p.user.get_full_name }}\'s verified profile to {{ job.employer.email }}?')"
+         style="background:#1a6b4a;color:#fff;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+        <i class="fas fa-envelope"></i> Email Profile to Employer
+      </a>
+
+      {% if item.whatsapp_url %}
+        <a href="{{ item.whatsapp_url }}" target="_blank" class="jrm-btn-wa">
+          <i class="fab fa-whatsapp"></i> Text via WhatsApp
+        </a>
+      {% endif %}
+
+      <a href="{% url 'AdminApp:admin_create_39_payment_link' job.pk %}?caregiver_id={{ p.user.pk }}" class="jrm-btn-pay">
+        <i class="fas fa-dollar-sign"></i> Drop $39 Paylink
+      </a>
+
+      <a href="{% url 'AdminApp:program_shift' %}?job_id={{ job.pk }}&employer_id={{ job.employer.pk }}&caregiver_id={{ p.user.pk }}" class="jrm-btn-prog">
+        <i class="fas fa-calendar-check"></i> Program Shift
+      </a>
+
+      <button type="button" onclick="togglePreview('prev-{{ p.pk }}')"
+              style="background:none;border:1px solid #dde2d8;border-radius:8px;padding:7px 12px;font-size:.76rem;cursor:pointer;color:#555">
+        <i class="fas fa-eye"></i> Preview Text
+      </button>
+    </div>
+
+    <!-- Collapsible WhatsApp text preview -->
+    <div id="prev-{{ p.pk }}" class="jrm-preview-box">{{ item.text_summary }}</div>
+  </div>
+</div>
+{% endwith %}
+{% empty %}
+<div class="adm-card">
+  <div class="adm-card-pad" style="text-align:center;padding:40px;color:#888">
+    <i class="fas fa-user-slash" style="font-size:2rem;margin-bottom:8px;display:block;opacity:.4"></i>
+    No caregivers found matching these criteria. Try adjusting the city or care type filters.
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  function togglePreview(id) {
+    const el = document.getElementById(id);
+    if(el) {
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+  }
+</script>
+{% endblock %}

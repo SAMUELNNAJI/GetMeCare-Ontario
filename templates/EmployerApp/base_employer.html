@@ -1,4 +1,4 @@
-﻿{% load static %}<!doctype html>
+{% load static %}<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,6 +14,10 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{% static 'Caregiver/css/whatsapp_widget.css' %}"
     />
     <style>
       *,
@@ -299,30 +303,247 @@
       .ep-back:hover {
         text-decoration: underline;
       }
+      .ep-bell-wrap { position: relative; display: inline-flex; align-items: center; }
       .ep-bell {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         background: #fff;
         border: 1px solid #dde2d8;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #555;
+        color: #4a5c52;
         cursor: pointer;
-        font-size: 0.88rem;
+        font-size: 0.92rem;
         position: relative;
+        transition: all 0.2s ease;
+      }
+      .ep-bell:hover { background: #eef5f0; color: #1b7d4f; border-color: #c4d9cb; }
+      .ep-bell-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4.5px;
+        border-radius: 999px;
+        background: #e05252;
+        color: #ffffff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 6px rgba(224,82,82,.45);
+        box-sizing: border-box;
+        pointer-events: none;
+        animation: epBadgePop 0.22s ease-out;
+      }
+      @keyframes epBadgePop {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
       }
       .ep-bell-dot {
-        width: 7px;
-        height: 7px;
+        width: 9px;
+        height: 9px;
         background: #e05252;
         border-radius: 50%;
         position: absolute;
-        top: 5px;
-        right: 5px;
-        border: 1.5px solid #f2f4f0;
+        top: 3px;
+        right: 3px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px rgba(224,82,82,.2);
+        animation: epBellPulse 2.5s infinite;
       }
+      @keyframes epBellPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+      }
+      .ep-notif-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 370px;
+        max-width: calc(100vw - 28px);
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 18px 45px rgba(15, 31, 23, 0.15), 0 3px 10px rgba(0, 0, 0, 0.04);
+        border: 1px solid #dce4dc;
+        z-index: 500;
+        animation: epNotifFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+      }
+      @keyframes epNotifFadeIn {
+        from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .ep-notif-dropdown.open { display: block; }
+      .ep-notif-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: #fbfdfb;
+        border-bottom: 1px solid #eef3ee;
+      }
+      .ep-notif-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #142e21;
+      }
+      .ep-notif-badge {
+        background: #1b7d4f;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+      .ep-notif-clear-btn {
+        background: #f0f7f2;
+        border: 1px solid #d4e7d8;
+        color: #1b7d4f;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 5px 11px;
+        border-radius: 8px;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .ep-notif-clear-btn:hover {
+        background: #1b7d4f;
+        color: #fff;
+        border-color: #1b7d4f;
+      }
+      .ep-notif-clear-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .ep-notif-body {
+        max-height: 380px;
+        overflow-y: auto;
+      }
+      .ep-notif-body::-webkit-scrollbar { width: 5px; }
+      .ep-notif-body::-webkit-scrollbar-thumb { background: #cfded2; border-radius: 4px; }
+      .ep-notif-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 13px 18px;
+        border-bottom: 1px solid #f2f5f2;
+        transition: background 0.15s;
+        position: relative;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+      }
+      .ep-notif-item:last-child { border-bottom: none; }
+      .ep-notif-item:hover { background: #f6faf6; }
+      .ep-notif-item.unread { background: #f3f9f4; }
+      .ep-notif-item.unread::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 18px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #1b7d4f;
+      }
+      .ep-notif-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .ep-ni-info    { background: #e8f5e9; color: #1b7d4f; }
+      .ep-ni-shift   { background: #e3f2fd; color: #1565c0; }
+      .ep-ni-document{ background: #fff3e0; color: #e65100; }
+      .ep-ni-message { background: #e0f2f1; color: #00796b; }
+      .ep-ni-payment { background: #f3e5f5; color: #7b1fa2; }
+      .ep-ni-account { background: #fff8e1; color: #f57f17; }
+      .ep-notif-content { flex: 1; min-width: 0; }
+      .ep-notif-item-title {
+        font-size: 0.855rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        line-height: 1.25;
+        margin-bottom: 3px;
+      }
+      .ep-notif-item-msg {
+        font-size: 0.775rem;
+        color: #555;
+        line-height: 1.45;
+      }
+      .ep-notif-item-time {
+        font-size: 0.69rem;
+        color: #88988e;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .ep-notif-dismiss-btn {
+        background: none;
+        border: none;
+        color: #9cb0a3;
+        font-size: 0.75rem;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+      .ep-notif-item:hover .ep-notif-dismiss-btn { opacity: 1; }
+      .ep-notif-dismiss-btn:hover { color: #c62828; background: #fbe9e7; }
+      .ep-notif-empty {
+        padding: 40px 24px;
+        text-align: center;
+        color: #88988e;
+      }
+      .ep-notif-empty i {
+        font-size: 2.2rem;
+        color: #bed0c5;
+        margin-bottom: 10px;
+        display: block;
+      }
+      .ep-notif-empty p {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1b3a2d;
+        margin-bottom: 3px;
+      }
+      .ep-notif-empty span {
+        font-size: 0.77rem;
+        color: #788d7f;
+      }
+      .ep-notif-footer {
+        padding: 10px 16px;
+        background: #fbfdfb;
+        border-top: 1px solid #edf2ee;
+        font-size: 0.72rem;
+        color: #88988e;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
       .ep-topbar-av {
         width: 34px;
         height: 34px;
@@ -873,9 +1094,66 @@
       <a href="{% url 'home' %}" class="ep-back" style="margin-left: 10px"
         ><i class="fas fa-arrow-left"></i> Back to site</a
       >
-      <div class="ep-topbar-space"></div>
-      <div class="ep-bell">
-        <i class="fas fa-bell"></i><span class="ep-bell-dot"></span>
+      <div class="ep-bell-wrap" id="epBellWrap">
+        <button type="button" class="ep-bell" id="epBellBtn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+          <i class="fas fa-bell"></i>
+          {% if unread_notifications_count %}
+          <span class="ep-bell-badge" id="epBellBadge">{% if unread_notifications_count > 9 %}9+{% else %}{{ unread_notifications_count }}{% endif %}</span>
+          {% else %}
+          <span class="ep-bell-badge" id="epBellBadge" style="display:none;">0</span>
+          {% endif %}
+        </button>
+
+        <!-- Notification Dropdown Popover -->
+        <div class="ep-notif-dropdown" id="epNotifDropdown" role="menu" aria-label="Notifications list">
+          <div class="ep-notif-header">
+            <div class="ep-notif-title-row">
+              <span>Notifications</span>
+              {% if unread_notifications_count %}
+              <span class="ep-notif-badge" id="epNotifBadge">{{ unread_notifications_count }}</span>
+              {% else %}
+              <span class="ep-notif-badge" id="epNotifBadge" style="display:none;">0</span>
+              {% endif %}
+            </div>
+            <button type="button" class="ep-notif-clear-btn" id="epClearNotifsBtn" title="Clear all notifications" {% if not user_notifications %}disabled{% endif %}>
+              <i class="fas fa-check-double"></i> Clear all
+            </button>
+          </div>
+
+          <div class="ep-notif-body" id="epNotifList">
+            {% for n in user_notifications %}
+            <div class="ep-notif-item {% if not n.is_read %}unread{% endif %}" data-notif-id="{{ n.id }}" data-notif-link="{{ n.link|default:'' }}">
+              <div class="ep-notif-icon ep-ni-{{ n.notification_type }}">
+                {% if n.notification_type == 'shift' %}<i class="fas fa-calendar-check"></i>
+                {% elif n.notification_type == 'document' %}<i class="fas fa-file-alt"></i>
+                {% elif n.notification_type == 'message' %}<i class="fas fa-comment-dots"></i>
+                {% elif n.notification_type == 'payment' %}<i class="fas fa-wallet"></i>
+                {% elif n.notification_type == 'account' %}<i class="fas fa-shield-alt"></i>
+                {% else %}<i class="fas fa-bell"></i>{% endif %}
+              </div>
+              <div class="ep-notif-content">
+                <div class="ep-notif-item-title">{{ n.title }}</div>
+                <div class="ep-notif-item-msg">{{ n.message }}</div>
+                <div class="ep-notif-item-time"><i class="far fa-clock" style="font-size:0.65rem;"></i> {{ n.created_at|timesince }} ago</div>
+              </div>
+              <button type="button" class="ep-notif-dismiss-btn" data-dismiss-id="{{ n.id }}" title="Dismiss this notification" aria-label="Dismiss">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            {% empty %}
+            <div class="ep-notif-empty" id="epNotifEmpty">
+              <i class="far fa-bell-slash"></i>
+              <p>No new notifications</p>
+              <span>You're all caught up!</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="ep-notif-footer">
+            <span>GetMeCare Live Updates</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#1b7d4f;border-radius:50%;display:inline-block;"></span> Active</span>
+          </div>
+        </div>
       </div>
       <div class="ep-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
     </div>
@@ -894,6 +1172,103 @@
         {% block content %}{% endblock %}
       </div>
     </main>
+    <!-- ===================== WHATSAPP FLOATING WIDGET (SITEWIDE) ===================== -->
+    <div class="whatsapp-widget" id="whatsappWidget">
+      <button class="whatsapp-widget-btn" id="whatsappBtn" aria-label="Contact Live Administrative Support Desk">
+        <span class="whatsapp-widget-label">Live Support</span>
+        <i class="whatsapp-icon fas fa-comment-dots"></i>
+      </button>
+      <div class="whatsapp-chat-badge" id="whatsappChatBadge" role="dialog" aria-label="Contact Live Administrative Support Desk">
+        <button class="badge-close" id="whatsappChatClose" aria-label="Close support card">&times;</button>
+        <div class="whatsapp-chat-badge-header">
+          <div class="wa-avatar"><i class="fab fa-whatsapp"></i></div>
+          <div>
+            <div class="badge-title">Contact Live Administrative Support Desk</div>
+            <div class="badge-subtitle"><span class="online-dot"></span> Online now · Typically replies in 2 min</div>
+          </div>
+        </div>
+        <div class="whatsapp-chat-badge-body">
+          Our concierge team is standing by to help with account questions, job posting support, or anything else you need.
+        </div>
+        <div class="whatsapp-chat-badge-footer">
+          <a href="#" id="whatsappChatOpen" class="btn-cta"><i class="fab fa-whatsapp"></i> Open Live Concierge Chat</a>
+          <a href="/contact" class="btn-email"><i class="fas fa-envelope"></i> Email Support</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="whatsapp-notification-toast" id="whatsappToast">
+      <i class="fas fa-check-circle toast-icon"></i>
+      <span class="toast-msg" id="toastMessage">Request submitted — admin notified</span>
+      <button class="toast-close" id="toastClose" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <script>
+      (function() {
+        const btn   = document.getElementById('whatsappBtn');
+        const badge = document.getElementById('whatsappChatBadge');
+        const open  = document.getElementById('whatsappChatOpen');
+        const closeBtn = document.getElementById('whatsappChatClose');
+        const toast = document.getElementById('whatsappToast');
+        const msg   = document.getElementById('toastMessage');
+        const closeToast = document.getElementById('toastClose');
+
+        if (!btn || !badge || !open) return;
+
+        btn.addEventListener('click', () => {
+          cancelAutoHide();
+          badge.classList.toggle('open');
+          btn.classList.toggle('expanded');
+        });
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cancelAutoHide();
+            badge.classList.remove('open');
+            btn.classList.remove('expanded');
+          });
+        }
+
+        // Show the support card on arrival for exactly 2 minutes.
+        // A manual click cancels the auto-hide timer. Arriving,
+        // refreshing, or navigating to another page restarts the cycle.
+        let autoHideTimer = null;
+
+        function cancelAutoHide() {
+          if (autoHideTimer) {
+            clearTimeout(autoHideTimer);
+            autoHideTimer = null;
+          }
+        }
+
+        badge.classList.add('open');
+        btn.classList.add('expanded');
+        autoHideTimer = window.setTimeout(() => {
+          badge.classList.remove('open');
+          btn.classList.remove('expanded');
+          autoHideTimer = null;
+        }, 120000);
+
+        open.addEventListener('click', (e) => {
+          e.preventDefault();
+          badge.classList.remove('open');
+          btn.classList.remove('expanded');
+          const adminWA = '{{ admin_whatsapp_number|default:"12494812647" }}';
+          window.open('https://wa.me/' + adminWA.replace(/[^0-9]/g, ''), '_blank');
+        });
+
+        let toastTimeout;
+        function showToast(text) {
+          msg.textContent = text;
+          toast.classList.add('show');
+          clearTimeout(toastTimeout);
+          toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        }
+        closeToast.addEventListener('click', () => { toast.classList.remove('show'); });
+      })();
+    </script>
+
     {% include "partials/flash_popup.html" %}
     <script>
       (function () {
@@ -943,6 +1318,171 @@
         document.addEventListener("keydown", function (e) {
           if (e.key === "Escape") closeSearch();
         });
+
+        // ── Employer Notification Center ──
+        (function(){
+          var bellBtn    = document.getElementById('epBellBtn');
+          var dropdown   = document.getElementById('epNotifDropdown');
+          var bellBadge  = document.getElementById('epBellBadge');
+          var badge      = document.getElementById('epNotifBadge');
+          var clearBtn   = document.getElementById('epClearNotifsBtn');
+          var notifList  = document.getElementById('epNotifList');
+          var wrap       = document.getElementById('epBellWrap');
+
+          if(!bellBtn || !dropdown) return;
+
+          function getCsrfToken() {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+              var cookies = document.cookie.split(';');
+              for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === ('csrftoken=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(10));
+                  break;
+                }
+              }
+            }
+            return cookieValue || '{{ csrf_token }}';
+          }
+
+          function toggleDropdown(e) {
+            if(e) e.stopPropagation();
+            var isOpen = dropdown.classList.contains('open');
+            if(isOpen) {
+              closeDropdown();
+            } else {
+              dropdown.classList.add('open');
+              bellBtn.setAttribute('aria-expanded', 'true');
+            }
+          }
+
+          function closeDropdown() {
+            dropdown.classList.remove('open');
+            bellBtn.setAttribute('aria-expanded', 'false');
+          }
+
+          bellBtn.addEventListener('click', toggleDropdown);
+
+          document.addEventListener('click', function(e) {
+            if(wrap && !wrap.contains(e.target)) {
+              closeDropdown();
+            }
+          });
+
+          document.addEventListener('keydown', function(e) {
+            if(e.key === 'Escape' && dropdown.classList.contains('open')) {
+              closeDropdown();
+            }
+          });
+
+          if(clearBtn) {
+            clearBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              clearBtn.disabled = true;
+              clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing…';
+
+              fetch("{% url 'Account:clear_notifications' %}", {
+                method: 'POST',
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'X-CSRFToken': getCsrfToken(),
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'delete_all=1'
+              })
+              .then(function(res){ return res.json(); })
+              .then(function(data){
+                if(data && data.ok) {
+                  if(bellBadge) {
+                    bellBadge.style.display = 'none';
+                    bellBadge.textContent = '0';
+                  }
+                  if(badge) {
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
+                  }
+                  if(notifList) {
+                    notifList.innerHTML = '<div class="ep-notif-empty"><i class="far fa-bell-slash"></i><p>No new notifications</p><span>You\'re all caught up!</span></div>';
+                  }
+                  clearBtn.innerHTML = '<i class="fas fa-check"></i> Cleared';
+                  clearBtn.disabled = true;
+                } else {
+                  clearBtn.disabled = false;
+                  clearBtn.innerHTML = '<i class="fas fa-check-double"></i> Clear all';
+                }
+              })
+              .catch(function(){
+                clearBtn.disabled = false;
+                clearBtn.innerHTML = '<i class="fas fa-check-double"></i> Clear all';
+              });
+            });
+          }
+
+          if(notifList) {
+            notifList.addEventListener('click', function(e) {
+              var dismissBtn = e.target.closest('.ep-notif-dismiss-btn');
+              if(dismissBtn) {
+                e.stopPropagation();
+                e.preventDefault();
+                var item = dismissBtn.closest('.ep-notif-item');
+                var notifId = dismissBtn.getAttribute('data-dismiss-id');
+                if(!notifId || !item) return;
+
+                item.style.opacity = '0.3';
+                fetch('/notifications/' + notifId + '/dismiss/', {
+                  method: 'POST',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCsrfToken()
+                  }
+                })
+                .then(function(res){ return res.json(); })
+                .then(function(data){
+                  item.remove();
+                  if(data && typeof data.unread_count !== 'undefined') {
+                    if(data.unread_count <= 0) {
+                      if(bellBadge) {
+                        bellBadge.style.display = 'none';
+                        bellBadge.textContent = '0';
+                      }
+                      if(badge) {
+                        badge.style.display = 'none';
+                        badge.textContent = '0';
+                      }
+                    } else {
+                      var countStr = data.unread_count > 9 ? '9+' : data.unread_count;
+                      if(bellBadge) {
+                        bellBadge.textContent = countStr;
+                        bellBadge.style.display = 'inline-flex';
+                      }
+                      if(badge) {
+                        badge.textContent = data.unread_count;
+                        badge.style.display = 'inline-flex';
+                      }
+                    }
+                  }
+                  if(!notifList.querySelector('.ep-notif-item')) {
+                    notifList.innerHTML = '<div class="ep-notif-empty"><i class="far fa-bell-slash"></i><p>No new notifications</p><span>You\'re all caught up!</span></div>';
+                    if(clearBtn) clearBtn.disabled = true;
+                  }
+                })
+                .catch(function(){
+                  item.style.opacity = '1';
+                });
+                return;
+              }
+
+              var itemLink = e.target.closest('.ep-notif-item');
+              if(itemLink) {
+                var href = itemLink.getAttribute('data-notif-link');
+                if(href) {
+                  window.location.href = href;
+                }
+              }
+            });
+          }
+        })();
       })();
     </script>
     {% block extra_scripts %}{% endblock %}

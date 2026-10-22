@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from django.urls import reverse
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class CustomUser(AbstractUser):
@@ -98,6 +99,10 @@ class CaregiverProfile(models.Model):
         max_digits=6, decimal_places=2,
         null=True, blank=True,
         help_text='Standard baseline rate in CAD/hr',
+    )
+    hours_available = models.FloatField(
+        null=True, blank=True,
+        help_text='Estimated hours per week the caregiver can commit',
     )
     city           = models.CharField(max_length=100, blank=True)
     skills         = models.TextField(blank=True, help_text='Comma-separated skill tags')
@@ -197,6 +202,23 @@ class CaregiverProfile(models.Model):
             ).values_list('doc_type', flat=True).distinct()
         )
         return len(user_doc_types) == len(REQUIRED_DOC_TYPES)
+
+    @property
+    def rating_count(self):
+        """Number of verified employer reviews tied to completed shifts."""
+        return self.user.received_caregiver_reviews.filter(
+            shift__status=Shift.STATUS_COMPLETED
+        ).count()
+
+    @property
+    def rating(self):
+        """Average of verified employer reviews from completed shifts only (1-5)."""
+        from django.db.models import Avg
+        return (
+            self.user.received_caregiver_reviews
+            .filter(shift__status=Shift.STATUS_COMPLETED)
+            .aggregate(avg=Avg('rating'))['avg']
+        )
 
 
 # ──────────────────────────────────────────────────────────────
@@ -601,6 +623,36 @@ class JobPosting(models.Model):
         return reverse('browse_jobs')
 
 
+class CaregiverReview(models.Model):
+    """A single, verified employer rating after a completed platform shift."""
+    shift = models.OneToOneField(Shift, on_delete=models.CASCADE, related_name='review')
+    employer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='submitted_caregiver_reviews')
+    caregiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='received_caregiver_reviews')
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Star rating from 1 to 5',
+    )
+    comment = models.TextField(blank=True, max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not 1 <= self.rating <= 5:
+            raise ValidationError({'rating': 'Choose a rating from 1 to 5.'})
+        if self.shift_id:
+            if self.shift.status != Shift.STATUS_COMPLETED:
+                raise ValidationError('Ratings can only be left after a completed shift.')
+            if self.employer_id != self.shift.employer_id or self.caregiver_id != self.shift.caregiver_id:
+                raise ValidationError('The review must match the employer and caregiver on its shift.')
+
+    def __str__(self):
+        return f'{self.rating}/5 for {self.caregiver.get_full_name()} (shift #{self.shift_id})'
+
+
 # ──────────────────────────────────────────────────────────────
 # EmployerPayment — records every payment made by an employer
 # (activation fee + shift booking payments)
@@ -779,4 +831,60 @@ class Dispute(models.Model):
     @property
     def is_resolved(self):
         return self.status in (self.STATUS_RESOLVED, self.STATUS_DISMISSED)
+
+
+# ──────────────────────────────────────────────────────────────
+# In-app user notifications (bell icon in caregiver/employer topbar)
+# ──────────────────────────────────────────────────────────────
+class Notification(models.Model):
+    TYPE_INFO    = 'info'
+    TYPE_SHIFT   = 'shift'
+    TYPE_DOC     = 'document'
+    TYPE_MESSAGE = 'message'
+    TYPE_PAYMENT = 'payment'
+    TYPE_ACCOUNT = 'account'
+
+    TYPE_CHOICES = [
+        (TYPE_INFO,    'General Info'),
+        (TYPE_SHIFT,   'Shift Update'),
+        (TYPE_DOC,     'Document Status'),
+        (TYPE_MESSAGE, 'Message / Chat'),
+        (TYPE_PAYMENT, 'Payment / Earnings'),
+        (TYPE_ACCOUNT, 'Account Alert'),
+    ]
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    title = models.CharField(max_length=160)
+    message = models.TextField()
+    notification_type = models.CharField(
+        max_length=30,
+        choices=TYPE_CHOICES,
+        default=TYPE_INFO,
+    )
+    link = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Notification({self.user.username}: {self.title})"
+
+    @classmethod
+    def send(cls, user, title, message, notification_type=TYPE_INFO, link=''):
+        return cls.objects.create(
+            user=user,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            link=link,
+        )
 

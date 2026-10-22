@@ -1,0 +1,218 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Program Shift & Time-Card Console — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ps-form-card {
+    background:#fff; border:1px solid #dde2d8; border-radius:14px;
+    padding:24px; margin-bottom:24px; box-shadow:0 2px 12px rgba(0,0,0,.03);
+  }
+  .ps-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:16px; margin-bottom:18px;
+  }
+  .ps-field { display:flex; flex-direction:column; gap:5px; }
+  .ps-field label { font-size:.78rem; font-weight:700; color:#333; text-transform:uppercase; letter-spacing:.04em; }
+  .ps-field input, .ps-field select {
+    padding:10px 12px; border:1px solid #dde2d8; border-radius:8px;
+    font-size:.88rem; font-family:inherit; color:#222; outline:none; transition:border-color .15s;
+  }
+  .ps-field input:focus, .ps-field select:focus { border-color:#1b7d4f; }
+  .ps-field .note { font-size:.72rem; color:#888; }
+  .ps-submit-btn {
+    display:inline-flex; align-items:center; gap:8px; background:#1b7d4f;
+    color:#fff; border:none; border-radius:9px; padding:12px 24px;
+    font-size:.9rem; font-weight:700; cursor:pointer; transition:background .15s;
+  }
+  .ps-submit-btn:hover { background:#14603c; }
+  .ps-rate-box {
+    background:#e6f5ee; border:1px solid #c4d9cb; border-radius:10px;
+    padding:12px 16px; margin-bottom:18px; display:flex; align-items:center;
+    justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-page-title">
+  <i class="fas fa-calendar-plus" style="color:#1b7d4f;margin-right:8px"></i>Backend Shift Programming Console
+</div>
+
+<div class="ps-form-card">
+  <div style="margin-bottom:18px">
+    <div style="font-size:1.1rem;font-weight:800;color:#1b3a2d">Program Shift Parameters &amp; Hourly Rate</div>
+    <div style="font-size:.83rem;color:#666">
+      Once the $39 verification fee has cleared on WhatsApp, program the confirmed parameters below. This creates the official time-card entry and enables caregiver clock-in/out tracking.
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'AdminApp:program_shift' %}">
+    {% csrf_token %}
+    {% if job_preset %}
+      <input type="hidden" name="job_id" value="{{ job_preset.pk }}">
+      <div style="background:#f8faf6;border-left:3px solid #f0a040;padding:10px 14px;border-radius:6px;font-size:.82rem;margin-bottom:16px">
+        <i class="fas fa-link" style="color:#f0a040"></i> Linked to Public Job Request: <strong>#{{ job_preset.pk }} — {{ job_preset.title }}</strong> (will be marked as filled upon saving).
+      </div>
+    {% endif %}
+
+    <div class="ps-grid">
+      <!-- Employer Field -->
+      <div class="ps-field">
+        <label for="employer_id">Employer (Family) *</label>
+        <select name="employer_id" id="employer_id" required>
+          <option value="">-- Select Employer --</option>
+          {% for emp in employers %}
+            <option value="{{ emp.pk }}" {% if pre_employer_id == emp.pk|stringformat:"s" %}selected{% endif %}>
+              {{ emp.get_full_name|default:emp.username }} {% if emp.phone %}({{ emp.phone }}){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        <span class="note">The registered family or hiring employer</span>
+      </div>
+
+      <!-- Caregiver Field -->
+      <div class="ps-field">
+        <label for="caregiver_id">Caregiver (PSW) *</label>
+        <select name="caregiver_id" id="caregiver_id" required>
+          <option value="">-- Select Caregiver --</option>
+          {% for c in caregivers %}
+            <option value="{{ c.user.pk }}" {% if pre_caregiver_id == c.user.pk|stringformat:"s" %}selected{% endif %}>
+              {{ c.user.get_full_name }} — {{ c.city|default:"Ontario" }} (Default: ${{ c.hourly_rate|default:"25.00" }}/hr)
+            </option>
+          {% endfor %}
+        </select>
+        <span class="note">Active &amp; verified PSW candidate</span>
+      </div>
+
+      <!-- City Field -->
+      <div class="ps-field">
+        <label for="city">City / Service Area *</label>
+        <input type="text" name="city" id="city" value="{{ job_preset.city|default:'Toronto' }}" required>
+        <span class="note">Masked city location for the shift</span>
+      </div>
+    </div>
+
+    <div class="ps-grid">
+      <!-- Start Date -->
+      <div class="ps-field">
+        <label for="start_date">Shift Date *</label>
+        <input type="date" name="start_date" id="start_date" value="{{ job_preset.start_date|date:'Y-m-d'|default:'' }}" required>
+        <span class="note">Scheduled date of care delivery</span>
+      </div>
+
+      <!-- Start Time -->
+      <div class="ps-field">
+        <label for="start_time">Start Time *</label>
+        <input type="time" name="start_time" id="start_time" value="09:00" required>
+        <span class="note">Scheduled start time</span>
+      </div>
+
+      <!-- Duration Hours -->
+      <div class="ps-field">
+        <label for="duration_hours">Booked Duration (Hours) *</label>
+        <input type="number" step="0.5" min="1" max="24" name="duration_hours" id="duration_hours" value="4.0" required>
+        <span class="note">Expected shift length (e.g. 4.0, 8.0 hrs)</span>
+      </div>
+
+      <!-- Agreed Hourly Rate -->
+      <div class="ps-field">
+        <label for="hourly_rate">Agreed Hourly Rate ($/hr CAD) *</label>
+        <input type="number" step="0.50" min="15" max="200" name="hourly_rate" id="hourly_rate" value="{{ job_preset.hourly_rate|default:'28.50' }}" required>
+        <span class="note">Rate negotiated and confirmed over WhatsApp</span>
+      </div>
+    </div>
+
+    <div class="ps-rate-box">
+      <div>
+        <span style="font-size:.85rem;font-weight:700;color:#1b3a2d"><i class="fas fa-calculator"></i> Shift Rate Summary:</span>
+        <span id="rateSummary" style="font-size:.85rem;color:#333;margin-left:8px">4.0 hrs @ $28.50/hr = <strong>$114.00 CAD Total</strong></span>
+      </div>
+      <div style="font-size:.78rem;color:#1b7d4f">
+        <i class="fas fa-check-circle"></i> Caregiver 85% share: <strong id="cgShare">$96.90 CAD</strong> · Platform: <span id="platShare">$17.10 CAD</span>
+      </div>
+    </div>
+
+    <button type="submit" class="ps-submit-btn">
+      <i class="fas fa-check-double"></i> Program Shift &amp; Activate Time-Card Tracking
+    </button>
+  </form>
+</div>
+
+<!-- Programmed Shifts Overview -->
+<div class="adm-card">
+  <div class="adm-card-pad">
+    <div style="font-size:.92rem;font-weight:700;color:#1a1a1a;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-clock" style="color:#1b7d4f"></i> Recently Programmed Shifts
+    </div>
+
+    <div class="scroll-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Shift ID</th>
+            <th>Employer</th>
+            <th>Caregiver</th>
+            <th>Date &amp; Time</th>
+            <th>Duration</th>
+            <th>Agreed Rate</th>
+            <th>Status</th>
+            <th>Time-Card</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_shifts %}
+          <tr>
+            <td><strong>#{{ s.pk }}</strong></td>
+            <td>{{ s.employer.get_full_name|default:s.employer.username }}</td>
+            <td>{{ s.caregiver.get_full_name }}</td>
+            <td>{{ s.start_date|date:"M d, Y" }} @ {{ s.start_time|time:"g:i A" }}</td>
+            <td>{{ s.duration_hours|default:"—" }} hrs</td>
+            <td><strong style="color:#1b7d4f">${{ s.hourly_rate }}/hr</strong></td>
+            <td>
+              <span style="background:#e6f5ee;color:#1b7d4f;border-radius:20px;padding:2px 8px;font-size:.7rem;font-weight:700">
+                {{ s.get_status_display }}
+              </span>
+            </td>
+            <td>
+              {% if s.log.clock_in_time %}
+                <span style="color:#1b7d4f;font-size:.75rem;font-weight:700"><i class="fas fa-check"></i> Clocked</span>
+              {% else %}
+                <span style="color:#888;font-size:.75rem">Awaiting Clock-in</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align:center;padding:28px;color:#888">
+              No shifts programmed yet. Use the form above to program your first shift.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const durInput = document.getElementById('duration_hours');
+  const rateInput = document.getElementById('hourly_rate');
+  const summaryEl = document.getElementById('rateSummary');
+  const cgShareEl = document.getElementById('cgShare');
+  const platShareEl = document.getElementById('platShare');
+
+  function updateMath() {
+    const dur = parseFloat(durInput.value) || 0;
+    const rate = parseFloat(rateInput.value) || 0;
+    const total = dur * rate;
+    const cgShare = total * 0.85;
+    const platShare = total * 0.15;
+    summaryEl.innerHTML = `${dur.toFixed(1)} hrs @ $${rate.toFixed(2)}/hr = <strong>$${total.toFixed(2)} CAD Total</strong>`;
+    cgShareEl.textContent = `$${cgShare.toFixed(2)} CAD`;
+    platShareEl.textContent = `$${platShare.toFixed(2)} CAD`;
+  }
+
+  durInput.addEventListener('input', updateMath);
+  rateInput.addEventListener('input', updateMath);
+</script>
+{% endblock %}

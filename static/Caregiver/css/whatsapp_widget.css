@@ -1,0 +1,310 @@
+/* =========================================================
+   WHATSAPP FLOATING WIDGET + NOTIFICATION TOAST
+   Standalone stylesheet so every base template can load it
+   (sitewide base.html plus the standalone caregiver and
+   employer dashboard bases) without pulling in the whole
+   styles.css bundle, which would clash with the dashboards’
+   own inline design system.
+   ========================================================= */
+
+
+/* ──────────────────────────────────────────────────────────────
+   WHATSAPP FLOATING WIDGET — Sitewide Administrative Support
+   ────────────────────────────────────────────────────────────── */
+.whatsapp-widget {
+  position: fixed;
+  bottom: 92px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.whatsapp-widget-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 56px;
+  padding: 0 22px 0 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #12805c, #25D366);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(18, 128, 92, 0.45);
+  font-family: "Inter", sans-serif;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.whatsapp-widget-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 16px 40px rgba(18, 128, 92, 0.55);
+}
+
+.whatsapp-widget-btn:active {
+  transform: scale(0.97);
+}
+
+.whatsapp-widget-btn .whatsapp-icon {
+  font-size: 22px;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+.whatsapp-widget-label {
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* ── Expanded support card (redesigned light glassmorphism) ── */
+.whatsapp-chat-badge {
+  position: fixed;
+  bottom: 160px;
+  right: 24px;
+  z-index: 99998;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  color: #12211a;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  padding: 0;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 24px 70px rgba(6, 51, 38, 0.28), 0 2px 8px rgba(6, 51, 38, 0.12);
+  font-family: "Inter", sans-serif;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: badgePopIn 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform-origin: bottom right;
+}
+
+.whatsapp-chat-badge.open { display: flex; }
+
+/* Close button on the support card */
+.badge-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.badge-close:hover {
+  background: rgba(255, 255, 255, 0.32);
+  transform: scale(1.08);
+}
+
+@keyframes badgePopIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.whatsapp-chat-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  background: linear-gradient(120deg, #0b3b2e 0%, #0e5c45 55%, #12805c 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.whatsapp-chat-badge-header::after {
+  content: '';
+  position: absolute;
+  top: -70px;
+  right: -45px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(37, 211, 102, 0.45) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.whatsapp-chat-badge-header .wa-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #25D366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.whatsapp-chat-badge-header .wa-avatar::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #25D366;
+  border: 2px solid #fff;
+}
+
+.whatsapp-chat-badge-header .badge-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.whatsapp-chat-badge-header .badge-subtitle {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.whatsapp-chat-badge-header .badge-subtitle .online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #25D366;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.25);
+  animation: waPulse 1.8s ease-out infinite;
+}
+
+@keyframes waPulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.whatsapp-chat-badge-body {
+  font-size: 0.8rem;
+  color: #3c4a44;
+  line-height: 1.6;
+  padding: 14px 18px 4px;
+}
+
+.whatsapp-chat-badge-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 18px 18px;
+}
+
+.whatsapp-chat-badge-footer a {
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 11px 12px;
+  border-radius: 13px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.whatsapp-chat-badge-footer a:hover { transform: translateY(-1px); }
+
+.whatsapp-chat-badge-footer .btn-cta {
+  background: linear-gradient(135deg, #1fb857, #25D366);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-chat-badge-footer .btn-cta:hover {
+  box-shadow: 0 10px 26px rgba(37, 211, 102, 0.5);
+}
+
+.whatsapp-chat-badge-footer .btn-email {
+  background: #eef4f1;
+  color: #0b3b2e;
+  border: 1px solid #d9e6e0;
+}
+
+.whatsapp-chat-badge-footer .btn-email:hover { background: #e1ece7; }
+
+/* Mobile: compact pill, keep button */
+@media (max-width: 640px) {
+  .whatsapp-widget-label { display: none; }
+  .whatsapp-widget-btn { height: 52px; padding: 0 18px; }
+  .whatsapp-widget { right: 14px; bottom: 88px; }
+  .whatsapp-chat-badge { right: 14px; bottom: 152px; width: auto; max-width: calc(100vw - 28px); }
+  .whatsapp-chat-badge-body { font-size: 0.75rem; }
+}
+
+/* ── Admin WhatsApp notification toast ── */
+.whatsapp-notification-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  z-index: 999999;
+  background: #0D1513;
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* The toast is opt-in: it is hidden until showToast() adds the .show class.
+   Without this the toast auto-animated on page load and was therefore
+   always visible, and re-triggering the animation was impossible. */
+.whatsapp-notification-toast.show {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  animation: toastIn 0.4s ease-out;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-80px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(-80px); }
+}
+
+.whatsapp-notification-toast .toast-icon { font-size: 20px; color: #25D366; }
+.whatsapp-notification-toast .toast-msg { font-size: 0.8rem; color: rgba(255,255,255,0.9); }
+.whatsapp-notification-toast .toast-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+}

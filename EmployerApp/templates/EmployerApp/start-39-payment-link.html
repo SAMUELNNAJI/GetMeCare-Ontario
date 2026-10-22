@@ -1,0 +1,89 @@
+{% extends 'EmployerApp/base-employer.html' %}
+
+{% block title %}Payment Link - $39 - Employer Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>$39 Payment Link</h1>
+    <p class="subtitle">Complete payment for candidate selection and shift booking.</p>
+</div>
+
+{% if messages %}
+<div class="alert alert-success">
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Select a Candidate</h2>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Choose a candidate from the list below to proceed with the $39 payment link. The payment will be routed to the selected shift.</p>
+
+        <form method="post" action="{% url 'EmployerApp:start_39_payment_link' %}">
+            {% csrf_token %}
+            <div class="list-group">
+                {% for candidate in candidates %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="avatar">
+                                {{ candidate.user.get_full_name|first }}
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <strong class="d-block">{{ candidate.user.get_full_name }}</strong>
+                            <small class="text-muted">{{ candidate.city }} • {{ candidate.care_type }}</small>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="badge badge-primary">Active</span>
+                        </div>
+                        <div class="col-md-2 text-right">
+                            <input type="hidden" name="candidate_pk" value="{{ candidate.pk }}">
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                <i class="fas fa-check"></i> Select
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item">
+                    <p class="text-muted mb-0">No active candidates available.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">
+        <h2 class="card-title">Payment Details</h2>
+    </div>
+    <div class="card-body">
+        <div class="d-footer">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted"><strong>Amount:</strong></p>
+                    <p class="h4 mb-0">$39.00 USD</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted"><strong>What this covers:</strong></p>
+                    <p class="mb-0 small text-muted">Caregiver activation + shift booking fee</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-3">
+    <p class="mb-0">
+        <i class="fas fa-info-circle"></i>
+        After selecting a candidate, you will be redirected to Stripe to complete the $39 payment.
+        A payment link will be generated and processed via Stripe's hosted checkout.
+    </p>
+</div>
+{% endblock %}

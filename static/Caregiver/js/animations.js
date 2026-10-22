@@ -1,10 +1,4 @@
-/**
- * GetMeCare Ontario — animations.js
- */
 document.addEventListener("DOMContentLoaded", function () {
-  /* ═══════════════════════════════════════════════════════
-     1. NAVBAR — shadow on scroll
-  ═══════════════════════════════════════════════════════ */
   const navbar = document.querySelector(".navbar");
   if (navbar) {
     window.addEventListener(
@@ -16,9 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════
-     2. HERO ENTRANCE (index.html) — stagger in on load
-  ═══════════════════════════════════════════════════════ */
   const heroContent = document.querySelector(".hero-content");
   if (heroContent) {
     const items = heroContent.querySelectorAll(
@@ -38,10 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* ═══════════════════════════════════════════════════════
-     3. PAGE-HERO ENTRANCE (terms, privacy, how-it-works, browse, services)
-        Elements use .reveal class — fire immediately on load
-  ═══════════════════════════════════════════════════════ */
   const pageHero = document.querySelector(
     ".page-hero, .browse-hero, .svc-hero, .contact-hero",
   );
@@ -77,9 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════
-     4. BROWSE HERO — search bar slide in from right
-  ═══════════════════════════════════════════════════════ */
   const browseSearch = document.querySelector(".browse-hero-search");
   if (browseSearch) {
     browseSearch.style.opacity = "0";
@@ -94,9 +78,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════
-     5. SCROLL REVEAL — all .reveal* elements below the fold
-  ═══════════════════════════════════════════════════════ */
   const revealEls = document.querySelectorAll(
     ".reveal, .reveal-left, .reveal-right, .reveal-scale",
   );
@@ -126,9 +107,6 @@ document.addEventListener("DOMContentLoaded", function () {
     scrollRevealEls.forEach((el) => revealObs.observe(el));
   }
 
-  /* ═══════════════════════════════════════════════════════
-     6. STAGGERED CHILDREN — care-cards, psw-cards, etc.
-  ═══════════════════════════════════════════════════════ */
   const staggerParents = document.querySelectorAll(".stagger-children");
   if (staggerParents.length) {
     const staggerObs = new IntersectionObserver(
@@ -153,9 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
     staggerParents.forEach((p) => staggerObs.observe(p));
   }
 
-  /* ═══════════════════════════════════════════════════════
-     6b. ANIMATE-ON-SCROLL cards — fade up individually
-  ═══════════════════════════════════════════════════════ */
   const scrollCards = document.querySelectorAll(".animate-on-scroll");
   if (scrollCards.length) {
     // Prime styles before observer fires
@@ -188,9 +163,6 @@ document.addEventListener("DOMContentLoaded", function () {
     scrollCards.forEach((card) => cardObs.observe(card));
   }
 
-  /* ═══════════════════════════════════════════════════════
-     7. STAT COUNTER
-  ═══════════════════════════════════════════════════════ */
   const statNums = document.querySelectorAll(".stat-number[data-target]");
   let counted = false;
   const statsBar = document.getElementById("stats-bar");
@@ -229,9 +201,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ).observe(statsBar);
   }
 
-  /* ═══════════════════════════════════════════════════════
-     8. HERO TYPEWRITER (index only)
-  ═══════════════════════════════════════════════════════ */
   const highlight = document.querySelector(".hero-highlight");
   if (highlight) {
     const words = ["Ontario", "Families", "Seniors", "Ontario"];
@@ -260,9 +229,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(type, 1400);
   }
 
-  /* ═══════════════════════════════════════════════════════
-     9. HERO PARTICLES (index.html main hero)
-  ═══════════════════════════════════════════════════════ */
   const mainHero = document.querySelector(".hero");
   if (mainHero) {
     for (let i = 0; i < 12; i++) {
@@ -274,9 +240,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════
-     10. CARD TILT — subtle 3D on hover
-  ═══════════════════════════════════════════════════════ */
   document
     .querySelectorAll(
       ".psw-card, .svc-card, .care-card, .testimonial-card, .bc-card, .contact-info-card, .contact-response-card, .contact-faq-card",
@@ -297,9 +260,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-  /* ═══════════════════════════════════════════════════════
-     11. BUTTON RIPPLE
-  ═══════════════════════════════════════════════════════ */
   document
     .querySelectorAll(
       ".btn-teal, .btn-find-caregiver, .btn-request, .btn-cta-orange, .bhs-btn, .btn-load-more, .btn-contact",
@@ -318,9 +278,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-  /* ═══════════════════════════════════════════════════════
-     12. TOC ACTIVE LINK on scroll (legal pages)
-  ═══════════════════════════════════════════════════════ */
   const contentSections = document.querySelectorAll(".content-section[id]");
   const tocLinks = document.querySelectorAll(".toc-list a");
   if (contentSections.length && tocLinks.length) {
@@ -342,9 +299,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════
-      14. HIIT STEPS — fade-in as user scrolls (how-it-works)
-   ═══════════════════════════════════════════════════════ */
   const hiwSteps = document.querySelectorAll(".hiw-step");
   if (hiwSteps.length) {
     const stepObs = new IntersectionObserver(
@@ -361,9 +315,6 @@ document.addEventListener("DOMContentLoaded", function () {
     hiwSteps.forEach((s) => stepObs.observe(s));
   }
 
-  /* ═══════════════════════════════════════════════════════
-      14b. AUTH PAGE — signup/login animations
-   ═══════════════════════════════════════════════════════ */
   const authPage = document.querySelector(".auth-page");
   if (authPage) {
     // Panels are already animated via CSS keyframes;

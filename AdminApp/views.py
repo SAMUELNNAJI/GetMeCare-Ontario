@@ -6,7 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
-from Account.models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerPayment, EmployerProfile, Dispute
+from Account.models import (
+    CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog,
+    EmployerPayment, EmployerProfile, Dispute, JobPosting, Notification
+)
 from Account.forms import REQUIRED_DOC_TYPES
 from django.db.models import Q
 from .models import Faq, Service
@@ -33,10 +36,11 @@ def admin_required(view_func):
 
 def _admin_sidebar():
     """Counts shown in the admin sidebar nav badges."""
-    from Account.models import EmployerPayment, Dispute
+    from Account.models import EmployerPayment, Dispute, JobPosting
     return {
         'pending_docs':            CaregiverDocument.objects.filter(status=CaregiverDocument.STATUS_PENDING).count(),
         'pending_profiles':        CaregiverProfile.objects.filter(status=CaregiverProfile.STATUS_PENDING).count(),
+        'open_jobs_count':         JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).count(),
         'employer_payments_count': EmployerPayment.objects.filter(admin_seen=False).count(),
         'payout_queue_count':      ShiftLog.objects.filter(payment_status=ShiftLog.PAY_PENDING).count(),
         'counts': {
@@ -1204,3 +1208,420 @@ def toggle_activation_fee(request):
            else 'New employers will get instant free access. Existing fee-exempt employers keep their access.')
     )
     return redirect('AdminApp:dashboard')
+
+
+# ──────────────────────────────────────────────────────────────
+# Operational Workflow: Job Requests & Candidate Matching Console
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def job_requests(request):
+    """Admin view: List all public job requests / listings with candidate matching status."""
+    import urllib.parse
+    from GETMECARE.whatsapp import whatsapp_digits
+
+    status_filter = request.GET.get('status', '').strip()
+    q = request.GET.get('q', '').strip()
+
+    qs = JobPosting.objects.select_related('employer').order_by('-created_at')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(city__icontains=q) |
+            Q(employer__first_name__icontains=q) |
+            Q(employer__last_name__icontains=q) |
+            Q(employer__email__icontains=q)
+        )
+
+    jobs_data = []
+    for job in qs:
+        phone_digits = whatsapp_digits(job.employer.phone) if job.employer.phone else ''
+        jobs_data.append({
+            'job': job,
+            'employer_phone_digits': phone_digits,
+            'has_whatsapp': bool(phone_digits),
+        })
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'jobs_data': jobs_data,
+        'status_filter': status_filter,
+        'q': q,
+        'total_requests': JobPosting.objects.count(),
+        'result_count': qs.count(),
+        'open_count': JobPosting.objects.filter(status=JobPosting.STATUS_OPEN).count(),
+        'filled_count': JobPosting.objects.filter(status=JobPosting.STATUS_FILLED).count(),
+        'closed_count': JobPosting.objects.filter(status=JobPosting.STATUS_CLOSED).count(),
+    })
+    return render(request, 'AdminApp/job-requests.html', ctx)
+
+
+@admin_required
+def job_request_matches(request, job_id):
+    """Admin candidate matching view: pulls top scored candidates from database
+
+    and generates one-click WhatsApp message previews to text directly to the employer.
+    """
+    import urllib.parse
+    from django.urls import reverse
+    from EmployerApp.services import suggest_candidates, format_candidate_screenshot
+    from GETMECARE.whatsapp import whatsapp_digits
+
+    job = get_object_or_404(JobPosting.objects.select_related('employer'), pk=job_id)
+
+    candidates = suggest_candidates(
+        care_type=job.care_type,
+        city=job.city,
+        hours_per_week=str(job.hours_per_week or ''),
+        hourly_rate=str(job.hourly_rate or ''),
+        limit=10,
+    )
+
+    employer_phone_digits = whatsapp_digits(job.employer.phone) if job.employer.phone else ''
+    try:
+        site_domain = request.get_host()
+    except Exception:
+        site_domain = 'getmecare.ca'
+
+    matched_candidates = []
+    for cand in candidates:
+        text_summary = format_candidate_screenshot(cand, site_domain=site_domain)
+        encoded_text = urllib.parse.quote(text_summary)
+        wa_url = f"https://wa.me/{employer_phone_digits}?text={encoded_text}" if employer_phone_digits else ""
+        matched_candidates.append({
+            'profile': cand,
+            'text_summary': text_summary,
+            'whatsapp_url': wa_url,
+        })
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'job': job,
+        'matched_candidates': matched_candidates,
+        'employer_phone_digits': employer_phone_digits,
+        'has_whatsapp': bool(employer_phone_digits),
+    })
+    return render(request, 'AdminApp/job-request-matches.html', ctx)
+
+
+@admin_required
+def admin_create_39_payment_link(request, job_id):
+    """Admin paywall trigger: Generates a dedicated $39 Stripe Checkout link
+
+    for the selected employer and pre-fills WhatsApp message targeting the employer.
+    """
+    import urllib.parse
+    from django.urls import reverse
+    from EmployerApp import stripe_payments
+    from GETMECARE.whatsapp import whatsapp_digits
+
+    job = get_object_or_404(JobPosting.objects.select_related('employer'), pk=job_id)
+    employer = job.employer
+    caregiver_id = request.GET.get('caregiver_id', '')
+
+    caregiver = None
+    if caregiver_id:
+        try:
+            caregiver = CustomUser.objects.get(pk=caregiver_id, role=CustomUser.CAREGIVER)
+        except CustomUser.DoesNotExist:
+            pass
+
+    reference = stripe_payments.generate_reference('ACT39')
+    try:
+        session = stripe_payments.create_checkout_session(
+            amount=EmployerProfile.ACTIVATION_FEE,
+            customer_name=employer.get_full_name() or employer.username,
+            customer_email=employer.email,
+            reference=reference,
+            success_url=(
+                request.build_absolute_uri(
+                    reverse('EmployerApp:stripe_activation_callback')
+                )
+                + '?session_id={CHECKOUT_SESSION_ID}'
+            ),
+            cancel_url=request.build_absolute_uri(
+                reverse('home')
+            ),
+            metadata={
+                'payment_type': EmployerPayment.TYPE_ACTIVATION,
+                'user_id': str(employer.pk),
+                'job_id': str(job.pk),
+                'caregiver_id': str(caregiver.pk if caregiver else ''),
+            },
+            description=f'GetMeCare — Caregiver Match Verification Fee ($39 CAD) for Job #{job.pk}',
+        )
+        checkout_url = session.url
+    except Exception:
+        logger.exception('Failed to generate admin $39 payment link for job %s', job.pk)
+        messages.error(request, 'Could not generate Stripe payment link. Please check Stripe configuration.')
+        return redirect('AdminApp:job_request_matches', job_id=job.pk)
+
+    caregiver_name = caregiver.get_full_name() if caregiver else "your selected caregiver"
+    wa_message = (
+        f"Hello {employer.first_name or employer.username}!\n"
+        f"Great news on your care request for '{job.title}'.\n\n"
+        f"To confirm and finalize your booking with {caregiver_name}, please complete the one-time $39 CAD verification fee via our secure Stripe payment link:\n"
+        f"{checkout_url}\n\n"
+        f"Once payment clears, our admin team will immediately program your shift parameters into the portal for time-card tracking."
+    )
+
+    employer_phone_digits = whatsapp_digits(employer.phone) if employer.phone else ''
+    encoded_message = urllib.parse.quote(wa_message)
+    wa_url = f"https://wa.me/{employer_phone_digits}?text={encoded_message}" if employer_phone_digits else ""
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
+        return JsonResponse({
+            'ok': True,
+            'checkout_url': checkout_url,
+            'wa_message': wa_message,
+            'whatsapp_url': wa_url,
+        })
+
+    if request.GET.get('action') == 'open_whatsapp' and wa_url:
+        return redirect(wa_url)
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'job': job,
+        'caregiver': caregiver,
+        'checkout_url': checkout_url,
+        'wa_message': wa_message,
+        'whatsapp_url': wa_url,
+        'employer_phone_digits': employer_phone_digits,
+    })
+    return render(request, 'AdminApp/payment-link-modal.html', ctx)
+
+
+@admin_required
+def admin_email_candidates(request, job_id):
+    """Admin action: Send matched candidate profile(s) directly to the employer's email."""
+    from EmployerApp.services import suggest_candidates
+    from GETMECARE.email_utils import send_matched_candidates_to_employer_email, send_single_candidate_profile_to_employer_email
+
+    job = get_object_or_404(JobPosting.objects.select_related('employer'), pk=job_id)
+    employer = job.employer
+    caregiver_id = request.GET.get('caregiver_id') or request.POST.get('caregiver_id')
+
+    try:
+        site_domain = request.get_host()
+    except Exception:
+        site_domain = 'getmecare-ontario.com'
+
+    if caregiver_id:
+        profile = get_object_or_404(CaregiverProfile.objects.select_related('user'), user_id=caregiver_id)
+        ok = send_single_candidate_profile_to_employer_email(job=job, profile=profile, site_domain=site_domain)
+        msg_target = f"Candidate {profile.user.get_full_name()}"
+    else:
+        candidates = suggest_candidates(
+            care_type=job.care_type,
+            city=job.city,
+            hours_per_week=str(job.hours_per_week or ''),
+            hourly_rate=str(job.hourly_rate or ''),
+            limit=4,
+        )
+        if not candidates:
+            messages.warning(request, "No verified candidates found matching this criteria.")
+            return redirect('AdminApp:job_request_matches', job_id=job.pk)
+        ok = send_matched_candidates_to_employer_email(job=job, candidates=candidates, site_domain=site_domain)
+        msg_target = f"{len(candidates)} matched candidate profiles"
+
+    if ok:
+        messages.success(request, f"✓ {msg_target} successfully emailed to {employer.email}.")
+    else:
+        messages.error(request, f"Failed to send email to {employer.email}. Please verify email settings.")
+
+    return redirect('AdminApp:job_request_matches', job_id=job.pk)
+
+
+@admin_required
+def admin_email_paylink(request, job_id):
+    """Admin action: Send the $39 Stripe payment link directly to the employer via email."""
+    from EmployerApp import stripe_payments
+    from GETMECARE.email_utils import send_payment_link_to_employer_email
+
+    job = get_object_or_404(JobPosting.objects.select_related('employer'), pk=job_id)
+    employer = job.employer
+    caregiver_id = request.GET.get('caregiver_id') or request.POST.get('caregiver_id')
+    checkout_url = request.GET.get('checkout_url') or request.POST.get('checkout_url')
+
+    caregiver = None
+    if caregiver_id:
+        try:
+            caregiver = CustomUser.objects.get(pk=caregiver_id, role=CustomUser.CAREGIVER)
+        except CustomUser.DoesNotExist:
+            pass
+
+    if not checkout_url:
+        reference = stripe_payments.generate_reference('ACT39')
+        try:
+            session = stripe_payments.create_checkout_session(
+                amount=EmployerProfile.ACTIVATION_FEE,
+                customer_name=employer.get_full_name() or employer.username,
+                customer_email=employer.email,
+                reference=reference,
+                success_url=(
+                    request.build_absolute_uri(
+                        reverse('EmployerApp:stripe_activation_callback')
+                    )
+                    + '?session_id={CHECKOUT_SESSION_ID}'
+                ),
+                cancel_url=request.build_absolute_uri(reverse('home')),
+                metadata={
+                    'payment_type': EmployerPayment.TYPE_ACTIVATION,
+                    'user_id': str(employer.pk),
+                    'job_id': str(job.pk),
+                    'caregiver_id': str(caregiver.pk if caregiver else ''),
+                },
+                description=f'GetMeCare — Caregiver Match Verification Fee ($39 CAD) for Job #{job.pk}',
+            )
+            checkout_url = session.url
+        except Exception:
+            logger.exception('Failed to generate admin $39 payment link for job %s', job.pk)
+            messages.error(request, 'Could not generate Stripe payment link.')
+            return redirect('AdminApp:job_request_matches', job_id=job.pk)
+
+    ok = send_payment_link_to_employer_email(
+        employer=employer,
+        job=job,
+        caregiver=caregiver,
+        checkout_url=checkout_url,
+    )
+
+    if ok:
+        messages.success(request, f"✓ $39 CAD verification paylink successfully emailed to {employer.email}.")
+    else:
+        messages.error(request, f"Failed to email payment link to {employer.email}. Please verify email settings.")
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'ok': ok})
+
+    return redirect('AdminApp:admin_create_39_payment_link', job_id=job.pk)
+
+
+# ──────────────────────────────────────────────────────────────
+# Operational Workflow: Backend Shift Programming Console
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def program_shift(request):
+    """Admin console to manually log agreed-upon hourly rate and shift parameters
+
+    into the website console for time-card tracking.
+    """
+    from decimal import Decimal
+    from django.urls import reverse
+
+    if request.method == 'POST':
+        employer_id = request.POST.get('employer_id')
+        caregiver_id = request.POST.get('caregiver_id')
+        city = request.POST.get('city', '').strip()
+        start_date = request.POST.get('start_date', '').strip()
+        start_time = request.POST.get('start_time', '').strip()
+        duration_hours = request.POST.get('duration_hours', '').strip()
+        hourly_rate = request.POST.get('hourly_rate', '').strip()
+        status = request.POST.get('status', Shift.STATUS_SCHEDULED).strip()
+
+        if not (employer_id and caregiver_id and start_date and start_time and hourly_rate):
+            messages.error(request, 'Please complete all required fields (Employer, Caregiver, Date, Time, Hourly Rate).')
+            return redirect('AdminApp:program_shift')
+
+        try:
+            employer = CustomUser.objects.get(pk=employer_id, role=CustomUser.EMPLOYER)
+            caregiver = CustomUser.objects.get(pk=caregiver_id, role=CustomUser.CAREGIVER)
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'Selected employer or caregiver was not found.')
+            return redirect('AdminApp:program_shift')
+
+        try:
+            duration_val = Decimal(duration_hours) if duration_hours else Decimal('4.0')
+            rate_val = Decimal(hourly_rate)
+        except Exception:
+            messages.error(request, 'Invalid format for duration or hourly rate.')
+            return redirect('AdminApp:program_shift')
+
+        shift = Shift.objects.create(
+            employer=employer,
+            caregiver=caregiver,
+            city=city or 'Ontario',
+            start_date=start_date,
+            start_time=start_time,
+            duration_hours=duration_val,
+            hourly_rate=rate_val,
+            status=status,
+        )
+
+        # Initialize ShiftLog for time-card tracking
+        ShiftLog.objects.get_or_create(
+            shift=shift,
+            defaults={'payment_status': ShiftLog.PAY_PENDING}
+        )
+
+        # In-app notifications
+        try:
+            Notification.objects.create(
+                user=caregiver,
+                title='New Shift Programmed',
+                message=f'Admin has scheduled a shift with {employer.get_full_name()} on {start_date} at ${rate_val}/hr.',
+                notification_type=Notification.TYPE_SHIFT,
+                link=reverse('CareGiverAcc:dashboard'),
+            )
+            Notification.objects.create(
+                user=employer,
+                title='Shift Programmed & Live',
+                message=f'Shift #{shift.pk} with {caregiver.get_full_name()} has been programmed at ${rate_val}/hr on {start_date}.',
+                notification_type=Notification.TYPE_SHIFT,
+                link=reverse('EmployerApp:dashboard'),
+            )
+        except Exception:
+            logger.exception('Notification creation failed for programmed shift %s', shift.pk)
+
+        # Close any matching job posting if specified
+        job_id = request.POST.get('job_id', '').strip()
+        if job_id:
+            try:
+                job_obj = JobPosting.objects.get(pk=job_id, employer=employer)
+                job_obj.status = JobPosting.STATUS_FILLED
+                job_obj.save(update_fields=['status', 'updated_at'])
+            except JobPosting.DoesNotExist:
+                pass
+
+        messages.success(
+            request,
+            f'Shift #{shift.pk} successfully programmed! Rate: ${rate_val} CAD/hr with {caregiver.get_full_name()} for {employer.get_full_name()}. Time-card tracking is now live.'
+        )
+        return redirect('AdminApp:manage_shifts')
+
+    # GET request
+    pre_employer_id = request.GET.get('employer_id', '')
+    pre_caregiver_id = request.GET.get('caregiver_id', '')
+    pre_job_id = request.GET.get('job_id', '')
+
+    job_preset = None
+    if pre_job_id:
+        try:
+            job_preset = JobPosting.objects.select_related('employer').get(pk=pre_job_id)
+            if not pre_employer_id:
+                pre_employer_id = str(job_preset.employer_id)
+        except JobPosting.DoesNotExist:
+            pass
+
+    employers = CustomUser.objects.filter(role=CustomUser.EMPLOYER).order_by('first_name', 'last_name')
+    caregivers = CaregiverProfile.objects.filter(
+        status=CaregiverProfile.STATUS_ACTIVE,
+        account_status=CaregiverProfile.ACCOUNT_ACTIVE,
+    ).select_related('user').order_by('user__first_name')
+
+    recent_shifts = Shift.objects.select_related('employer', 'caregiver').order_by('-created_at')[:10]
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'employers': employers,
+        'caregivers': caregivers,
+        'pre_employer_id': pre_employer_id,
+        'pre_caregiver_id': pre_caregiver_id,
+        'job_preset': job_preset,
+        'recent_shifts': recent_shifts,
+    })
+    return render(request, 'AdminApp/program-shift.html', ctx)

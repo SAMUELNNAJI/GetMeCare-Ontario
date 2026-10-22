@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -275,6 +275,10 @@
     </a>
 
     <div class="adm-nav-section">Management</div>
+    <a href="{% url 'AdminApp:job_requests' %}" {% if request.resolver_match.url_name in 'job_requests,job_request_matches,admin_create_39_payment_link' %}class="active"{% endif %}>
+      <i class="fas fa-clipboard-list" style="color:#f0a040"></i> Job Requests
+      {% if open_jobs_count %}<span class="adm-nav-badge" style="background:#f0a040;color:#1b3a2d">{{ open_jobs_count }}</span>{% endif %}
+    </a>
     <a href="{% url 'AdminApp:manage_caregivers' %}" {% if request.resolver_match.url_name == 'manage_caregivers' %}class="active"{% endif %}>
       <i class="fas fa-user-nurse"></i> Caregivers
       {% if pending_profiles %}<span class="adm-nav-badge">{{ pending_profiles }}</span>{% endif %}
@@ -288,6 +292,9 @@
     </a>
     <a href="{% url 'AdminApp:manage_shifts' %}" {% if request.resolver_match.url_name == 'manage_shifts' %}class="active"{% endif %}>
       <i class="fas fa-calendar-alt"></i> Shifts
+    </a>
+    <a href="{% url 'AdminApp:program_shift' %}" {% if request.resolver_match.url_name == 'program_shift' %}class="active"{% endif %}>
+      <i class="fas fa-plus-circle" style="color:#4caf7d"></i> Program Shift
     </a>
     <a href="{% url 'AdminApp:payout_queue' %}" {% if request.resolver_match.url_name == 'payout_queue' %}class="active"{% endif %}>
       <i class="fas fa-money-bill-wave"></i> Payout Queue

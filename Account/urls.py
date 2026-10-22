@@ -14,4 +14,8 @@ urlpatterns = [
     path('edit-profile/',        views.edit_profile,        name='edit_profile'),
     path('documents/',           views.documents,           name='documents'),
     path('change-password/',     views.password_change,     name='password_change'),
+    path('notifications/',       views.get_notifications,    name='get_notifications'),
+    path('notifications/clear/', views.clear_notifications,  name='clear_notifications'),
+    path('notifications/<int:notif_id>/dismiss/', views.dismiss_notification, name='dismiss_notification'),
 ]
+

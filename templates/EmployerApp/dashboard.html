@@ -149,6 +149,69 @@
 <div class="dash-stat"><div class="dash-stat-icon si-green"><i class="fas fa-check-circle"></i></div><div class="dash-stat-val">{{ total_completed }}</div><div class="dash-stat-lbl">Completed</div><div class="dash-stat-sub muted">all time</div></div>
 <div class="dash-stat"><div class="dash-stat-icon si-purple"><i class="fas fa-briefcase"></i></div><div class="dash-stat-val">{{ open_jobs_count }}</div><div class="dash-stat-lbl">Open Jobs</div><div class="dash-stat-sub muted">live listings</div></div>
 </div>
+
+<!-- Dispute a Shift -->
+<div class="section-card" id="disputeShiftCard">
+  <div class="section-head">
+    <div style="display:flex;align-items:center;gap:8px">
+      <i class="fas fa-exclamation-triangle" style="color:#c62828"></i>
+      <h3 style="margin:0">Dispute a Shift</h3>
+    </div>
+    <a href="{% url 'EmployerApp:my_disputes' %}" class="view-all">
+      View all disputes <i class="fas fa-arrow-right" style="font-size:.6rem"></i>
+    </a>
+  </div>
+
+  {% if all_employer_shifts %}
+  <form method="post" action="{% url 'EmployerApp:submit_dispute' %}">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;margin-bottom:10px">
+      <div>
+        <label style="display:block;font-size:.74rem;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:4px">Select Shift to Dispute</label>
+        <select name="shift_pk" id="dispute_shift_pk" required style="width:100%;font:inherit;padding:9px 11px;border:1px solid #dde2d8;border-radius:8px">
+          {% for s in all_employer_shifts %}
+            <option value="{{ s.pk }}" {% if latest_shift and latest_shift.pk == s.pk %}selected{% endif %}>
+              Shift #{{ s.pk }} · {{ s.caregiver.get_full_name }} · {{ s.start_date|date:"M d, Y" }} ({{ s.get_status_display }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:.74rem;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:4px">Dispute Reason / Category</label>
+        <select name="category" required style="width:100%;font:inherit;padding:9px 11px;border:1px solid #dde2d8;border-radius:8px">
+          {% for cat in dispute_categories %}
+            <option value="{{ cat.0 }}">{{ cat.1 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:.74rem;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:4px">Details / Description</label>
+      <textarea name="description" rows="3" required style="width:100%;font:inherit;padding:9px 11px;border:1px solid #dde2d8;border-radius:8px;box-sizing:border-box" placeholder="Describe the billing discrepancy, hours mismatch, caregiver no-show, or time-card error…"></textarea>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <p style="font-size:.78rem;color:#666;margin:0">
+        <i class="fab fa-whatsapp" style="color:#25d366"></i> Submitting instantly alerts our Admin WhatsApp account for manual resolution.
+      </p>
+      <button type="submit" class="btn-dispute" style="font:inherit;padding:10px 22px;border:0;border-radius:8px;background:#c62828;color:#fff;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        <i class="fas fa-paper-plane"></i> Submit Dispute
+      </button>
+    </div>
+  </form>
+  {% else %}
+  <div style="text-align:center;color:#666;font-size:.85rem;padding:20px 0">
+    <p style="margin:0 0 10px">You currently have no scheduled or completed shifts to dispute.</p>
+    <a href="https://wa.me/{{ admin_whatsapp_number|default:'12494812647' }}?text=Hello%20Admin,%20I%20have%20an%20inquiry%20regarding%20my%20account%20billing." target="_blank"
+       style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:.82rem">
+      <i class="fab fa-whatsapp"></i> Chat with Admin Support on WhatsApp
+    </a>
+  </div>
+  {% endif %}
+</div>
+
 <div class="dash-mid">
 <div>
 <div class="action-card">

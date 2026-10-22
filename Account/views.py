@@ -4,12 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Sum
+from django.db import transaction
 from django.http import JsonResponse
 from decimal import Decimal
 import logging
 
-from .forms import LoginForm, SignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm, PasswordChangeForm
-from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog
+from .forms import LoginForm, SignupForm, UnifiedEmployerSignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm, PasswordChangeForm
+from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerProfile, JobPosting, Notification
 from GETMECARE.email_utils import (
     send_welcome_email,
     send_clock_in_email,
@@ -67,6 +68,55 @@ def login_view(request):
 
 
 def signup(request):
+    # Families complete registration and publish their care request in one
+    # atomic submit.  A failed job creation therefore never leaves an empty
+    # employer account behind.
+    if request.method == 'POST' and request.POST.get('role') == CustomUser.EMPLOYER:
+        employer_form = UnifiedEmployerSignupForm(request.POST)
+        caregiver_form = SignupForm()
+        if employer_form.is_valid():
+            data = employer_form.cleaned_data
+            names = data['full_name'].strip().split(None, 1)
+            first_name = names[0]
+            last_name = names[1] if len(names) > 1 else ''
+            base_username = data['email'].split('@', 1)[0][:140] or 'family'
+            username = base_username
+            suffix = 2
+            while CustomUser.objects.filter(username=username).exists():
+                username = f'{base_username[:145]}-{suffix}'
+                suffix += 1
+            with transaction.atomic():
+                user = CustomUser.objects.create_user(
+                    username=username, email=data['email'], password=data['password'],
+                    first_name=first_name, last_name=last_name, phone=data['phone'],
+                    role=CustomUser.EMPLOYER,
+                )
+                profile = EmployerProfile.objects.create(user=user)
+                # A request is publicly visible immediately; activation/payment
+                # happens later when a caregiver is selected over WhatsApp.
+                job = JobPosting.objects.create(
+                    employer=user, title='New care request', city=data['city'],
+                    description=data['care_request'], care_type='other', schedule='flexible',
+                    status=JobPosting.STATUS_OPEN,
+                )
+                payload = {
+                    'user_id': user.pk, 'job_posting_id': job.pk,
+                    'name': user.get_full_name(), 'email': user.email,
+                    'phone': user.phone, 'city': job.city,
+                    'care_request': job.description,
+                }
+                transaction.on_commit(lambda: _notify_new_care_request(payload))
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            try:
+                send_welcome_email(user)
+            except Exception:
+                logger.exception('Welcome email failed for user %s', user.pk)
+            messages.success(request, 'Your care request is live! Our matching coordination team has been alerted and will review candidates shortly.')
+            return redirect('EmployerApp:dashboard')
+        return render(request, 'Account/signup.html', {
+            'form': caregiver_form, 'employer_form': employer_form, 'selected_role': 'employer',
+        })
+
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
@@ -77,7 +127,6 @@ def signup(request):
             # Auto-activate employer and mark fee-exempt if fee is currently OFF
             if user.is_employer:
                 from AdminApp.models import SiteSettings
-                from Account.models import EmployerProfile
                 fee_on = SiteSettings.get().activation_fee_enabled
                 ep, _ = EmployerProfile.objects.get_or_create(user=user)
                 if not fee_on:
@@ -96,7 +145,34 @@ def signup(request):
     else:
         form = SignupForm()
 
-    return render(request, 'Account/signup.html', {'form': form})
+    return render(request, 'Account/signup.html', {
+        'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': 'caregiver' if request.method == 'POST' else 'employer',
+    })
+
+
+def _notify_new_care_request(payload):
+    from GETMECARE.whatsapp import notify_admin
+    title = payload.get('title') or 'New care request'
+    care_type = payload.get('care_type') or 'General Care'
+    rate = f"${payload['hourly_rate']}/hr" if payload.get('hourly_rate') else "Flexible"
+    message = (
+        '🆕 NEW CARE REQUEST — LIVE ON JOB BOARD\n'
+        '━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+        f"Title: {title}\n"
+        f"Family: {payload['name']}\n"
+        f"Phone: {payload['phone']}\n"
+        f"City: {payload['city']}\n"
+        f"Care Type: {care_type}\n"
+        f"Target Rate: {rate}\n"
+        f"Details: {payload['care_request'][:400]}\n"
+        f"Job ID: #{payload['job_posting_id']}\n"
+        '━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+        'Action: Review & match caregivers in the Admin Panel.'
+    )
+    try:
+        notify_admin(message, event='care_request_created', payload=payload)
+    except Exception:
+        logger.exception('New care request WhatsApp alert failed for job %s', payload['job_posting_id'])
 
 
 # ──────────────────────────────────────────────────────────────
@@ -399,3 +475,119 @@ def password_change(request):
     return render(request, 'Account/password_change_form.html', {
         'form': form,
     })
+
+
+# ──────────────────────────────────────────────────────────────
+# In-app notification center (bell dropdown & clear notification)
+# ──────────────────────────────────────────────────────────────
+def ensure_user_notifications(user):
+    """
+    Ensure user has realistic, helpful notifications seeded if they have none,
+    reflecting their account role and current platform status.
+    """
+    if not user or not user.is_authenticated:
+        return
+    if user.notifications.exists():
+        return
+
+    if user.is_caregiver:
+        profile = getattr(user, 'caregiver_profile', None)
+        if profile and profile.status == CaregiverProfile.STATUS_ACTIVE:
+            Notification.send(
+                user=user,
+                title='Account Verified & Active',
+                message='Your caregiver profile is verified and active. Families and employers across Ontario can view your profile and book shifts.',
+                notification_type=Notification.TYPE_ACCOUNT,
+                link='/caregiver-acc/',
+            )
+        else:
+            Notification.send(
+                user=user,
+                title='Complete Your Documents',
+                message='Welcome to GetMeCare! Upload your police check (VSC) and certifications to complete your activation and begin accepting shifts.',
+                notification_type=Notification.TYPE_DOC,
+                link='/caregiver-acc/documents/',
+            )
+
+        upcoming_shifts = getattr(user, 'shifts_as_caregiver', None)
+        shift_count = upcoming_shifts.count() if upcoming_shifts else 0
+        if shift_count > 0:
+            Notification.send(
+                user=user,
+                title='Upcoming Schedule',
+                message=f'You have {shift_count} shift(s) scheduled on your calendar.',
+                notification_type=Notification.TYPE_SHIFT,
+                link='/caregiver-acc/my-schedule/',
+            )
+
+        Notification.send(
+            user=user,
+            title='GetMeCare Live Support',
+            message='Need assistance or have questions about a shift? Live administrative support is available 24/7 directly from your dashboard.',
+            notification_type=Notification.TYPE_MESSAGE,
+            link='/chatbot/support/',
+        )
+    elif user.is_employer:
+        Notification.send(
+            user=user,
+            title='Welcome to GetMeCare Ontario',
+            message='Browse pre-vetted Personal Support Workers (PSWs) in your local area with verified credentials.',
+            notification_type=Notification.TYPE_INFO,
+            link='/employer/dashboard/',
+        )
+
+
+@login_required(login_url='Account:login')
+def get_notifications(request):
+    """Return JSON serialized notifications for the current logged-in user."""
+    ensure_user_notifications(request.user)
+    notifs = request.user.notifications.all()[:20]
+    unread_count = request.user.notifications.filter(is_read=False).count()
+    data = [
+        {
+            'id': n.id,
+            'title': n.title,
+            'message': n.message,
+            'type': n.notification_type,
+            'link': n.link,
+            'is_read': n.is_read,
+            'created_at': n.created_at.strftime('%b %d, %H:%M'),
+        }
+        for n in notifs
+    ]
+    return JsonResponse({'ok': True, 'unread_count': unread_count, 'notifications': data})
+
+
+@login_required(login_url='Account:login')
+def clear_notifications(request):
+    """
+    Clear notifications for the user:
+    Marks all notifications as read, and optionally removes them if requested.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'POST required'}, status=405)
+
+    delete_all = request.POST.get('delete_all') == '1' or request.headers.get('X-Action') == 'delete'
+    if delete_all:
+        cleared_count = request.user.notifications.all().delete()[0]
+    else:
+        cleared_count = request.user.notifications.filter(is_read=False).update(is_read=True)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'ok': True, 'unread_count': 0, 'cleared_count': cleared_count})
+
+    messages.success(request, 'Notifications cleared.')
+    return redirect(request.META.get('HTTP_REFERER') or 'home')
+
+
+@login_required(login_url='Account:login')
+def dismiss_notification(request, notif_id):
+    """Dismiss/remove a single notification."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'POST required'}, status=405)
+
+    n = get_object_or_404(Notification, id=notif_id, user=request.user)
+    n.delete()
+    unread_count = request.user.notifications.filter(is_read=False).count()
+    return JsonResponse({'ok': True, 'unread_count': unread_count})
+

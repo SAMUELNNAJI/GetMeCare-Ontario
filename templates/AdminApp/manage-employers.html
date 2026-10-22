@@ -1,4 +1,5 @@
 {% extends "AdminApp/base_admin.html" %}
+{% load gmc_tags %}
 {% block title %}Manage Employers — Admin{% endblock %}
 {% block extra_head %}
 <style>
@@ -405,9 +406,15 @@
       <a href="{% url 'AdminApp:employer_payments' %}" class="ec-btn ecb-pay">
         <i class="fas fa-credit-card"></i> Payments
       </a>
-      <a href="{% url 'admin_support_start' p.user.pk %}" class="ec-btn ecb-green">
+      <a href="{% url 'admin_support_start' p.user.pk %}" class="ec-btn ecb-green" title="Open internal web chat">
         <i class="fas fa-comment"></i> Chat
       </a>
+      {% if p.user.phone|wa_link %}
+      <a href="{{ p.user.phone|wa_link }}?text=Hello%20{{ p.user.first_name|default:p.user.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20Admin%20Support."
+         target="_blank" class="ec-btn" style="background:#25d366;color:#fff;" title="Chat directly with employer on WhatsApp">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>
+      {% endif %}
     </div>
 
   </div>{# /emp-card #}

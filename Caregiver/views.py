@@ -4,7 +4,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
-from Account.models import CaregiverProfile, JobPosting
+from django.db.models import Avg, Count, Q
+from Account.models import CaregiverProfile, JobPosting, Shift
 from AdminApp.models import Faq, Service
 
 # Contact-form submissions are delivered to this inbox (admin notification).
@@ -26,7 +27,16 @@ def browse(request):
     qs = CaregiverProfile.objects.filter(
         status=CaregiverProfile.STATUS_ACTIVE,
         account_status='active',
-    ).select_related('user').order_by('user__first_name')
+    ).select_related('user').annotate(
+        avg_rating=Avg(
+            'user__received_caregiver_reviews__rating',
+            filter=Q(user__received_caregiver_reviews__shift__status=Shift.STATUS_COMPLETED),
+        ),
+        review_count=Count(
+            'user__received_caregiver_reviews',
+            filter=Q(user__received_caregiver_reviews__shift__status=Shift.STATUS_COMPLETED),
+        ),
+    ).order_by('user__first_name')
 
     # ── Filters ──────────────────────────────────────────────
     city      = request.GET.get('city', '').strip()
@@ -278,6 +288,15 @@ def caregiver_profile(request, pk):
         status=CaregiverProfile.STATUS_ACTIVE,
         account_status='active',
     )
+    # Star-fill percentage for the 1-5 public credibility rating (real data,
+    # averaged from completed-shift employer reviews only).
+    try:
+        rating_value = profile.rating or 0
+    except Exception:
+        rating_value = 0
+    rating_pct = int(round(float(rating_value) / 5 * 100))
+
     return render(request, 'Caregiver/caregiver-profile.html', {
         'profile': profile,
+        'rating_pct': rating_pct,
     })

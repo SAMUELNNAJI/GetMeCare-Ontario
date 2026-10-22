@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Q
@@ -6,6 +7,7 @@ from decimal import Decimal
 from django.utils import timezone
 
 from Account.models import CaregiverProfile, CaregiverDocument, Shift, ShiftLog, JobPosting
+from GETMECARE.whatsapp import whatsapp_digits, whatsapp_link
 
 
 def caregiver_required(view_func):
@@ -569,3 +571,50 @@ def dismiss_activation_modal(request):
     if next_url and next_url.startswith('/') and not next_url.startswith('//'):
         return redirect(next_url)
     return redirect('CareGiverAcc:dashboard')
+
+
+# ──────────────────────────────────────────────────────────────
+# WhatsApp number management (caregiver-facing)
+# ──────────────────────────────────────────────────────────────
+def _normalise_whatsapp(raw):
+    """
+    Clean a user-entered phone number into a wa.me-friendly digit string.
+
+    Uses the EXACT rule the ``wa_link`` template filter applies
+    (``len(digits) < 7`` => invalid) so the saved value and the
+    rendered WhatsApp link can never disagree.
+    """
+    return whatsapp_digits(raw)
+
+
+@caregiver_required
+def update_whatsapp(request):
+    """
+    Save the caregiver's WhatsApp-enabled phone number to ``user.phone``.
+
+    Returns JSON ``{ok, wa_link}`` for the popup to re-render without a
+    full page reload, and falls back to a normal POST redirect for
+    non-JS submissions.
+    """
+    if request.method != 'POST':
+        return redirect('CareGiverAcc:dashboard')
+
+    raw = (request.POST.get('phone') or request.POST.get('whatsapp') or '').strip()
+    digits = _normalise_whatsapp(raw)
+
+    if not digits:
+        error = 'Please enter a valid phone number (at least 7 digits).'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'ok': False, 'error': error}, status=400)
+        messages.error(request, error)
+        return redirect(request.META.get('HTTP_REFERER') or 'CareGiverAcc:dashboard')
+
+    request.user.phone = digits
+    request.user.save(update_fields=['phone'])
+
+    wa_link = whatsapp_link(digits)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True, 'wa_link': wa_link, 'phone': digits})
+
+    messages.success(request, 'Your WhatsApp number has been updated.')
+    return redirect(request.META.get('HTTP_REFERER') or 'CareGiverAcc:dashboard')

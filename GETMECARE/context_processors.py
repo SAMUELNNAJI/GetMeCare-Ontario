@@ -94,6 +94,15 @@ def sidebar_context(request):
             except Exception:
                 pass
 
+        # ── WhatsApp popup gate ──────────────────────────────
+        # Auto-show the "Add WhatsApp" popup on the dashboard for
+        # caregivers who have not saved a usable WhatsApp number yet.
+        try:
+            from GETMECARE.whatsapp import whatsapp_digits
+            ctx['show_whatsapp_modal'] = not whatsapp_digits(request.user.phone)
+        except Exception:
+            ctx['show_whatsapp_modal'] = False
+
     elif request.user.is_employer:
         try:
             from EmployerApp.views import _employer_ctx
@@ -120,4 +129,27 @@ def sidebar_context(request):
         except Exception:
             ctx['upcoming_shifts_count'] = 0
 
+    # Notifications system for topbar bell
+    try:
+        from Account.views import ensure_user_notifications
+        ensure_user_notifications(request.user)
+        ctx['user_notifications'] = list(request.user.notifications.all()[:15])
+        ctx['unread_notifications_count'] = request.user.notifications.filter(is_read=False).count()
+    except Exception:
+        ctx['user_notifications'] = []
+        ctx['unread_notifications_count'] = 0
+
     return ctx
+
+
+
+
+def admin_whatsapp_number(request):
+    """
+    Inject the admin WhatsApp number into every template context.
+    """
+    from django.conf import settings
+    # Use the admin WhatsApp number from settings; fall back to a placeholder
+    return {
+        'admin_whatsapp_number': getattr(settings, 'ADMIN_WHATSAPP_NUMBER', '+12494812647'),
+    }

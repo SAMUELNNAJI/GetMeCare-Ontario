@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -40,6 +40,7 @@
     <link rel="icon" type="image/x-icon" href="{% static 'Caregiver/images/favicon.ico' %}">
     <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'Caregiver/css/styles.css' %}" />
+    <link rel="stylesheet" href="{% static 'Caregiver/css/whatsapp_widget.css' %}" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
@@ -60,7 +61,7 @@
       "name": "GetMeCare Ontario",
       "description": "Connecting Ontario families with trusted, pre-vetted independent Personal Support Workers. Mediated, transparent, and safe.",
       "url": "https://getmecare.ca",
-      "telephone": "+1-416-000-0000",
+      "telephone": "+1-249-481-2647",
       "address": {
         "@type": "PostalAddress",
         "addressRegion": "ON",
@@ -330,6 +331,103 @@
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape' && overlay.style.display === 'flex') closePopup();
         });
+      })();
+    </script>
+
+    <!-- ===================== WHATSAPP FLOATING WIDGET (SITEWIDE) ===================== -->
+    <div class="whatsapp-widget" id="whatsappWidget">
+      <button class="whatsapp-widget-btn" id="whatsappBtn" aria-label="Contact Live Administrative Support Desk">
+        <span class="whatsapp-widget-label">Live Support</span>
+        <i class="whatsapp-icon fas fa-comment-dots"></i>
+      </button>
+
+      <div class="whatsapp-chat-badge" id="whatsappChatBadge" role="dialog" aria-label="Contact Live Administrative Support Desk">
+        <button class="badge-close" id="whatsappChatClose" aria-label="Close support card">&times;</button>
+        <div class="whatsapp-chat-badge-header">
+          <div class="wa-avatar"><i class="fab fa-whatsapp"></i></div>
+          <div>
+            <div class="badge-title">Contact Live Administrative Support Desk</div>
+            <div class="badge-subtitle"><span class="online-dot"></span> Online now · Typically replies in 2 min</div>
+          </div>
+        </div>
+        <div class="whatsapp-chat-badge-body">
+          Our concierge team is standing by to help with account questions, job posting support, or anything else you need.
+        </div>
+        <div class="whatsapp-chat-badge-footer">
+          <a href="#" id="whatsappChatOpen" class="btn-cta"><i class="fab fa-whatsapp"></i> Open Live Concierge Chat</a>
+          <a href="{% url 'contact' %}" class="btn-email"><i class="fas fa-envelope"></i> Email Support</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="whatsapp-notification-toast" id="whatsappToast">
+      <i class="fas fa-check-circle toast-icon"></i>
+      <span class="toast-msg" id="toastMessage">Request submitted — admin notified</span>
+      <button class="toast-close" id="toastClose" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <script>
+      (function() {
+        const btn   = document.getElementById('whatsappBtn');
+        const badge = document.getElementById('whatsappChatBadge');
+        const open  = document.getElementById('whatsappChatOpen');
+        const closeBtn = document.getElementById('whatsappChatClose');
+        const toast = document.getElementById('whatsappToast');
+        const msg   = document.getElementById('toastMessage');
+        const closeToast = document.getElementById('toastClose');
+
+        if (!btn || !badge || !open) return;
+
+        btn.addEventListener('click', () => {
+          cancelAutoHide();
+          badge.classList.toggle('open');
+          btn.classList.toggle('expanded');
+        });
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cancelAutoHide();
+            badge.classList.remove('open');
+            btn.classList.remove('expanded');
+          });
+        }
+
+        let autoHideTimer = null;
+
+        function cancelAutoHide() {
+          if (autoHideTimer) {
+            clearTimeout(autoHideTimer);
+            autoHideTimer = null;
+          }
+        }
+
+        badge.classList.add('open');
+        btn.classList.add('expanded');
+        autoHideTimer = window.setTimeout(() => {
+          badge.classList.remove('open');
+          btn.classList.remove('expanded');
+          autoHideTimer = null;
+        }, 120000);
+
+        open.addEventListener('click', (e) => {
+          e.preventDefault();
+          badge.classList.remove('open');
+          btn.classList.remove('expanded');
+          const adminWA = '{{ admin_whatsapp_number|default:"12494812647" }}';
+          window.open('https://wa.me/' + adminWA.replace(/[^0-9]/g, ''), '_blank');
+        });
+
+        let toastTimeout;
+        function showToast(text) {
+          msg.textContent = text;
+          toast.classList.add('show');
+          clearTimeout(toastTimeout);
+          toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        }
+        if (closeToast) {
+          closeToast.addEventListener('click', () => { toast.classList.remove('show'); });
+        }
       })();
     </script>
 

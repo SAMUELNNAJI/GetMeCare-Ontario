@@ -1,7 +1,17 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm as DjangoPasswordChangeForm
-from .models import CustomUser, CaregiverProfile, CaregiverDocument
+from django.db.models import Q
+
+from .models import (
+    CustomUser,
+    CaregiverProfile,
+    CaregiverDocument,
+    Shift,
+    EmployerPayment,
+    Dispute,
+    JobPosting,
+)
 
 
 class SignupForm(UserCreationForm):
@@ -27,7 +37,7 @@ class SignupForm(UserCreationForm):
     )
     phone = forms.CharField(
         max_length=20,
-        required=False,
+        required=True,
         widget=forms.TextInput(attrs={'placeholder': '+1 (416) 000-0000'}),
     )
     role = forms.ChoiceField(
@@ -83,6 +93,88 @@ class SignupForm(UserCreationForm):
         return user
 
 
+class DisputeForm(forms.Form):
+    """Form-based dispute submission used by the employer dashboard.
+
+    Mirrors the fields that ``submit_dispute`` currently reads off the
+    raw POST body so that validation, CSRF handling and error rendering
+    are handled by Django's form machinery instead of ad-hoc checks.
+    """
+
+    CATEGORY_CHOICES = [
+        ('service_quality', 'Poor Service Quality'),
+        ('no_show',         'Caregiver No-Show'),
+        ('late_arrival',    'Late Arrival'),
+        ('misconduct',      'Unprofessional / Misconduct'),
+        ('billing',         'Billing / Payment Issue'),
+        ('safety',          'Safety Concern'),
+        ('other',           'Other'),
+    ]
+
+    shift_pk = forms.CharField(
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(attrs={'aria-label': 'Shift ID'}),
+    )
+    payment_pk = forms.CharField(
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(attrs={'aria-label': 'Payment ID'}),
+    )
+    category = forms.ChoiceField(choices=CATEGORY_CHOICES)
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        min_length=10,
+        max_length=3000,
+    )
+
+    def __init__(self, request_user, *args, **kwargs):
+        self._request_user = request_user
+        super().__init__(*args, **kwargs)
+        self.cleaned = {}
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self.cleaned.update(cleaned_data)
+
+        shift_pk = self.cleaned.get('shift_pk', '').strip()
+        payment_pk = self.cleaned.get('payment_pk', '').strip()
+        category = self.cleaned.get('category', '').strip()
+        description = self.cleaned.get('description', '').strip()
+
+        if category not in dict(self.CATEGORY_CHOICES):
+            self.add_error('category', 'Please select a valid dispute category.')
+
+        if len(description) < 10:
+            self.add_error('description', 'Please describe the issue (min 10 characters).')
+
+        # Resolve the linked entities so the form can pre-validate them.
+        self.cleaned['_shift'] = None
+        self.cleaned['_payment'] = None
+        if shift_pk:
+            try:
+                self.cleaned['_shift'] = Shift.objects.get(
+                    pk=shift_pk, employer=self._request_user
+                )
+            except Shift.DoesNotExist:
+                self.add_error('shift_pk', 'No shift found with that ID for your account.')
+        elif payment_pk:
+            try:
+                self.cleaned['_payment'] = EmployerPayment.objects.get(
+                    pk=payment_pk, employer=self._request_user
+                )
+            except EmployerPayment.DoesNotExist:
+                self.add_error('payment_pk', 'No payment found with that ID for your account.')
+
+        if not self.cleaned.get('_shift') and not self.cleaned.get('_payment'):
+            self.add_error(None, 'The dispute must be tied to a specific shift or booking payment.')
+
+        if self.cleaned.get('_shift'):
+            self.cleaned['caregiver'] = self.cleaned['_shift'].caregiver
+        elif self.cleaned.get('_payment'):
+            self.cleaned['caregiver'] = self.cleaned['_payment'].shift.caregiver
+
+        return self.cleaned
 class LoginForm(forms.Form):
     username_or_email = forms.CharField(
         label='Username or Email',
@@ -315,6 +407,29 @@ class DocumentUploadForm(forms.ModelForm):
 # Job Posting form
 # ──────────────────────────────────────────────────────────────
 from .models import JobPosting
+
+
+class UnifiedEmployerSignupForm(forms.Form):
+    """The intentionally short, single-step family registration + request form."""
+    full_name = forms.CharField(max_length=150)
+    email = forms.EmailField()
+    password = forms.CharField(min_length=8, widget=forms.PasswordInput)
+    phone = forms.CharField(max_length=20, label='WhatsApp-enabled mobile number')
+    city = forms.CharField(max_length=100)
+    care_request = forms.CharField(widget=forms.Textarea, max_length=3000)
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].lower().strip()
+        if CustomUser.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('An account with this email already exists. Please sign in.')
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data['phone'].strip()
+        digits = ''.join(c for c in phone if c.isdigit())
+        if len(digits) < 10:
+            raise forms.ValidationError('Enter a valid WhatsApp-enabled mobile number, including country code.')
+        return phone
 
 class JobPostingForm(forms.ModelForm):
     title = forms.CharField(

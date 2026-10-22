@@ -1,0 +1,155 @@
+{% extends 'EmployerApp/base-employer.html' %}
+
+{% block title %}Admin Shift Log - Employer Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Admin Shift Log Console</h1>
+    <p class="subtitle">Record time entries, hours worked, hourly rate, amount earned, and payment status for employer shifts.</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Shift Logs</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover ep-table">
+                <thead>
+                <tr>
+                    <th>Shift ID</th>
+                    <th>Caregiver</th>
+                    <th>Date</th>
+                    <th>Hours</th>
+                    <th>Rate ($/hr)</th>
+                    <th>Earned ($)</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for shift_log in shift_logs %}
+                    <tr>
+                        <td>{{ shift_log.shift_id }}</td>
+                        <td>{{ shift_log.caregiver.get_full_name }}</td>
+                        <td>{{ shift_log.clock_in_time|date:"Y-m-d H:i" }}</td>
+                        <td>{{ shift_log.hours_worked }}</td>
+                        <td>{{ shift_log.hourly_rate }}</td>
+                        <td>{{ shift_log.amount_earned }}</td>
+                        <td>
+                            <span class="badge">{{ shift_log.payment_status }}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editShiftLog({{ shift_log.id }})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            No shift logs recorded yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Add Shift Log</h2>
+    </div>
+    <div class="card-body">
+        <form method="post" class="shift-log-form">
+            {% csrf_token %}
+            <input type="hidden" name="shift_pk" id="id_shift_pk">
+            {% if shift_log_to_edit %}
+                <input type="hidden" name="shift_log_edit_id" value="{{ shift_log_to_edit.id }}">
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_shift_pk">Shift ID</label>
+                        <input type="text" name="shift_pk" id="id_shift_pk" class="form-control" required value="{{ shift_log_to_edit.shift_id|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_clock_in_time">Clock In Time</label>
+                        <input type="datetime-local" name="clock_in_time" id="id_clock_in_time" class="form-control" value="{{ shift_log_to_edit.clock_in_time|date:'Y-m-d\TH:i' if shift_log_to_edit.clock_in_time else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="id_clock_out_time">Clock Out Time</label>
+                        <input type="datetime-local" name="clock_out_time" id="id_clock_out_time" class="form-control" value="{{ shift_log_to_edit.clock_out_time|date:'Y-m-d\TH:i' if shift_log_to_edit.clock_out_time else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="id_hours_worked">Hours Worked</label>
+                        <input type="number" step="0.1" min="0" name="hours_worked" id="id_hours_worked" class="form-control" placeholder="e.g. 8.5" value="{{ shift_log_to_edit.hours_worked|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="id_hourly_rate">Hourly Rate ($/hr)</label>
+                        <input type="number" step="0.01" min="0" name="hourly_rate" id="id_hourly_rate" class="form-control" placeholder="e.g. 224.50" value="{{ shift_log_to_edit.hourly_rate|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_amount_earned">Amount Earned ($)</label>
+                        <input type="number" step="0.01" min="0" name="amount_earned" id="id_amount_earned" class="form-control" placeholder="e.g. 208.25" value="{{ shift_log_to_edit.amount_earned|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_payment_status">Payment Status</label>
+                        <select name="payment_status" id="id_payment_status" class="form-control">
+                            <option value="pending" {% if shift_log_to_edit and shift_log_to_edit.payment_status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="completed" {% if shift_log_to_edit and shift_log_to_edit.payment_status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="paid" {% if shift_log_to_edit and shift_log_to_edit.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="partial" {% if shift_log_to_edit and shift_log_to_edit.payment_status == 'partial' %}selected{% endif %}>Partial</option>
+                            <option value="failed" {% if shift_log_to_edit and shift_log_to_edit.payment_status == 'failed' %}selected{% endif %}>Failed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% if shift_log_to_edit %}
+                        Update Shift Log
+                    {% else %}
+                        Save Shift Log
+                    {% endif %}
+                </button>
+                <a href="{% url 'EmployerApp:dashboard' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form></form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editShiftLog(shift_log_id) {
+    // Open a modal to edit an existing shift log
+    // Uses a Django form with ShiftLog model
+    window.location.href = '?edit=' + shift_log_id;
+}
+</script>
+{% endblock %}

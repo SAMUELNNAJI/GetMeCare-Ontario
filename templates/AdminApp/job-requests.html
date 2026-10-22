@@ -1,0 +1,388 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}Job Requests & Candidate Matching — Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Page Header ── */
+.jr-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:20px; }
+.jr-header-left h1 { font-size:1.45rem; font-weight:800; color:#0f1f17; letter-spacing:-.3px; display:flex; align-items:center; gap:9px; }
+.jr-header-left p  { font-size:.83rem; color:#7a8c80; margin-top:3px; }
+
+/* ── Filter Tabs ── */
+.filter-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.ftab {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 16px; border-radius:20px; font-size:.8rem; font-weight:600;
+  text-decoration:none; border:1.5px solid #dde4d9;
+  background:#fff; color:#555; transition:all .15s;
+}
+.ftab:hover { border-color:#1b7d4f; color:#1b7d4f; }
+.ftab.active-tab { background:#1b7d4f; color:#fff; border-color:#1b7d4f; }
+.ftab.tab-open.active-tab   { background:#1b7d4f; border-color:#1b7d4f; }
+.ftab.tab-filled.active-tab { background:#1a56c4; border-color:#1a56c4; }
+.ftab.tab-closed.active-tab { background:#6b7c72; border-color:#6b7c72; }
+.ftab-count {
+  background:rgba(0,0,0,.08); border-radius:20px;
+  padding:1px 7px; font-size:.7rem; font-weight:700;
+}
+.ftab.active-tab .ftab-count { background:rgba(255,255,255,.25); }
+
+/* ── Search Bar ── */
+.jr-search-box {
+  display:flex; align-items:center; gap:9px; background:#fff;
+  border:1.5px solid #dde4d9; border-radius:12px; padding:9px 16px;
+  flex:1; max-width:420px; box-shadow:0 1px 4px rgba(0,0,0,.05);
+  transition:border-color .15s;
+}
+.jr-search-box:focus-within { border-color:#1b7d4f; box-shadow:0 0 0 3px rgba(27,125,79,.1); }
+.jr-search-box i { color:#9aaa9e; font-size:.84rem; flex-shrink:0; }
+.jr-search-box input { border:none; outline:none; background:transparent; font-size:.875rem; color:#333; width:100%; font-family:inherit; }
+.jr-search-box input::placeholder { color:#bbb; }
+.jr-clear-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#fdecea; color:#c62828; border:1px solid #ffcdd2;
+  border-radius:9px; padding:8px 14px; font-size:.78rem;
+  font-weight:600; text-decoration:none; transition:background .15s;
+}
+.jr-clear-btn:hover { background:#ffcdd2; }
+.jr-result-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#e6f5ee; color:#1b5e35; border:1px solid #b2dfca;
+  border-radius:20px; padding:6px 14px; font-size:.8rem; margin-bottom:14px;
+}
+
+/* ── Card Grid (Matching Manage Caregivers) ── */
+.jr-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:18px; }
+.jr-card {
+  background:#fff; border:1px solid #e8ede9; border-radius:16px;
+  overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.05);
+  transition:box-shadow .2s,transform .2s; display:flex; flex-direction:column;
+}
+.jr-card:hover { box-shadow:0 6px 24px rgba(27,58,45,.1); transform:translateY(-2px); }
+
+/* Accent line */
+.jr-accent { height:4px; width:100%; }
+.jr-accent-open   { background:linear-gradient(90deg,#1b7d4f,#2daa70); }
+.jr-accent-filled { background:linear-gradient(90deg,#1a56c4,#3b82f6); }
+.jr-accent-closed { background:linear-gradient(90deg,#9aaa9e,#c8d8c8); }
+
+/* Card Body */
+.jr-card-body { padding:18px 20px 14px; flex:1; display:flex; flex-direction:column; }
+
+/* Top Header */
+.jr-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:14px; }
+.jr-av {
+  width:46px; height:46px; border-radius:12px; color:#fff;
+  font-size:1.15rem; font-weight:800; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; box-shadow:0 2px 8px rgba(27,58,45,.18);
+}
+.jr-av-open   { background:linear-gradient(135deg,#1b3a2d,#2d7a50); }
+.jr-av-filled { background:linear-gradient(135deg,#153e75,#2563eb); }
+.jr-av-closed { background:linear-gradient(135deg,#526058,#829388); }
+
+.jr-title-block { flex:1; min-width:0; }
+.jr-req-num { font-size:.72rem; font-weight:700; color:#1b7d4f; text-transform:uppercase; letter-spacing:.05em; }
+.jr-title { font-size:.96rem; font-weight:800; color:#0f1f17; line-height:1.35; margin:1px 0 3px; word-break:break-word; }
+.jr-employer { font-size:.8rem; color:#4a5c51; font-weight:600; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.jr-contact-line { font-size:.75rem; color:#7a8c80; margin-top:2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+/* Status Badges */
+.jr-sbadge { display:inline-flex; align-items:center; gap:5px; border-radius:20px; padding:4px 10px; font-size:.7rem; font-weight:700; white-space:nowrap; flex-shrink:0; }
+.jsb-open   { background:#e6f5ee; color:#1b7d4f; }
+.jsb-filled { background:#e8f0fe; color:#1a56c4; }
+.jsb-closed { background:#f0f0f0; color:#777; }
+.jsb-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.jsd-open   { background:#1b7d4f; animation:cpulse 2s infinite; }
+.jsd-filled { background:#1a56c4; }
+.jsd-closed { background:#bbb; }
+@keyframes cpulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Meta 2x3 Grid */
+.jr-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.jr-meta-item { background:#f8faf7; border-radius:9px; padding:8px 11px; }
+.jr-meta-lbl { font-size:.62rem; font-weight:700; color:#9aaa9e; text-transform:uppercase; letter-spacing:.06em; }
+.jr-meta-val { font-size:.82rem; font-weight:700; color:#1a1a1a; margin-top:2px; word-break:break-word; }
+
+/* Description Details Box */
+.jr-desc-box {
+  background:#fcfdfc; border:1px solid #edf2ee; border-radius:10px;
+  padding:10px 12px; margin-bottom:12px; font-size:.81rem; color:#444; line-height:1.5;
+  flex:1;
+}
+.jr-desc-lbl { font-size:.64rem; font-weight:700; color:#84968a; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+.jr-desc-text { color:#333; margin:0; word-break:break-word; white-space:pre-line; }
+
+/* Tags row */
+.jr-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.jr-tag { font-size:.7rem; font-weight:600; border-radius:20px; padding:3px 10px; }
+.jr-tag-care { background:#eef4f1; color:#2d5a42; }
+.jr-tag-sched { background:#f0f4f8; color:#1a4575; }
+.jr-tag-wa { background:#e7f8ee; color:#1b7d4f; border:1px solid #c3edd2; }
+.jr-tag-nowa { background:#f5f5f5; color:#777; border:1px solid #e0e0e0; }
+
+/* Card Actions Footer */
+.jr-actions {
+  padding:13px 18px 15px; border-top:1px solid #f2f4f0;
+  display:flex; gap:7px; flex-wrap:wrap; align-items:center;
+  background:#fafbfa; border-radius:0 0 16px 16px;
+}
+.jr-btn {
+  display:inline-flex; align-items:center; gap:6px; border-radius:9px;
+  padding:8px 14px; font-size:.775rem; font-weight:700; cursor:pointer;
+  border:none; font-family:inherit; text-decoration:none;
+  transition:all .15s; flex:1; justify-content:center; min-width:110px;
+}
+.jr-btn:hover { opacity:.9; transform:translateY(-1px); }
+.jr-btn-match { background:#1b7d4f; color:#fff; }
+.jr-btn-match:hover { background:#15603c; color:#fff; }
+.jr-btn-wa { background:#25d366; color:#fff; }
+.jr-btn-wa:hover { background:#1ebd57; color:#fff; }
+.jr-btn-prog { background:#1b3a2d; color:#fff; }
+.jr-btn-prog:hover { background:#10241c; color:#fff; }
+.jr-btn-chat { background:#fff; color:#128c7e; border:1.5px solid #25d366; }
+.jr-btn-chat:hover { background:#e6f9ed; color:#0b665b; }
+
+/* Empty state */
+.jr-empty {
+  grid-column:1/-1; text-align:center; padding:60px 20px;
+  background:#fff; border:1px solid #e8ede9; border-radius:16px; color:#84968a;
+}
+.jr-empty i { font-size:3rem; margin-bottom:12px; color:#c0ccc4; display:block; }
+.jr-empty h3 { font-size:1.15rem; font-weight:800; color:#23352c; margin-bottom:6px; }
+.jr-empty p { font-size:.85rem; margin:0; }
+
+@media(max-width:768px){
+  .jr-grid { grid-template-columns:1fr; }
+  .jr-header { flex-direction:column; align-items:flex-start; }
+  .jr-actions .jr-btn { flex:1 1 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="jr-header">
+  <div class="jr-header-left">
+    <h1>
+      <i class="fas fa-clipboard-list" style="color:#1b7d4f"></i>
+      Job Requests &amp; Candidate Matching
+    </h1>
+    <p>Review incoming public care requests, match caregivers, drop $39 Stripe verification paylinks over WhatsApp, and program confirmed shifts.</p>
+  </div>
+  <div>
+    <a href="{% url 'AdminApp:program_shift' %}" class="jr-btn jr-btn-prog" style="flex:initial;padding:10px 18px;font-size:.84rem">
+      <i class="fas fa-calendar-plus" style="color:#4caf7d"></i> Program New Shift
+    </a>
+  </div>
+</div>
+
+<!-- Filter tabs (matching Manage Caregivers) -->
+<div class="filter-tabs">
+  <a href="{% url 'AdminApp:job_requests' %}{% if q %}?q={{ q }}{% endif %}"
+     class="ftab {% if not status_filter %}active-tab{% endif %}">
+    <i class="fas fa-list"></i> All Requests
+    <span class="ftab-count">{{ total_requests }}</span>
+  </a>
+  <a href="{% url 'AdminApp:job_requests' %}?status=open{% if q %}&q={{ q }}{% endif %}"
+     class="ftab tab-open {% if status_filter == 'open' %}active-tab{% endif %}">
+    <i class="fas fa-circle" style="color:#25d366;font-size:.55rem"></i> Open
+    <span class="ftab-count">{{ open_count }}</span>
+  </a>
+  <a href="{% url 'AdminApp:job_requests' %}?status=filled{% if q %}&q={{ q }}{% endif %}"
+     class="ftab tab-filled {% if status_filter == 'filled' %}active-tab{% endif %}">
+    <i class="fas fa-check-circle"></i> Filled
+    <span class="ftab-count">{{ filled_count }}</span>
+  </a>
+  <a href="{% url 'AdminApp:job_requests' %}?status=closed{% if q %}&q={{ q }}{% endif %}"
+     class="ftab tab-closed {% if status_filter == 'closed' %}active-tab{% endif %}">
+    <i class="fas fa-times-circle"></i> Closed
+    <span class="ftab-count">{{ closed_count }}</span>
+  </a>
+</div>
+
+<!-- Search form -->
+<form method="get" action="" style="margin-bottom:16px;">
+  {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="jr-search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search by family, care title, city, or email…" value="{{ q|default:'' }}">
+    </div>
+    <button type="submit" style="padding:9px 18px;border:none;border-radius:12px;background:#1b7d4f;color:#fff;font-size:.845rem;font-weight:700;cursor:pointer;font-family:inherit">
+      Search
+    </button>
+    {% if q %}
+      <a href="{% url 'AdminApp:job_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="jr-clear-btn">
+        <i class="fas fa-times"></i> Clear Search
+      </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if q %}
+<div class="jr-result-pill">
+  <i class="fas fa-filter"></i>
+  Found <strong>{{ result_count }}</strong> request{{ result_count|pluralize }} matching <strong>"{{ q }}"</strong>
+</div>
+{% endif %}
+
+<!-- Cards Grid -->
+<div class="jr-grid">
+  {% for item in jobs_data %}
+  {% with j=item.job %}
+  <div class="jr-card">
+    <!-- Top accent color bar -->
+    <div class="jr-accent
+      {% if j.status == 'open' %}jr-accent-open
+      {% elif j.status == 'filled' %}jr-accent-filled
+      {% else %}jr-accent-closed{% endif %}">
+    </div>
+
+    <!-- Card Content Body -->
+    <div class="jr-card-body">
+      <!-- Top header line -->
+      <div class="jr-top">
+        <div class="jr-av
+          {% if j.status == 'open' %}jr-av-open
+          {% elif j.status == 'filled' %}jr-av-filled
+          {% else %}jr-av-closed{% endif %}">
+          {% if j.care_type == 'senior_elder' %}<i class="fas fa-user-nurse"></i>
+          {% elif j.care_type == 'dementia' %}<i class="fas fa-brain"></i>
+          {% elif j.care_type == 'palliative' %}<i class="fas fa-hand-holding-heart"></i>
+          {% elif j.care_type == 'post_surgery' %}<i class="fas fa-hospital-user"></i>
+          {% elif j.care_type == 'companion' %}<i class="fas fa-user-friends"></i>
+          {% else %}<i class="fas fa-heartbeat"></i>{% endif %}
+        </div>
+
+        <div class="jr-title-block">
+          <div class="jr-req-num">Request #{{ j.pk }}</div>
+          <div class="jr-title" title="{{ j.title }}">{{ j.title }}</div>
+          <div class="jr-employer">
+            <i class="far fa-user" style="color:#1b7d4f;font-size:.75rem"></i>
+            {{ j.employer.get_full_name|default:j.employer.username }}
+          </div>
+          <div class="jr-contact-line">
+            {% if j.employer.phone %}
+              <a href="https://wa.me/{{ item.employer_phone_digits }}" target="_blank" style="color:#128c7e;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ j.employer.phone }}
+              </a>
+            {% endif %}
+            <span><i class="far fa-envelope" style="font-size:.7rem"></i> {{ j.employer.email }}</span>
+          </div>
+        </div>
+
+        <div>
+          {% if j.status == 'open' %}
+            <span class="jr-sbadge jsb-open">
+              <span class="jsb-dot jsd-open"></span> Open
+            </span>
+          {% elif j.status == 'filled' %}
+            <span class="jr-sbadge jsb-filled">
+              <i class="fas fa-check" style="font-size:.65rem"></i> Filled
+            </span>
+          {% else %}
+            <span class="jr-sbadge jsb-closed">
+              Closed
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Key Metadata 2-Column Grid -->
+      <div class="jr-meta">
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="fas fa-map-marker-alt" style="color:#e05252;font-size:.62rem"></i> Location</div>
+          <div class="jr-meta-val">{{ j.city|default:"Ontario" }}</div>
+        </div>
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="fas fa-hand-holding-heart" style="color:#1b7d4f;font-size:.62rem"></i> Care Type</div>
+          <div class="jr-meta-val">{{ j.get_care_type_display }}</div>
+        </div>
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="fas fa-dollar-sign" style="color:#1b7d4f;font-size:.62rem"></i> Offered Rate</div>
+          <div class="jr-meta-val">
+            {% if j.hourly_rate %}
+              <span style="color:#1b7d4f">${{ j.hourly_rate }} / hr CAD</span>
+            {% else %}
+              <span style="color:#777;font-weight:600">Flexible</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="far fa-clock" style="color:#1a56c4;font-size:.62rem"></i> Schedule</div>
+          <div class="jr-meta-val">
+            {{ j.get_schedule_display }}{% if j.hours_per_week %} ({{ j.hours_per_week }}h/wk){% endif %}
+          </div>
+        </div>
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="far fa-calendar-alt" style="color:#f0a040;font-size:.62rem"></i> Desired Start</div>
+          <div class="jr-meta-val">
+            {% if j.start_date %}{{ j.start_date|date:"M d, Y" }}{% else %}Immediate / Flexible{% endif %}
+          </div>
+        </div>
+        <div class="jr-meta-item">
+          <div class="jr-meta-lbl"><i class="fas fa-clock" style="color:#9aaa9e;font-size:.62rem"></i> Posted Date</div>
+          <div class="jr-meta-val">{{ j.created_at|date:"M d, Y" }}</div>
+        </div>
+      </div>
+
+      <!-- Description / Special Details -->
+      {% if j.description %}
+      <div class="jr-desc-box">
+        <div class="jr-desc-lbl">
+          <i class="fas fa-align-left" style="color:#1b7d4f"></i> Request Notes &amp; Needs
+        </div>
+        <p class="jr-desc-text">{{ j.description }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Tag Badges -->
+      <div class="jr-tags">
+        <span class="jr-tag jr-tag-care"><i class="fas fa-shield-alt" style="font-size:.65rem"></i> {{ j.get_care_type_display }}</span>
+        <span class="jr-tag jr-tag-sched"><i class="far fa-calendar" style="font-size:.65rem"></i> {{ j.get_schedule_display }}</span>
+        {% if item.has_whatsapp %}
+          <span class="jr-tag jr-tag-wa"><i class="fab fa-whatsapp"></i> WhatsApp Verified</span>
+        {% else %}
+          <span class="jr-tag jr-tag-nowa"><i class="far fa-envelope"></i> Email Contact Only</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Bottom Actions Toolbar -->
+    <div class="jr-actions">
+      <!-- 1. Manual Match Button -->
+      <a href="{% url 'AdminApp:job_request_matches' j.pk %}" class="jr-btn jr-btn-match" title="Pull top matched caregiver candidates from 100+ database">
+        <i class="fas fa-user-check"></i> Match Candidates
+      </a>
+
+      <!-- 2. $39 Paylink Trigger -->
+      <a href="{% url 'AdminApp:admin_create_39_payment_link' j.pk %}" class="jr-btn jr-btn-wa" title="Generate dedicated $39 Stripe Payment link for WhatsApp">
+        <i class="fas fa-dollar-sign"></i> Drop $39 Paylink
+      </a>
+
+      <!-- 3. Program Shift Console -->
+      <a href="{% url 'AdminApp:program_shift' %}?job_id={{ j.pk }}&employer_id={{ j.employer.pk }}" class="jr-btn jr-btn-prog" title="Program agreed hourly rate and shift parameters">
+        <i class="fas fa-calendar-plus"></i> Program Shift
+      </a>
+
+      <!-- 4. Direct WhatsApp chat if phone exists -->
+      {% if item.has_whatsapp %}
+      <a href="https://wa.me/{{ item.employer_phone_digits }}?text=Hello%20{{ j.employer.first_name|default:j.employer.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20regarding%20your%20care%20request%20#{{ j.pk }}%20({{ j.title|urlencode }})."
+         target="_blank" class="jr-btn jr-btn-chat" title="Open direct WhatsApp conversation with employer">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endwith %}
+  {% empty %}
+  <div class="jr-empty">
+    <i class="far fa-folder-open"></i>
+    <h3>No Job Requests Found</h3>
+    <p>There are no care requests matching your current filter criteria.</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

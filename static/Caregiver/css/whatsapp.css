@@ -1,0 +1,40 @@
+/* =========================================================
+   SHARED WHATSAPP MODAL STYLES
+   Loaded by the caregiver popup partial and by the admin
+   "No WhatsApp" badge so all three pages look identical.
+   ========================================================= */
+
+/* ── Caregiver popup (partials/whatsapp_modal.html) ── */
+.gmc-wa-backdrop{position:fixed;inset:0;background:rgba(10,25,18,.55);z-index:1300;display:none;align-items:center;justify-content:center;padding:20px}
+.gmc-wa-backdrop.open{display:flex}
+.gmc-wa-modal{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:28px 26px 24px;text-align:center;box-shadow:0 18px 54px rgba(0,0,0,.24);animation:gmcWaIn .25s ease}
+@keyframes gmcWaIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.gmc-wa-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.7rem;color:#fff}
+.gmc-wa-title{font-size:1.05rem;font-weight:800;color:#1a1a1a;margin-bottom:8px}
+.gmc-wa-body{font-size:.85rem;color:#5b6b62;line-height:1.55;margin-bottom:18px}
+.gmc-wa-field{display:block;text-align:left;margin-bottom:12px}
+.gmc-wa-label{font-size:.72rem;font-weight:700;color:#7a8c80;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block}
+.gmc-wa-input{width:100%;border:1.5px solid #dde4d9;border-radius:10px;padding:11px 13px;font-size:.9rem;font-family:inherit;color:#1a1a1a;outline:none;transition:border-color .15s,box-shadow .15s}
+.gmc-wa-input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.16)}
+.gmc-wa-error{color:#c62828;font-size:.78rem;margin-bottom:10px;display:none}
+.gmc-wa-error.show{display:block}
+.gmc-wa-actions{display:flex;gap:10px;justify-content:center}
+.gmc-wa-btn{background:#25D366;color:#fff;border:none;border-radius:9px;padding:10px 26px;font-size:.87rem;font-weight:700;cursor:pointer;font-family:inherit;transition:filter .15s}
+.gmc-wa-btn:hover{filter:brightness(.94)}
+.gmc-wa-btn[disabled]{opacity:.6;cursor:progress}
+.gmc-wa-cancel{background:#fff;color:#555;border:1.5px solid #ddd;border-radius:9px;padding:10px 26px;font-size:.87rem;font-weight:700;cursor:pointer;font-family:inherit}
+.gmc-wa-cancel:hover{background:#f2f4f0}
+
+/* "Add WhatsApp" trigger button (browse / profile) */
+.gmc-wa-add{display:inline-flex;align-items:center;gap:6px;background:#f2f4f0;color:#5b6b62;border:1px solid #dde4d9;border-radius:8px;padding:6px 10px;font-size:.76rem;font-weight:600;margin-top:8px;text-decoration:none;cursor:pointer;font-family:inherit}
+.gmc-wa-add:hover{background:#e8ede7;color:#1b7d4f;border-color:#b9e3ca}
+
+/* Success chip rendered after a successful save.
+   Applied on top of the trigger's own classes so page-specific styling
+   (e.g. .cp-btn on the profile page) is preserved. */
+.gmc-wa-done{background:#eafff0!important;color:#1b7d4f!important;border-color:#b9e3ca!important}
+.gmc-wa-done i{color:#25d366}
+
+/* ── Admin "No WhatsApp" disabled badge (manage-caregivers.html) ── */
+.ccb-none{background:#eceff1!important;color:#8d97a0!important;border:1px solid #d8dde1!important;cursor:pointer}
+.ccb-none:hover{background:#e4e8e2!important;color:#6b7a6f!important}

@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -112,16 +112,235 @@
     text-decoration: none; margin-left: 10px;
   }
   .cg-back-link:hover { text-decoration: underline; }
+  .cg-bell-wrap { position: relative; display: inline-flex; align-items: center; }
   .cg-bell {
-    width: 34px; height: 34px; border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 50%;
     background: #fff; border: 1px solid #dde2d8;
     display: flex; align-items: center; justify-content: center;
-    color: #555; cursor: pointer; font-size: .88rem; position: relative;
+    color: #4a5c52; cursor: pointer; font-size: .92rem; position: relative;
+    transition: all .2s ease;
+  }
+  .cg-bell:hover { background: #eef5f0; color: #1b7d4f; border-color: #c4d9cb; }
+  .cg-bell-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4.5px;
+    border-radius: 999px;
+    background: #e05252;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(224,82,82,.45);
+    box-sizing: border-box;
+    pointer-events: none;
+    animation: cgBadgePop 0.22s ease-out;
+  }
+  @keyframes cgBadgePop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
   }
   .cg-bell-dot {
-    width: 7px; height: 7px; background: #e05252; border-radius: 50%;
-    position: absolute; top: 5px; right: 5px; border: 1.5px solid #f2f4f0;
+    width: 9px; height: 9px; background: #e05252; border-radius: 50%;
+    position: absolute; top: 3px; right: 3px; border: 2px solid #fff;
+    box-shadow: 0 0 0 2px rgba(224,82,82,.2);
+    animation: cgBellPulse 2.5s infinite;
   }
+  @keyframes cgBellPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .cg-notif-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 370px;
+    max-width: calc(100vw - 28px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 18px 45px rgba(15, 31, 23, 0.15), 0 3px 10px rgba(0, 0, 0, 0.04);
+    border: 1px solid #dce4dc;
+    z-index: 500;
+    animation: cgNotifFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+  @keyframes cgNotifFadeIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .cg-notif-dropdown.open { display: block; }
+  .cg-notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #fbfdfb;
+    border-bottom: 1px solid #eef3ee;
+  }
+  .cg-notif-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #142e21;
+  }
+  .cg-notif-badge {
+    background: #1b7d4f;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .cg-notif-clear-btn {
+    background: #f0f7f2;
+    border: 1px solid #d4e7d8;
+    color: #1b7d4f;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 11px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .cg-notif-clear-btn:hover {
+    background: #1b7d4f;
+    color: #fff;
+    border-color: #1b7d4f;
+  }
+  .cg-notif-clear-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .cg-notif-body {
+    max-height: 380px;
+    overflow-y: auto;
+  }
+  .cg-notif-body::-webkit-scrollbar { width: 5px; }
+  .cg-notif-body::-webkit-scrollbar-thumb { background: #cfded2; border-radius: 4px; }
+  .cg-notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 18px;
+    border-bottom: 1px solid #f2f5f2;
+    transition: background 0.15s;
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+  .cg-notif-item:last-child { border-bottom: none; }
+  .cg-notif-item:hover { background: #f6faf6; }
+  .cg-notif-item.unread {
+    background: #f3f9f4;
+  }
+  .cg-notif-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 18px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1b7d4f;
+  }
+  .cg-notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .cg-ni-info    { background: #e8f5e9; color: #1b7d4f; }
+  .cg-ni-shift   { background: #e3f2fd; color: #1565c0; }
+  .cg-ni-document{ background: #fff3e0; color: #e65100; }
+  .cg-ni-message { background: #e0f2f1; color: #00796b; }
+  .cg-ni-payment { background: #f3e5f5; color: #7b1fa2; }
+  .cg-ni-account { background: #fff8e1; color: #f57f17; }
+  .cg-notif-content { flex: 1; min-width: 0; }
+  .cg-notif-item-title {
+    font-size: 0.855rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+  .cg-notif-item-msg {
+    font-size: 0.775rem;
+    color: #555;
+    line-height: 1.45;
+  }
+  .cg-notif-item-time {
+    font-size: 0.69rem;
+    color: #88988e;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cg-notif-dismiss-btn {
+    background: none;
+    border: none;
+    color: #9cb0a3;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .cg-notif-item:hover .cg-notif-dismiss-btn { opacity: 1; }
+  .cg-notif-dismiss-btn:hover { color: #c62828; background: #fbe9e7; }
+  .cg-notif-empty {
+    padding: 40px 24px;
+    text-align: center;
+    color: #88988e;
+  }
+  .cg-notif-empty i {
+    font-size: 2.2rem;
+    color: #bed0c5;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .cg-notif-empty p {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1b3a2d;
+    margin-bottom: 3px;
+  }
+  .cg-notif-empty span {
+    font-size: 0.77rem;
+    color: #788d7f;
+  }
+  .cg-notif-footer {
+    padding: 10px 16px;
+    background: #fbfdfb;
+    border-top: 1px solid #edf2ee;
+    font-size: 0.72rem;
+    color: #88988e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .cg-topbar-av {
     width: 34px; height: 34px; border-radius: 50%;
     background: #2d5a42; color: #fff;
@@ -471,7 +690,67 @@
     <i class="fas fa-arrow-left"></i> Go back to site
   </a>
   <div class="cg-topbar-space"></div>
-  <div class="cg-bell"><i class="fas fa-bell"></i><span class="cg-bell-dot"></span></div>
+  <div class="cg-bell-wrap" id="cgBellWrap">
+    <button type="button" class="cg-bell" id="cgBellBtn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+      <i class="fas fa-bell"></i>
+      {% if unread_notifications_count %}
+      <span class="cg-bell-badge" id="cgBellBadge">{% if unread_notifications_count > 9 %}9+{% else %}{{ unread_notifications_count }}{% endif %}</span>
+      {% else %}
+      <span class="cg-bell-badge" id="cgBellBadge" style="display:none;">0</span>
+      {% endif %}
+    </button>
+
+    <!-- Notification Dropdown Popover -->
+    <div class="cg-notif-dropdown" id="cgNotifDropdown" role="menu" aria-label="Notifications list">
+      <div class="cg-notif-header">
+        <div class="cg-notif-title-row">
+          <span>Notifications</span>
+          {% if unread_notifications_count %}
+          <span class="cg-notif-badge" id="cgNotifBadge">{{ unread_notifications_count }}</span>
+          {% else %}
+          <span class="cg-notif-badge" id="cgNotifBadge" style="display:none;">0</span>
+          {% endif %}
+        </div>
+        <button type="button" class="cg-notif-clear-btn" id="cgClearNotifsBtn" title="Clear all notifications" {% if not user_notifications %}disabled{% endif %}>
+          <i class="fas fa-check-double"></i> Clear all
+        </button>
+      </div>
+
+      <div class="cg-notif-body" id="cgNotifList">
+        {% for n in user_notifications %}
+        <div class="cg-notif-item {% if not n.is_read %}unread{% endif %}" data-notif-id="{{ n.id }}" data-notif-link="{{ n.link|default:'' }}">
+          <div class="cg-notif-icon cg-ni-{{ n.notification_type }}">
+            {% if n.notification_type == 'shift' %}<i class="fas fa-calendar-check"></i>
+            {% elif n.notification_type == 'document' %}<i class="fas fa-file-alt"></i>
+            {% elif n.notification_type == 'message' %}<i class="fas fa-comment-dots"></i>
+            {% elif n.notification_type == 'payment' %}<i class="fas fa-wallet"></i>
+            {% elif n.notification_type == 'account' %}<i class="fas fa-shield-alt"></i>
+            {% else %}<i class="fas fa-bell"></i>{% endif %}
+          </div>
+          <div class="cg-notif-content">
+            <div class="cg-notif-item-title">{{ n.title }}</div>
+            <div class="cg-notif-item-msg">{{ n.message }}</div>
+            <div class="cg-notif-item-time"><i class="far fa-clock" style="font-size:0.65rem;"></i> {{ n.created_at|timesince }} ago</div>
+          </div>
+          <button type="button" class="cg-notif-dismiss-btn" data-dismiss-id="{{ n.id }}" title="Dismiss this notification" aria-label="Dismiss">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        {% empty %}
+        <div class="cg-notif-empty" id="cgNotifEmpty">
+          <i class="far fa-bell-slash"></i>
+          <p>No new notifications</p>
+          <span>You're all caught up!</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="cg-notif-footer">
+        <span>GetMeCare Live Updates</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#1b7d4f;border-radius:50%;display:inline-block;"></span> Active</span>
+      </div>
+    </div>
+  </div>
   <div class="cg-topbar-av">{% if request.user.caregiver_profile.profile_image %}<img src="{{ request.user.caregiver_profile.profile_image.url }}" alt="{{ request.user.get_full_name }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;display:block">{% elif request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</div>
 </div>
 <!-- Mobile search overlay -->
@@ -556,6 +835,173 @@
       if (e.target === searchOverlay) closeSearch();
     });
   }
+  // ── Notification Center ──
+  (function(){
+    var bellBtn    = document.getElementById('cgBellBtn');
+    var dropdown   = document.getElementById('cgNotifDropdown');
+    var bellBadge  = document.getElementById('cgBellBadge');
+    var badge      = document.getElementById('cgNotifBadge');
+    var clearBtn   = document.getElementById('cgClearNotifsBtn');
+    var notifList  = document.getElementById('cgNotifList');
+    var wrap       = document.getElementById('cgBellWrap');
+
+    if(!bellBtn || !dropdown) return;
+
+    function getCsrfToken() {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, 10) === ('csrftoken=')) {
+            cookieValue = decodeURIComponent(cookie.substring(10));
+            break;
+          }
+        }
+      }
+      return cookieValue || '{{ csrf_token }}';
+    }
+
+    function toggleDropdown(e) {
+      if(e) e.stopPropagation();
+      var isOpen = dropdown.classList.contains('open');
+      if(isOpen) {
+        closeDropdown();
+      } else {
+        dropdown.classList.add('open');
+        bellBtn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function closeDropdown() {
+      dropdown.classList.remove('open');
+      bellBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    bellBtn.addEventListener('click', toggleDropdown);
+
+    document.addEventListener('click', function(e) {
+      if(wrap && !wrap.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if(e.key === 'Escape' && dropdown.classList.contains('open')) {
+        closeDropdown();
+      }
+    });
+
+    // Clear all notifications
+    if(clearBtn) {
+      clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        clearBtn.disabled = true;
+        clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing…';
+
+        fetch("{% url 'Account:clear_notifications' %}", {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'delete_all=1'
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if(data && data.ok) {
+            if(bellBadge) {
+              bellBadge.style.display = 'none';
+              bellBadge.textContent = '0';
+            }
+            if(badge) {
+              badge.style.display = 'none';
+              badge.textContent = '0';
+            }
+            if(notifList) {
+              notifList.innerHTML = '<div class="cg-notif-empty"><i class="far fa-bell-slash"></i><p>No new notifications</p><span>You\'re all caught up!</span></div>';
+            }
+            clearBtn.innerHTML = '<i class="fas fa-check"></i> Cleared';
+            clearBtn.disabled = true;
+          } else {
+            clearBtn.disabled = false;
+            clearBtn.innerHTML = '<i class="fas fa-check-double"></i> Clear all';
+          }
+        })
+        .catch(function(){
+          clearBtn.disabled = false;
+          clearBtn.innerHTML = '<i class="fas fa-check-double"></i> Clear all';
+        });
+      });
+    }
+
+    // Dismiss single notification
+    if(notifList) {
+      notifList.addEventListener('click', function(e) {
+        var dismissBtn = e.target.closest('.cg-notif-dismiss-btn');
+        if(dismissBtn) {
+          e.stopPropagation();
+          e.preventDefault();
+          var item = dismissBtn.closest('.cg-notif-item');
+          var notifId = dismissBtn.getAttribute('data-dismiss-id');
+          if(!notifId || !item) return;
+
+          item.style.opacity = '0.3';
+          fetch('/notifications/' + notifId + '/dismiss/', {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': getCsrfToken()
+            }
+          })
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            item.remove();
+            if(data && typeof data.unread_count !== 'undefined') {
+              if(data.unread_count <= 0) {
+                if(bellBadge) {
+                  bellBadge.style.display = 'none';
+                  bellBadge.textContent = '0';
+                }
+                if(badge) {
+                  badge.style.display = 'none';
+                  badge.textContent = '0';
+                }
+              } else {
+                var countStr = data.unread_count > 9 ? '9+' : data.unread_count;
+                if(bellBadge) {
+                  bellBadge.textContent = countStr;
+                  bellBadge.style.display = 'inline-flex';
+                }
+                if(badge) {
+                  badge.textContent = data.unread_count;
+                  badge.style.display = 'inline-flex';
+                }
+              }
+            }
+            if(!notifList.querySelector('.cg-notif-item')) {
+              notifList.innerHTML = '<div class="cg-notif-empty"><i class="far fa-bell-slash"></i><p>No new notifications</p><span>You\'re all caught up!</span></div>';
+              if(clearBtn) clearBtn.disabled = true;
+            }
+          })
+          .catch(function(){
+            item.style.opacity = '1';
+          });
+          return;
+        }
+
+        var itemLink = e.target.closest('.cg-notif-item');
+        if(itemLink) {
+          var href = itemLink.getAttribute('data-notif-link');
+          if(href) {
+            window.location.href = href;
+          }
+        }
+      });
+    }
+  })();
+
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSearch(); });
   {% if show_activation_modal %}
   (function(){

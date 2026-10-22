@@ -23,6 +23,13 @@ urlpatterns = [
     path('admin-panel/caregivers/<int:profile_id>/deactivate/',  views.deactivate_caregiver,  name='deactivate_caregiver'),
     path('admin-panel/caregivers/<int:profile_id>/reactivate/',  views.reactivate_caregiver,  name='reactivate_caregiver'),
     path('admin-panel/shifts/',                               views.manage_shifts,      name='manage_shifts'),
+    path('admin-panel/shifts/program/',                       views.program_shift,       name='program_shift'),
+    # Operational Workflow: Job Requests & Candidate Matching
+    path('admin-panel/job-requests/',                         views.job_requests,        name='job_requests'),
+    path('admin-panel/job-requests/<int:job_id>/matches/',    views.job_request_matches, name='job_request_matches'),
+    path('admin-panel/job-requests/<int:job_id>/payment-link/', views.admin_create_39_payment_link, name='admin_create_39_payment_link'),
+    path('admin-panel/job-requests/<int:job_id>/email-candidates/', views.admin_email_candidates, name='admin_email_candidates'),
+    path('admin-panel/job-requests/<int:job_id>/email-paylink/', views.admin_email_paylink, name='admin_email_paylink'),
     # Payout queue
     path('admin-panel/payouts/',                              views.payout_queue,       name='payout_queue'),
     path('admin-panel/payouts/<int:log_pk>/mark-paid/',       views.mark_paid,          name='mark_paid'),

@@ -11,9 +11,10 @@ import json
 import logging
 from decimal import Decimal
 
-from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute
-from Account.forms import JobPostingForm
+from Account.models import Shift, ShiftLog, EmployerProfile, JobPosting, BookingProposal, EmployerPayment, Dispute, CaregiverReview
+from Account.forms import JobPostingForm, DisputeForm
 from EmployerApp import stripe_payments
+from EmployerApp.stripe_payments import generate_reference, create_checkout_session
 from GETMECARE.email_utils import (
     send_shift_payment_employer_email,
     send_shift_payment_caregiver_email,
@@ -107,8 +108,12 @@ def _first_job_nudge_ctx(user, profile, request=None) -> dict:
             # The DB timestamp stops it re-appearing on every refresh/page.
             show = last_shown is None or last_shown <= (now - timedelta(hours=24))
         else:
-            # Has posted before: gentle once-a-week reminder to post again.
-            show = last_shown is None or last_shown <= (now - timedelta(days=7))
+            # Do not congratulate a just-posted request with another posting
+            # prompt. The gentle reminder starts seven days after the latest
+            # request, then repeats weekly if shown.
+            latest_post = JobPosting.objects.filter(employer=user).order_by('-created_at').first()
+            anchor = last_shown or (latest_post.created_at if latest_post else now)
+            show = anchor <= (now - timedelta(days=7))
 
     return {
         'show_first_job_modal': show,
@@ -192,6 +197,7 @@ def dashboard(request):
     scheduled = scheduled_qs.order_by('start_date', 'start_time')
     active = active_qs
     recent = recent_qs.order_by('-start_date')[:5]
+    latest_shift = recent[0] if recent else None
     recent_jobs = recent_jobs_qs.order_by('-created_at')[:4]
 
     now   = timezone.localtime()
@@ -210,6 +216,9 @@ def dashboard(request):
         'total_scheduled':   scheduled.count(),
         'total_active':      active.count(),
         'recent_jobs':       recent_jobs,
+        'dispute_categories': Dispute.CATEGORY_CHOICES,
+        'latest_shift':      latest_shift,
+        'all_employer_shifts': Shift.objects.filter(employer=user).select_related('caregiver').order_by('-start_date')[:25],
         'greeting':          greeting,
         'today':             now.date(),
         'employer_profile':  ctx['emp_profile'],
@@ -244,10 +253,42 @@ def dashboard(request):
 def my_shifts(request):
     shifts = Shift.objects.filter(
         employer=request.user
-    ).select_related('caregiver').order_by('-start_date', '-created_at')
+    ).select_related('caregiver', 'review').order_by('-start_date', '-created_at')
     ctx = _employer_ctx(request.user)
     ctx['shifts'] = shifts
     return render(request, 'EmployerApp/my-shifts.html', ctx)
+
+
+@employer_required
+@employer_moderation_check
+def submit_caregiver_review(request, shift_id):
+    """Create or update the employer's review for one completed shift."""
+    if request.method != 'POST':
+        return redirect('EmployerApp:my_shifts')
+    shift = get_object_or_404(
+        Shift, pk=shift_id, employer=request.user, status=Shift.STATUS_COMPLETED,
+    )
+    try:
+        rating = int(request.POST.get('rating', ''))
+        if rating not in range(1, 6):
+            raise ValueError
+    except (TypeError, ValueError):
+        messages.error(request, 'Please choose a star rating from 1 to 5.')
+        return redirect('EmployerApp:my_shifts')
+    review, created = CaregiverReview.objects.get_or_create(
+        shift=shift,
+        defaults={
+            'employer': request.user, 'caregiver': shift.caregiver,
+            'rating': rating, 'comment': request.POST.get('comment', '').strip(),
+        },
+    )
+    if not created:
+        review.rating = rating
+        review.comment = request.POST.get('comment', '').strip()
+        review.full_clean()
+        review.save(update_fields=['rating', 'comment', 'updated_at'])
+    messages.success(request, 'Thanks — your verified rating has been saved.')
+    return redirect('EmployerApp:my_shifts')
 
 
 @employer_required
@@ -314,12 +355,32 @@ def post_job(request):
             job = form.save(commit=False)
             job.employer = request.user
             job.save()
+
+            # Immediate automated webhook alert to Admin WhatsApp account
+            try:
+                from Account.views import _notify_new_care_request
+                payload = {
+                    'user_id': request.user.pk,
+                    'job_posting_id': job.pk,
+                    'name': request.user.get_full_name() or request.user.username,
+                    'email': request.user.email,
+                    'phone': request.user.phone or '',
+                    'city': job.city,
+                    'title': job.title,
+                    'care_type': job.get_care_type_display() if hasattr(job, 'get_care_type_display') else job.care_type,
+                    'hourly_rate': str(job.hourly_rate) if job.hourly_rate else '',
+                    'care_request': job.description,
+                }
+                _notify_new_care_request(payload)
+            except Exception:
+                logger.exception('Job-post WhatsApp webhook alert failed for job %s', job.pk)
+
             # Broadcast job alert to all active caregivers
             try:
                 send_job_posted_caregivers_email(job)
             except Exception:
                 logger.exception('Job-post broadcast email failed for job %s', job.pk)
-            messages.success(request, f'Job "{job.title}" posted successfully.')
+            messages.success(request, f'Job "{job.title}" posted successfully. Live Admin matching desk alerted.')
             return redirect('EmployerApp:my_jobs')
     else:
         form = JobPostingForm()
@@ -845,100 +906,243 @@ def submit_dispute(request):
     if request.method != 'POST':
         return redirect('EmployerApp:my_disputes')
 
-    shift_pk   = request.POST.get('shift_pk', '').strip()
-    payment_pk = request.POST.get('payment_pk', '').strip()
-    category   = request.POST.get('category', '').strip()
-    description = request.POST.get('description', '').strip()
-
-    # Validate category
-    valid_cats = [c[0] for c in Dispute.CATEGORY_CHOICES]
-    if category not in valid_cats:
-        messages.error(request, 'Please select a valid dispute category.')
+    form = DisputeForm(request.user, data=request.POST)
+    if not form.is_valid():
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f'{field}: {error}')
         return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
 
-    if not description:
-        messages.error(request, 'Please describe the issue before submitting.')
-        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
-
-    # Resolve shift (required — dispute must be tied to a shift or payment)
-    shift = None
-    caregiver = None
-    if shift_pk:
-        shift = get_object_or_404(Shift, pk=shift_pk, employer=request.user)
-        caregiver = shift.caregiver
-    elif payment_pk:
-        payment_obj = get_object_or_404(
-            EmployerPayment,
-            pk=payment_pk,
-            employer=request.user,
-            payment_type=EmployerPayment.TYPE_BOOKING,
-        )
-        shift = payment_obj.shift
-        if shift:
-            caregiver = shift.caregiver
-
-    if not caregiver:
-        messages.error(request, 'Could not identify the caregiver for this dispute.')
-        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
-
-    # Prevent duplicate open disputes for the same shift
-    existing = Dispute.objects.filter(
-        employer=request.user,
-        shift=shift,
-        status__in=[Dispute.STATUS_OPEN, Dispute.STATUS_UNDER_REVIEW],
-    ).first()
-    if existing:
-        messages.warning(
-            request,
-            f'You already have an open dispute (#{existing.pk}) for this shift. '
-            'Please wait for it to be resolved before raising another.'
-        )
-        return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:payment_history'))
-
-    payment_obj = None
-    if payment_pk:
-        try:
-            payment_obj = EmployerPayment.objects.get(
-                pk=payment_pk, employer=request.user
-            )
-        except EmployerPayment.DoesNotExist:
-            pass
-
-    Dispute.objects.create(
+    cleaned = form.cleaned
+    dispute = Dispute.objects.create(
         employer    = request.user,
-        caregiver   = caregiver,
-        shift       = shift,
-        payment     = payment_obj,
-        category    = category,
-        description = description,
+        caregiver   = cleaned['caregiver'],
+        shift       = cleaned.get('_shift'),
+        payment     = cleaned.get('_payment'),
+        category    = cleaned['category'],
+        description = cleaned['description'],
         status      = Dispute.STATUS_OPEN,
     )
 
-    # Notify admin of the new complaint
+    # Notify admin of the new complaint. Delivery channels are deliberately
+    # independent: an email outage must not suppress the WhatsApp escalation.
     try:
-        _new_dispute = Dispute.objects.filter(
-            employer=request.user,
-            description=description,
-        ).order_by('-pk').first()
-        if _new_dispute:
-            send_dispute_submitted_admin_email(_new_dispute)
+        send_dispute_submitted_admin_email(dispute)
     except Exception:
         logger.exception('Dispute submitted email failed for employer %s', request.user.pk)
+    try:
+        notify_admin(
+            '⚠️ SHIFT DISPUTE #' + str(dispute.pk) + '\n'
+            'Employer: ' + request.user.get_full_name() + '\n'
+            'Caregiver: ' + dispute.caregiver.get_full_name() + '\n'
+            'Category: ' + dispute.get_category_display() + '\n'
+            'Details: ' + dispute.description[:500],
+            event='shift_dispute_created',
+            payload={'dispute_id': dispute.pk, 'employer_id': request.user.pk},
+        )
+    except Exception:
+        logger.exception('Dispute WhatsApp alert failed for employer %s', request.user.pk)
 
     messages.success(
         request,
-        'Your dispute has been submitted. Our team will review it and respond within 2 business days.'
+        'Your dispute has been submitted. Our team will review it and respond within 2 business days.',
     )
     return redirect(request.META.get('HTTP_REFERER', 'EmployerApp:my_disputes'))
+def my_disputes(request):
+    """Display a list of all disputes raised by the current employer.
+
+    Each dispute is shown with its status, category, summary description,
+    and the caregiver it was filed against.
+    """
+    disputes = Dispute.objects.filter(employer=request.user).select_related(
+        'caregiver', 'shift', 'payment'
+    ).order_by('-created_at')
+
+    ctx = _employer_ctx(request.user)
+    ctx.update({
+        'disputes': disputes,
+        'open_count': disputes.filter(status=Dispute.STATUS_OPEN).count(),
+        'under_review_count': disputes.filter(
+            status=Dispute.STATUS_UNDER_REVIEW
+        ).count(),
+        'resolved_count': disputes.filter(
+            status=Dispute.STATUS_RESOLVED
+        ).count(),
+        'dismissed_count': disputes.filter(
+            status=Dispute.STATUS_DISMISSED
+        ).count(),
+    })
+    return render(request, 'EmployerApp/my-disputes.html', ctx)
 
 
 @employer_required
 @employer_moderation_check
-def my_disputes(request):
-    """Employer views all their own disputes."""
-    disputes = Dispute.objects.filter(
-        employer=request.user
-    ).select_related('caregiver', 'shift', 'payment').order_by('-created_at')
+def admin_shift_log(request):
+    """Admin console to record shift logging / time entries.
+
+    Used by employment-agency admins to backfill or correct the hours
+    worked, hourly rate, amount earned and payment status for a shift.
+    Supports both creating new shift logs and editing existing ones.
+    """
+    shift_log_edit_id = request.GET.get('edit', '').strip()
+    shift_log_to_edit = None
+
+    if shift_log_edit_id:
+        try:
+            shift_log_to_edit = ShiftLog.objects.get(pk=shift_log_edit_id)
+        except ShiftLog.DoesNotExist:
+            messages.warning(request, 'Shift log not found.')
+            return redirect('EmployerApp:dashboard')
+
+    if request.method == 'POST':
+        shift_pk = request.POST.get('shift_pk', '').strip()
+        clock_in = request.POST.get('clock_in_time', '').strip()
+        clock_out = request.POST.get('clock_out_time', '').strip()
+        hours_worked = request.POST.get('hours_worked', '').strip()
+        hourly_rate = request.POST.get('hourly_rate', '').strip()
+        amount_earned = request.POST.get('amount_earned', '').strip()
+        payment_status = request.POST.get('payment_status', '').strip()
+
+        try:
+            shift = Shift.objects.get(pk=shift_pk, employer=request.user)
+        except Shift.DoesNotExist:
+            messages.error(request, 'No shift found with that ID for your account.')
+            return redirect('EmployerApp:dashboard')
+
+        # Resolve the caregiver from the shift.
+        caregiver = shift.caregiver
+
+        if shift_log_to_edit:
+            # Edit: update existing ShiftLog
+            shift_log = shift_log_to_edit
+            shift_log.shift = shift
+            shift_log.caregiver = caregiver
+            shift_log.pk = None  # Remove old pk to create a new entry on save
+        else:
+            # Create: new ShiftLog
+            shift_log = ShiftLog(shift=shift, caregiver=caregiver)
+
+        if clock_in:
+            try:
+                shift_log.clock_in_time = datetime.datetime.fromisoformat(clock_in)
+            except ValueError:
+                messages.error(request, 'Invalid clock-in time.')
+                return redirect('EmployerApp:dashboard')
+        if clock_out:
+            try:
+                shift_log.clock_out_time = datetime.datetime.fromisoformat(clock_out)
+            except ValueError:
+                messages.error(request, 'Invalid clock-out time.')
+                return redirect('EmployerApp:dashboard')
+        if hours_worked:
+            try:
+                shift_log.hours_worked = Decimal(hours_worked)
+            except Exception:
+                messages.error(request, 'Invalid hours worked.')
+                return redirect('EmployerApp:dashboard')
+        if hourly_rate:
+            try:
+                shift_log.hourly_rate = Decimal(hourly_rate)
+            except Exception:
+                messages.error(request, 'Invalid hourly rate.')
+                return redirect('EmployerApp:dashboard')
+        if amount_earned:
+            try:
+                shift_log.amount_earned = Decimal(amount_earned)
+            except Exception:
+                messages.error(request, 'Invalid amount earned.')
+                return redirect('EmployerApp:dashboard')
+        if payment_status:
+            shift_log.payment_status = payment_status
+
+        shift_log.save()
+
+        if shift_log_to_edit:
+            messages.success(request, 'Shift log updated successfully.')
+        else:
+            messages.success(
+                request,
+                f'Shift log recorded for shift #{shift_pk} ({caregiver.get_full_name()}).',
+            )
+        return redirect('EmployerApp:dashboard')
+
+    shifts = Shift.objects.filter(employer=request.user).select_related('caregiver').order_by('-start_date')[:20]
+    shift_logs = ShiftLog.objects.filter(shift__in=shifts).select_related('shift', 'caregiver').order_by('-id')[:20]
+    ctx = _employer_ctx(request.user)
+    ctx.update({
+        'shifts': shifts,
+        'shift_logs': shift_logs,
+        'shift_log_form': True,
+        'shift_log_edit_id': shift_log_edit_id,
+        'shift_log_to_edit': shift_log_to_edit,
+    })
+    return render(request, 'EmployerApp/admin-shift-log.html', ctx)
+
+@employer_required
+@employer_moderation_check
+def start_39_payment_link(request):
+    """Display the $39 Stripe Payment Link for candidate selection."""
+    if request.method == 'POST':
+        candidate_pk = request.POST.get('candidate_pk', '').strip()
+        shift_pk = request.POST.get('shift_pk', '').strip()
+
+        try:
+            shift = Shift.objects.get(pk=shift_pk, employer=request.user)
+        except Shift.DoesNotExist:
+            messages.error(request, 'No shift found with that ID for your account.')
+            return redirect('EmployerApp:dashboard')
+
+        try:
+            candidate = CaregiverProfile.objects.get(pk=candidate_pk)
+        except CaregiverProfile.DoesNotExist:
+            messages.error(request, 'No candidate selected.')
+            return redirect('EmployerApp:dashboard')
+
+        # Route the $39 payment to this shift (booking-type payment).
+        reference = generate_reference('PAY39')
+        success_url = request.build_absolute_uri(
+            reverse('EmployerApp:payment_checkout', args=[shift.pk]) + '?confirmed=1'
+        )
+        cancel_url = request.build_absolute_uri(
+            reverse('EmployerApp:dashboard')
+        )
+
+        session = create_checkout_session(
+            amount=39.00,
+            customer_name=request.user.get_full_name(),
+            customer_email=request.user.email,
+            reference=reference,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                'payment_type': EmployerPayment.TYPE_BOOKING,
+                'user_id': request.user.pk,
+                'shift_id': shift.pk,
+            },
+            description='Caregiver activation + shift booking - ' + candidate.user.get_full_name()
+        )
+
+        messages.success(
+            request,
+            'Payment link created. Redirecting to Stripe to complete the $39 booking...',
+        )
+        return redirect(session.url)
+
+    candidates = CaregiverProfile.objects.filter(
+        user__is_active=True,
+        account_status=CaregiverProfile.ACCOUNT_ACTIVE,
+        status=CaregiverProfile.STATUS_ACTIVE,
+    ).select_related('user')[:20]
+
+    ctx = _employer_ctx(request.user)
+    ctx.update({
+        'candidates': candidates,
+        'payment_link_active': True,
+        'fee_amount': '39.00',
+    })
+    return render(request, 'EmployerApp/start-39-payment-link.html', ctx)
+
+    return render(request, 'EmployerApp/admin-shift-log.html', ctx)
 
     open_count     = disputes.filter(status=Dispute.STATUS_OPEN).count()
     review_count   = disputes.filter(status=Dispute.STATUS_UNDER_REVIEW).count()
@@ -958,16 +1162,145 @@ def my_disputes(request):
 
 
 # ──────────────────────────────────────────────────────────────
-# Stripe Webhook Endpoint
-# Receives checkout.session.completed events from Stripe and records
-# payments that may not have been captured by the redirect flow.
+# Admin Notification Webhook
+# Receives job posting / request notifications and dispatches
+# a formatted message to the admin WhatsApp line.
+# ──────────────────────────────────────────────────────────────
+@csrf_exempt
+def request_notification_webhook(request):
+    """
+    Receive POST payloads whenever a new care request is publicly listed.
+    Triggered by POST /api/notifications/request-created/.
+
+    Expected JSON payload (from unified signup form):
+    {
+        "user_id": 123,
+        "name": "Jane Smith",
+        "email": "jane@example.com",
+        "phone": "+16475550100",
+        "city": "Toronto",
+        "care_type": "senior_elder",
+        "schedule": "flexible",
+        "hourly_rate": "28.00",
+        "hours_per_week": 20,
+        "description": "Full-time respite care for my mother…",
+        "job_posting_id": 456
+    }
+
+    Flow:
+      1. Validates the POST payload.
+      2. Sends a formatted message to the admin WhatsApp account
+         (via external service integration point).
+      3. Returns a 200 OK so the form submission keeps its "instant publish" promise.
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        logger.warning(
+            'request_notification_webhook: invalid JSON payload — %s',
+            exc,
+        )
+        return HttpResponse(status=400)
+
+    # Extract the fields we care about (fall back to defaults)
+    user_id      = payload.get('user_id')
+    name         = payload.get('name', 'Unknown')
+    phone        = payload.get('phone', '')
+    email        = payload.get('email', '')
+    city         = payload.get('city', 'Not specified')
+    care_type    = payload.get('care_type', 'other')
+    schedule     = payload.get('schedule', 'flexible')
+    hourly_rate  = payload.get('hourly_rate', 'Not specified')
+    hours_per_week = payload.get('hours_per_week', '')
+    description  = payload.get('description', '')
+    job_id       = payload.get('job_posting_id', 'N/A')
+
+    # ── Compose the notification message ──
+    rate_display = f"${hourly_rate}/hr" if hourly_rate and hourly_rate != 'Not specified' else "Rate: to be confirmed"
+    hours_display = f"{hours_per_week} hrs/wk" if hours_per_week else "Hours: flexible"
+
+    msg_lines = [
+        "🆕 NEW CARE REQUEST PUBLISHED",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        f"👤 Name:       {name}",
+        f"📞 Phone:      {phone}",
+        f"📧 Email:      {email}",
+        f"📍 City:       {city}",
+        f"💼 Care type:  {care_type}",
+        f"⏱ Schedule:   {schedule}",
+        f"💰 Rate:       {rate_display}",
+        f"⏰ Hours:      {hours_display}",
+        f"📝 Description: {description[:200]}{'...' if len(description) > 200 else ''}",
+        f"🔗 Job ID:     {job_id}",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "Admin: review + match caregivers via WhatsApp.",
+    ]
+    notification_message = "\n".join(msg_lines)
+
+    logger.info(
+        'request_notification_webhook received for user_id=%s job_id=%s',
+        user_id, job_id,
+    )
+
+    # ── ⚡ Integration point: send to admin WhatsApp ──
+    # Replace the block below with a call to your WhatsApp Business API
+    # or a SMS/WhatsApp gateway (e.g. Twilio, Vonage, MessageBird).
+    # Example:
+    #   from notifications.services import whatsapp
+    #   whatsapp.send_to_admin(notification_message)
+    try:
+        _dispatch_to_admin_whatsapp(notification_message, payload)
+    except Exception as exc:
+        # Always log and return 200 to keep the form submission fast;
+        # the notification is best-effort.
+        logger.exception(
+            'request_notification_webhook: failed to dispatch to admin WhatsApp — %s',
+            exc,
+        )
+
+    return HttpResponse(status=200)
+
+
+def _dispatch_to_admin_whatsapp(message: str, payload: dict) -> None:
+    """
+    Dispatch the notification to the admin WhatsApp account.
+
+    Replace this helper with your actual WhatsApp delivery logic.
+    Example Slack-style calls:
+
+      # Twilio WhatsApp
+      from twilio.rest import Client
+      client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+      client.messages.create(
+          body=message,
+          from_='whatsapp:+14155238886',
+          to=settings.ADMIN_WHATSAPP_NUMBER,
+      )
+
+      # Or a custom gateway
+      requests.post(
+          settings.WHATSAPP_API_URL,
+          json={'to': settings.ADMIN_WHATSAPP_NUMBER, 'body': message},
+      )
+    """
+    from django.conf import settings
+
+    from GETMECARE.whatsapp import notify_admin
+    notify_admin(message, event='care_request_created', payload=payload)
+
+
+# ──────────────────────────────────────────────────────────────
+# Stripe Webhook Endpoint (existing)
 # ──────────────────────────────────────────────────────────────
 @csrf_exempt
 def stripe_webhook(request):
     """Process Stripe webhook notifications (checkout.session.completed).
 
     This endpoint is called by Stripe's servers whenever a checkout
-    session completes.  It runs independently of the redirect callback
+    session completes. It runs independently of the redirect callback
     so payments are recorded even if the customer closes the browser.
 
     Signature is validated against the Stripe-Signature header using

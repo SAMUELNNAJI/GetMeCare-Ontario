@@ -93,6 +93,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'GETMECARE.context_processors.sidebar_context',
+                'GETMECARE.context_processors.admin_whatsapp_number',
             ],
         },
     },
@@ -150,7 +151,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# Must be absolute.  A relative URL causes pages below a nested route (for
+# example /employer/dashboard/) to request /employer/dashboard/static/... and
+# render without their stylesheet.
+STATIC_URL = '/static/'
 
 # Note: don't list app static dirs here — Django finds those automatically
 # via APP_DIRS. Only add project-level static folders outside of any app.
@@ -218,20 +222,29 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# ── Email Configuration ──────────────────────────────────────
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# ── Email Configuration (ZeptoMail SMTP) ────────────────────────
+# Outbound mail is routed via ZeptoMail SMTP.
+# Admin notifications are delivered to ADMIN_EMAIL (getmecareontario@gmail.com).
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.zeptomail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'emailapikey')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GetMeCare Ontario <noreply@getmecare-ontario.com>')
-CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'info@getmecare-ontario.com')
-ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'info@getmecare-ontario.com')
 
-# ── Contact form — Gmail SMTP (bypasses ZeptoMail to save credits) ──
-# Use a Gmail App Password (not your real password):
-# Google Account → Security → 2-Step Verification → App passwords
-GMAIL_USER         = os.getenv('GMAIL_USER', '')
-GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD', '')
+# Use SMTP backend if ZeptoMail credentials exist, otherwise console in dev
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend' if os.getenv('EMAIL_HOST_PASSWORD') else 'django.core.mail.backends.console.EmailBackend'
+)
+
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GetMeCare Ontario <noreply@getmecare-ontario.com>')
+CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'getmecareontario@gmail.com')
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'getmecareontario@gmail.com')
+
+# Operational alerts channel: 'email' (default), 'whatsapp', or 'both'
+ADMIN_NOTIFICATION_CHANNEL = os.getenv('ADMIN_NOTIFICATION_CHANNEL', 'email').lower()
+
+# WhatsApp Business provider webhook (optional fallback)
+ADMIN_WHATSAPP_NUMBER = os.getenv('ADMIN_WHATSAPP_NUMBER', '+12494812647')
+ADMIN_WHATSAPP_WEBHOOK_URL = os.getenv('ADMIN_WHATSAPP_WEBHOOK_URL', '')
