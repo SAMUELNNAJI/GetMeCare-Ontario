@@ -41,6 +41,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
             name="firstName"
             placeholder="e.g. Sandra"
             id="firstName"
+            value="{{ form_data.firstName|default:'' }}"
             required
           />
         </div>
@@ -51,6 +52,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
             name="lastName"
             placeholder="e.g. Mitchell"
             id="lastName"
+            value="{{ form_data.lastName|default:'' }}"
             required
           />
         </div>
@@ -63,23 +65,24 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
             name="email"
             placeholder="you@example.com"
             id="email"
+            value="{{ form_data.email|default:'' }}"
             required
           />
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" name="phone" placeholder="+1 (647) 000-0000" id="phone" />
+          <input type="tel" name="phone" placeholder="+1 (647) 000-0000" id="phone" value="{{ form_data.phone|default:'' }}" />
         </div>
       </div>
       <div class="form-group">
         <label>I am a… <span>*</span></label>
         <select id="role" name="role" required>
-          <option value="" disabled selected>Select your role</option>
-          <option value="family">Family / Employer looking for care</option>
-          <option value="psw">PSW / Caregiver looking to join</option>
-          <option value="general">General enquiry</option>
-          <option value="media">Media / Press</option>
-          <option value="other">Other</option>
+          <option value="" disabled {% if not form_data.role %}selected{% endif %}>Select your role</option>
+          <option value="family" {% if form_data.role == 'family' %}selected{% endif %}>Family / Employer looking for care</option>
+          <option value="psw" {% if form_data.role == 'psw' %}selected{% endif %}>PSW / Caregiver looking to join</option>
+          <option value="general" {% if form_data.role == 'general' %}selected{% endif %}>General enquiry</option>
+          <option value="media" {% if form_data.role == 'media' %}selected{% endif %}>Media / Press</option>
+          <option value="other" {% if form_data.role == 'other' %}selected{% endif %}>Other</option>
         </select>
       </div>
       <div class="form-group">
@@ -89,6 +92,7 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
           name="subject"
           placeholder="Brief subject of your message"
           id="subject"
+          value="{{ form_data.subject|default:'' }}"
           required
         />
       </div>
@@ -99,15 +103,40 @@ Us – GetMeCare ONTARIO{% endblock %} {% block content %}
           name="message"
           placeholder="Tell us how we can help you…"
           required
-        ></textarea>
+        >{{ form_data.message|default:'' }}</textarea>
       </div>
+
+      {# ── Anti-Spam Human Verification ── #}
+      <div class="form-group" style="background:#f4faf6;border:1.5px solid #c2e7d3;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+        <label for="captcha_ans" style="display:flex;align-items:center;gap:8px;font-weight:700;color:#1b5e3a;margin-bottom:8px;font-size:0.92rem;">
+          <i class="fas fa-shield-alt" style="color:#1b7d4f;font-size:1.1rem;"></i>
+          Security Verification: What is <strong>{{ captcha_n1 }} + {{ captcha_n2 }}</strong>? <span style="color:#e53935;">*</span>
+        </label>
+        <input
+          type="number"
+          name="captcha_ans"
+          id="captcha_ans"
+          placeholder="Enter the number"
+          required
+          autocomplete="off"
+          style="background:#fff;border:1.5px solid #a8dfc1;border-radius:8px;padding:10px 14px;font-size:1rem;font-weight:700;width:100%;max-width:200px;box-sizing:border-box;"
+        />
+        <input type="hidden" name="captcha_token" value="{{ captcha_token }}">
+        <p style="margin:6px 0 0;font-size:0.75rem;color:#557b64;">Solves automated spam so our care team receives only genuine inquiries.</p>
+      </div>
+
       <button type="submit" class="btn-submit" id="contactSubmitBtn">
         <i class="fas fa-paper-plane"></i> Send Message
       </button>
-      {# ── Honeypot: hidden field bots fill in, humans leave blank ── #}
-      <div style="display:none !important;visibility:hidden;position:absolute;left:-9999px;" aria-hidden="true">
+
+      {# ── Deceptive Honeypots: Invisible to humans, bots automatically fill them ── #}
+      <div style="display:none !important;visibility:hidden;position:absolute;left:-9999px;opacity:0;pointer-events:none;width:0;height:0;" aria-hidden="true">
         <label for="website">Leave this blank</label>
         <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+        <label for="company_website">Company Website</label>
+        <input type="text" name="company_website" id="company_website" tabindex="-1" autocomplete="off">
+        <label for="business_title">Business Title</label>
+        <input type="text" name="business_title" id="business_title" tabindex="-1" autocomplete="off">
       </div>
       {# ── Timing field: set by JS on page load, checked server-side ── #}
       <input type="hidden" name="form_loaded_at" id="formLoadedAt" value="">
