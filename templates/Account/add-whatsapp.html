@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Connect WhatsApp — GetMeCare Ontario{% endblock %}
+
+{% block extra_head %}
+<style>
+  .wa-landing-wrap {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    background: #f4f7f4;
+  }
+  .wa-card {
+    background: #ffffff;
+    border: 1px solid #dde4d9;
+    border-radius: 18px;
+    max-width: 520px;
+    width: 100%;
+    padding: 36px 32px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .wa-badge-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    font-size: 2rem;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(37, 211, 102, 0.28);
+  }
+  .wa-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+  }
+  .wa-desc {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.55;
+    margin-bottom: 24px;
+  }
+  .wa-perks {
+    background: #f0faf3;
+    border: 1px solid #d2edd9;
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  .wa-perk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #264a34;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .wa-perk-item:last-child {
+    margin-bottom: 0;
+  }
+  .wa-perk-item i {
+    color: #25D366;
+    margin-top: 2px;
+    font-size: 0.95rem;
+  }
+  .wa-form-group {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+  .wa-label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #496352;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .wa-input-wrap {
+    display: flex;
+    border: 1.5px solid #dde4d9;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .wa-input-wrap:focus-within {
+    border-color: #25D366;
+    box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.16);
+  }
+  .wa-country-prefix {
+    background: #f7faf6;
+    border-right: 1px solid #dde4d9;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .wa-input {
+    flex: 1;
+    border: none;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #1a1a1a;
+    outline: none;
+    min-width: 0;
+  }
+  .wa-submit-btn {
+    width: 100%;
+    background: #25D366;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+  .wa-submit-btn:hover {
+    background: #1ebd57;
+    color: #ffffff;
+  }
+  .wa-secondary-btn {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: #666;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .wa-secondary-btn:hover {
+    color: #1a1a1a;
+    text-decoration: underline;
+  }
+  .wa-already-active {
+    background: #eafff0;
+    border: 1px solid #b9e3ca;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  @media (max-width: 520px) {
+    .wa-card {
+      padding: 24px 18px;
+      border-radius: 14px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wa-landing-wrap">
+  <div class="wa-card">
+    <div class="wa-badge-icon">
+      <i class="fab fa-whatsapp"></i>
+    </div>
+
+    {% if has_whatsapp %}
+      <h1 class="wa-title">WhatsApp Already Connected</h1>
+      <p class="wa-desc">
+        Your account is already linked with a verified WhatsApp number:
+      </p>
+
+      <div class="wa-already-active">
+        <span style="font-size:1.15rem;font-weight:800;color:#1b7d4f;letter-spacing:.05em">
+          +{{ current_digits }}
+        </span>
+        <div style="font-size:.78rem;color:#1b7d4f;font-weight:700;margin-top:6px;">
+          <i class="fas fa-check-circle"></i> Active &amp; Verified for Live Notifications
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:#666;margin-bottom:20px;">
+        Need to change or update your WhatsApp number? Enter a new one below:
+      </p>
+    {% else %}
+      <h1 class="wa-title">Connect Your WhatsApp</h1>
+      <p class="wa-desc">
+        {% if request.user.is_caregiver %}
+          Employers connect significantly faster over WhatsApp. Link your number to receive instant shift notifications and coordinator updates.
+        {% else %}
+          Stay updated on your care requests. Connect your WhatsApp number to receive immediate caregiver matches and coordinator support.
+        {% endif %}
+      </p>
+
+      <div class="wa-perks">
+        <div class="wa-perk-item">
+          <i class="fas fa-bolt"></i>
+          <div><strong>Instant Notifications:</strong> No need to refresh the website to know when someone messages or updates you.</div>
+        </div>
+        <div class="wa-perk-item">
+          <i class="fas fa-shield-alt"></i>
+          <div><strong>Private &amp; Secure:</strong> Strictly used for care coordination, shift confirmation, and support alerts.</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'Account:add_whatsapp_page' %}">
+      {% csrf_token %}
+      <div class="wa-form-group">
+        <label for="waPhoneInput" class="wa-label">WhatsApp Mobile Number</label>
+        <div class="wa-input-wrap">
+          <div class="wa-country-prefix">
+            <span>🇨🇦 / 🇺🇸 +1</span>
+          </div>
+          <input type="tel" id="waPhoneInput" name="phone" class="wa-input"
+                 placeholder="e.g. 416 555 0123" inputmode="tel" autocomplete="tel"
+                 value="{{ current_phone }}" required autofocus>
+        </div>
+        <span style="display:block;font-size:.72rem;color:#888;margin-top:5px;">
+          Enter 10-digit Canadian/US mobile number or include country code if international.
+        </span>
+      </div>
+
+      <button type="submit" class="wa-submit-btn">
+        <i class="fab fa-whatsapp"></i> {% if has_whatsapp %}Update WhatsApp Number{% else %}Save &amp; Link WhatsApp{% endif %}
+      </button>
+
+      {% if request.user.is_caregiver %}
+        <a href="{% url 'CareGiverAcc:dashboard' %}" class="wa-secondary-btn">
+          Back to Dashboard
+        </a>
+      {% elif request.user.is_employer %}
+        <a href="{% url 'EmployerApp:dashboard' %}" class="wa-secondary-btn">
+          Back to Dashboard
+        </a>
+      {% else %}
+        <a href="{% url 'home' %}" class="wa-secondary-btn">
+          Back to Home
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

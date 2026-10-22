@@ -72,104 +72,132 @@
         >{% if search_q %}{{ users|length }} result{{ users|length|pluralize }}{% else %}{{ users|length }} total{% endif %}</span
       >
     </div>
-    <form method="get" action="" style="margin-bottom:14px;">
-      <div class="adm-search" style="max-width:320px;">
-        <i class="fas fa-search"></i>
-        <input type="text" name="q" placeholder="Search users by name, email or role…" value="{{ request.GET.q|default:'' }}">
-      </div>
-    </form>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+      <form method="get" action="" style="margin:0;">
+        <div class="adm-search" style="max-width:320px;">
+          <i class="fas fa-search"></i>
+          <input type="text" name="q" placeholder="Search users by name, email or role…" value="{{ request.GET.q|default:'' }}">
+        </div>
+      </form>
+
+      {% if missing_wa_count > 0 %}
+      <form method="post" action="{% url 'AdminApp:send_whatsapp_reminders' %}" onsubmit="return confirm('Send WhatsApp setup reminder emails to all {{ missing_wa_count }} user(s) currently missing a WhatsApp number?');" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" style="background:#25d366;color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,211,102,.2);transition:background .15s;">
+          <i class="fab fa-whatsapp" style="font-size:1rem;"></i> Email WhatsApp Setup Link to Old Users ({{ missing_wa_count }})
+        </button>
+      </form>
+      {% endif %}
+    </div>
+
     {% if search_q %}
     <div id="search-results" style="background:#e6f5ee;border:1px solid #1b7d4f;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span style="font-size:.82rem;color:#1b7d4f"><i class="fas fa-search" style="margin-right:6px"></i>Search results for <strong>"{{ search_q }}"</strong> — {{ users|length }} user{{ users|length|pluralize }}</span>
       <a href="{% url 'AdminApp:manage_users' %}" style="font-size:.78rem;color:#1b7d4f;text-decoration:none;font-weight:600"><i class="fas fa-times" style="margin-right:4px"></i>Clear search</a>
     </div>
     {% endif %}
+
     <div class="scroll-table-wrap">
-<table class="adm-table">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Role</th>
-          <th>Phone</th>
-          <th>Joined</th>
-          <th>Staff</th>
-          <th>Active</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>
-            <div class="u-info">
-              <div class="u-av {% if u.is_employer %}employer{% endif %}">
-                {% if u.first_name %}{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}{% else %}{{ u.username|slice:":2"|upper }}{% endif %}
-              </div>
-              <div>
-                <div class="u-name">
-                  {{ u.get_full_name|default:u.username }}
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>WhatsApp / Phone</th>
+            <th>Joined</th>
+            <th>Staff</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in users_data %}
+          {% with u=item.user has_wa=item.has_whatsapp %}
+          <tr>
+            <td>
+              <div class="u-info">
+                <div class="u-av {% if u.is_employer %}employer{% endif %}">
+                  {% if u.first_name %}{{ u.first_name|first|upper }}{{ u.last_name|first|upper }}{% else %}{{ u.username|slice:":2"|upper }}{% endif %}
                 </div>
-                <div class="u-email">{{ u.email }}</div>
+                <div>
+                  <div class="u-name">
+                    {{ u.get_full_name|default:u.username }}
+                  </div>
+                  <div class="u-email">{{ u.email }}</div>
+                </div>
               </div>
-            </div>
-          </td>
-          <td>
-            <span
-              class="badge {% if u.is_caregiver %}badge-green{% elif u.is_staff %}badge-orange{% else %}badge-blue{% endif %}"
-              >{{ u.get_role_display }}</span
-            >
-          </td>
-          <td style="color: #888; font-size: 0.82rem">
-            {{ u.phone|default:"—" }}
-          </td>
-          <td style="color: #888; font-size: 0.82rem">
-            {{ u.date_joined|date:"M d, Y" }}
-          </td>
-          <td>
-            {% if u.is_staff or u.is_superuser %}<span
-              class="badge badge-orange"
-              >Admin</span
-            >{% else %}<span style="color: #ccc; font-size: 0.8rem">—</span>{% endif %}
-          </td>
-          <td>
-            <span
-              class="badge {% if u.is_active %}badge-green{% else %}badge-red{% endif %}"
-              >{% if u.is_active %}Active{% else %}Inactive{% endif %}</span
-            >
-          </td>
-          <td>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              {% if u.id != request.user.id and not u.is_superuser and not u.is_staff %}
-              <a href="{% url 'admin_support_start' u.id %}" class="adm-btn adm-btn-green" style="padding:6px 12px;font-size:.75rem;">
-                <i class="fas fa-comment"></i> Chat
-              </a>
-              {% endif %}
-              {% if u.id != request.user.id %}
-              <form method="post" action="{% url 'AdminApp:delete_user' u.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ u.get_full_name|default:u.username }}? This action cannot be undone.');">
-                {% csrf_token %}
-                <button type="submit" class="adm-btn adm-btn-danger" style="padding:6px 12px;font-size:.75rem;">
-                  <i class="fas fa-trash"></i> Delete
-                </button>
-              </form>
+            </td>
+            <td>
+              <span
+                class="badge {% if u.is_caregiver %}badge-green{% elif u.is_staff %}badge-orange{% else %}badge-blue{% endif %}"
+                >{{ u.get_role_display }}</span
+              >
+            </td>
+            <td>
+              {% if has_wa %}
+                <span style="font-size:.82rem;font-weight:600;color:#1b7d4f;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> {{ u.phone }}</span>
               {% else %}
-              <span style="color:#ccc;font-size:.75rem;">—</span>
+                <span style="font-size:.74rem;color:#c96000;background:#fff8ee;padding:3px 8px;border-radius:6px;border:1px solid #fed7aa;display:inline-flex;align-items:center;gap:4px;">
+                  <i class="fas fa-exclamation-circle"></i> No WhatsApp
+                </span>
               {% endif %}
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7">
-            <div class="adm-empty">
-              <i class="fas fa-{% if search_q %}search{% else %}users-slash{% endif %}"></i>
-              {% if search_q %}No users match "{{ search_q }}"{% else %}No users found.{% endif %}
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div><!-- /scroll-table-wrap -->
+            </td>
+            <td style="color: #888; font-size: 0.82rem">
+              {{ u.date_joined|date:"M d, Y" }}
+            </td>
+            <td>
+              {% if u.is_staff or u.is_superuser %}<span
+                class="badge badge-orange"
+                >Admin</span
+              >{% else %}<span style="color: #ccc; font-size: 0.8rem">—</span>{% endif %}
+            </td>
+            <td>
+              <span
+                class="badge {% if u.is_active %}badge-green{% else %}badge-red{% endif %}"
+                >{{ u.is_active|yesno:"Active,Inactive" }}</span
+              >
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                {% if not has_wa and u.email and not u.is_superuser and not u.is_staff %}
+                <a href="{% url 'AdminApp:send_single_whatsapp_reminder' u.id %}"
+                   onclick="return confirm('Send WhatsApp setup reminder email to {{ u.email }}?')"
+                   class="adm-btn" style="background:#e8f7ee;color:#1b7d4f;border:1px solid #b2dfca;padding:6px 10px;font-size:.74rem;text-decoration:none;" title="Send WhatsApp setup reminder email">
+                  <i class="fab fa-whatsapp" style="color:#25d366;"></i> Remind
+                </a>
+                {% endif %}
+                {% if u.id != request.user.id and not u.is_superuser and not u.is_staff %}
+                <a href="{% url 'admin_support_start' u.id %}" class="adm-btn adm-btn-green" style="padding:6px 12px;font-size:.75rem;">
+                  <i class="fas fa-comment"></i> Chat
+                </a>
+                {% endif %}
+                {% if u.id != request.user.id %}
+                <form method="post" action="{% url 'AdminApp:delete_user' u.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ u.get_full_name|default:u.username }}? This action cannot be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" class="adm-btn adm-btn-danger" style="padding:6px 12px;font-size:.75rem;">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </form>
+                {% else %}
+                <span style="color:#ccc;font-size:.75rem;">—</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="adm-empty">
+                <i class="fas fa-{% if search_q %}search{% else %}users-slash{% endif %}"></i>
+                {% if search_q %}No users match "{{ search_q }}"{% else %}No users found.{% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

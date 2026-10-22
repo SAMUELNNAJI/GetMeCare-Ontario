@@ -202,7 +202,85 @@ def manage_users(request):
     ctx = _admin_sidebar()
     ctx['users'] = users
     ctx['search_q'] = q
+
+    from GETMECARE.whatsapp import whatsapp_digits
+    users_data = []
+    missing_wa_count = 0
+    for u in users:
+        has_wa = bool(whatsapp_digits(u.phone))
+        if not has_wa and not u.is_staff and not u.is_superuser:
+            missing_wa_count += 1
+        users_data.append({
+            'user': u,
+            'has_whatsapp': has_wa,
+        })
+    ctx['users_data'] = users_data
+    ctx['missing_wa_count'] = missing_wa_count
+
     return render(request, 'AdminApp/manage-users.html', ctx)
+
+
+@admin_required
+def send_whatsapp_reminders(request):
+    """Admin bulk action: Send an email reminder to all active users without a valid WhatsApp number."""
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_users')
+
+    from GETMECARE.whatsapp import whatsapp_digits
+    from GETMECARE.email_utils import send_whatsapp_reminder_email
+
+    users = CustomUser.objects.filter(is_active=True).exclude(is_staff=True).exclude(is_superuser=True)
+    sent_count = 0
+    failed_count = 0
+
+    try:
+        site_domain = request.get_host()
+    except Exception:
+        site_domain = 'getmecare-ontario.com'
+
+    for u in users:
+        if not whatsapp_digits(u.phone) and u.email:
+            try:
+                ok = send_whatsapp_reminder_email(u, site_domain=site_domain)
+                if ok:
+                    sent_count += 1
+                else:
+                    failed_count += 1
+            except Exception:
+                failed_count += 1
+
+    if sent_count > 0:
+        messages.success(request, f"✓ WhatsApp setup reminders sent to {sent_count} user(s).")
+    elif failed_count > 0:
+        messages.error(request, f"Failed to deliver reminders to {failed_count} user(s). Check email logs.")
+    else:
+        messages.info(request, "All current active users already have a verified WhatsApp number on file!")
+
+    return redirect('AdminApp:manage_users')
+
+
+@admin_required
+def send_single_whatsapp_reminder(request, user_id):
+    """Admin action: Send a WhatsApp setup reminder email to a specific user."""
+    from GETMECARE.email_utils import send_whatsapp_reminder_email
+    target_user = get_object_or_404(CustomUser, pk=user_id)
+
+    try:
+        site_domain = request.get_host()
+    except Exception:
+        site_domain = 'getmecare-ontario.com'
+
+    if not target_user.email:
+        messages.error(request, f"User {target_user.username} has no email address on file.")
+        return redirect('AdminApp:manage_users')
+
+    ok = send_whatsapp_reminder_email(target_user, site_domain=site_domain)
+    if ok:
+        messages.success(request, f"✓ WhatsApp setup reminder email sent to {target_user.email}.")
+    else:
+        messages.error(request, f"Failed to send email to {target_user.email}. Check email configuration.")
+
+    return redirect('AdminApp:manage_users')
 
 
 @admin_required

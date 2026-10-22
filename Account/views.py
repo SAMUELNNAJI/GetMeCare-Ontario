@@ -632,3 +632,38 @@ def dismiss_whatsapp_modal(request):
         return JsonResponse({'ok': True})
     return JsonResponse({'ok': False, 'error': 'POST required'}, status=400)
 
+
+@login_required(login_url='Account:login')
+def add_whatsapp_page(request):
+    """
+    Dedicated landing page for users (especially older accounts or those clicking from reminder emails)
+    to add or update their WhatsApp number.
+    """
+    from GETMECARE.whatsapp import whatsapp_digits, whatsapp_link
+    current_digits = whatsapp_digits(request.user.phone)
+    has_whatsapp = bool(current_digits)
+
+    if request.method == 'POST':
+        raw = (request.POST.get('phone') or request.POST.get('whatsapp') or '').strip()
+        digits = whatsapp_digits(raw)
+        if not digits:
+            messages.error(request, 'Please enter a valid phone number with at least 7 digits.')
+        else:
+            request.user.phone = digits
+            request.user.save(update_fields=['phone'])
+            request.session['dismissed_whatsapp_modal'] = True
+            messages.success(request, '✓ Your WhatsApp number has been linked successfully!')
+            if request.user.is_caregiver:
+                return redirect('CareGiverAcc:dashboard')
+            elif request.user.is_employer:
+                return redirect('EmployerApp:dashboard')
+            elif request.user.is_staff or request.user.is_superuser:
+                return redirect('AdminApp:dashboard')
+            return redirect('home')
+
+    return render(request, 'Account/add-whatsapp.html', {
+        'has_whatsapp': has_whatsapp,
+        'current_phone': request.user.phone or '',
+        'current_digits': current_digits,
+    })
+

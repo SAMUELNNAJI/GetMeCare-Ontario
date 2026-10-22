@@ -19,5 +19,6 @@ urlpatterns = [
     path('notifications/<int:notif_id>/dismiss/', views.dismiss_notification, name='dismiss_notification'),
     path('update-whatsapp/',     views.update_user_whatsapp, name='update_user_whatsapp'),
     path('dismiss-whatsapp/',    views.dismiss_whatsapp_modal, name='dismiss_whatsapp_modal'),
+    path('add-whatsapp/',        views.add_whatsapp_page,    name='add_whatsapp_page'),
 ]
 

@@ -1422,3 +1422,57 @@ def send_admin_general_alert_email(subject: str, message: str, event: str = '', 
         html_body=_wrap(content),
         plain_body=message,
     )
+
+
+def send_whatsapp_reminder_email(user, site_domain: str = None) -> bool:
+    """Send an email reminder to an older user without a WhatsApp number encouraging them to link it."""
+    domain = site_domain or SITE_URL.replace('https://', '').replace('http://', '')
+    proto = 'https' if not domain.startswith('127.0.0.1') and not domain.startswith('localhost') else 'http'
+    add_wa_url = f"{proto}://{domain}/account/add-whatsapp/"
+
+    name = user.first_name or user.username
+    is_caregiver = getattr(user, 'is_caregiver', False)
+
+    if is_caregiver:
+        role_benefit = """
+        <li><strong>Instant Job Alerts:</strong> Receive notifications directly on WhatsApp when families in your area post urgent care shifts.</li>
+        <li><strong>Faster Client Connection:</strong> Approved employers can message you directly on WhatsApp to coordinate schedules.</li>
+        """
+    else:
+        role_benefit = """
+        <li><strong>Real-Time Candidate Updates:</strong> Get notified instantly on WhatsApp when verified PSWs are matched to your care request.</li>
+        <li><strong>Direct Coordination:</strong> Connect seamlessly with your assigned caregiver desk on WhatsApp.</li>
+        """
+
+    content = f"""
+    <h2>Action Required: Connect Your WhatsApp Number</h2>
+    <p>Hi {name},</p>
+    <p>We've upgraded <strong>GetMeCare Ontario</strong> with real-time WhatsApp coordination to make caregiver matching and communications significantly faster.</p>
+
+    <div class="info-box" style="border-left-color:#25d366;background:#f0faf3;">
+      <p style="margin:4px 0;font-weight:700;color:#128c7e;">Why connect WhatsApp?</p>
+      <ul style="padding-left:20px;line-height:1.7;margin:6px 0;font-size:13.5px;">
+        {role_benefit}
+        <li><strong>Free &amp; Verified:</strong> No spam, strictly operational care coordination and shift updates.</li>
+      </ul>
+    </div>
+
+    <p>Because your account was created before WhatsApp integration was mandatory, your profile does not currently have a verified WhatsApp number on file.</p>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a class="btn" href="{add_wa_url}" style="background:#25d366;color:#ffffff;padding:14px 32px;font-size:15px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;">
+        Add WhatsApp Number to My Account &rarr;
+      </a>
+    </div>
+
+    <p style="font-size:12.5px;color:#777;line-height:1.5;">
+      Takes less than 30 seconds. If you already have your WhatsApp connected or experience any issues, please contact our support desk at <a href="mailto:{ADMIN_EMAIL}">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+
+    subject = f"[{SITE_NAME}] Action Required: Connect your WhatsApp number to your account"
+    return send_transactional_email(
+        subject=subject,
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
