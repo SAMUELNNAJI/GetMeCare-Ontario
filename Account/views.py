@@ -68,6 +68,13 @@ def login_view(request):
 
 
 def signup(request):
+    # Determine requested role from query param or POST data
+    role_param = (request.GET.get('role') or request.POST.get('role') or '').strip().lower()
+    if role_param in ('caregiver', 'psw', 'worker', 'nurse', 'work'):
+        selected_role = 'caregiver'
+    else:
+        selected_role = 'employer'
+
     # Families complete registration and publish their care request in one
     # atomic submit.  A failed job creation therefore never leaves an empty
     # employer account behind.
@@ -142,11 +149,14 @@ def signup(request):
             except Exception:
                 logger.exception('Welcome email failed for user %s', user.pk)
             return redirect_for_user(user)
+        return render(request, 'Account/signup.html', {
+            'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': 'caregiver',
+        })
     else:
         form = SignupForm()
 
     return render(request, 'Account/signup.html', {
-        'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': 'caregiver' if request.method == 'POST' else 'employer',
+        'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': selected_role,
     })
 
 

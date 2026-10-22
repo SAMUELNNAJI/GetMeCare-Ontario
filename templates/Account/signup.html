@@ -2,12 +2,232 @@
 {% block title %}Create Account — GetMeCare Ontario{% endblock %}
 {% block extra_head %}
 <style>
-  .signup-page .auth-form-wrap { max-width: 440px; }
-  .signup-page .role-tabs { display:flex; gap:8px; margin: 0 0 20px; }
-  .signup-page .role-tabs button { flex:1; padding:11px; border:1px solid #dde2d8; border-radius:10px; background:#fff; font:inherit; font-weight:600; cursor:pointer; color:#4a5550 }
-  .signup-page .role-tabs button.active { background:#00897b; color:#fff; border-color:#00897b }
+  .signup-page .auth-form-wrap { max-width: 580px; width: 100%; }
+
+  /* ── Role Decision Helper & Cards ── */
+  .role-helper-box {
+    background: #f0f7f3;
+    border: 1px solid #cce8d9;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .role-helper-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1a5632;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .role-quick-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quick-pill {
+    background: #ffffff;
+    border: 1px solid #b7deca;
+    color: #1a5632;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .quick-pill:hover {
+    background: #1b7d4f;
+    color: #ffffff;
+    border-color: #1b7d4f;
+  }
+
+  /* Two Decision Cards Grid */
+  .role-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .role-card {
+    background: #ffffff;
+    border: 2px solid #e1e7de;
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    user-select: none;
+  }
+  .role-card:hover {
+    border-color: #00897b;
+    box-shadow: 0 4px 16px rgba(0, 137, 123, 0.12);
+    transform: translateY(-2px);
+  }
+  .role-card.selected {
+    border-color: #00897b;
+    background: #f2faf7;
+    box-shadow: 0 4px 20px rgba(0, 137, 123, 0.16);
+  }
+  .role-card.selected.caregiver-card {
+    border-color: #0288d1;
+    background: #f0f8fd;
+    box-shadow: 0 4px 20px rgba(2, 136, 209, 0.16);
+  }
+
+  .rc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .rc-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .rc-badge.family {
+    background: #e8f5e9;
+    color: #1b5e20;
+  }
+  .rc-badge.caregiver {
+    background: #e1f5fe;
+    color: #0277bd;
+  }
+
+  .rc-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #cfd8dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+  }
+  .role-card.selected .rc-check {
+    background: #00897b;
+    border-color: #00897b;
+  }
+  .role-card.selected.caregiver-card .rc-check {
+    background: #0288d1;
+    border-color: #0288d1;
+  }
+
+  .rc-icon {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  .rc-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+    line-height: 1.25;
+  }
+  .rc-desc {
+    font-size: 0.77rem;
+    color: #555;
+    line-height: 1.4;
+    margin: 0 0 10px;
+    flex-grow: 1;
+  }
+  .rc-perks {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px;
+    border-top: 1px dashed #e0e5dd;
+    padding-top: 8px;
+  }
+  .rc-perks li {
+    font-size: 0.72rem;
+    color: #333;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rc-perks li i {
+    color: #00897b;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+  .caregiver-card .rc-perks li i {
+    color: #0288d1;
+  }
+
+  .rc-action-btn {
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 7px 10px;
+    border-radius: 8px;
+    text-align: center;
+    background: #eef3ed;
+    color: #4a5550;
+    transition: all 0.15s ease;
+  }
+  .role-card.selected .rc-action-btn {
+    background: #00897b;
+    color: #ffffff;
+  }
+  .role-card.selected.caregiver-card .rc-action-btn {
+    background: #0288d1;
+    color: #ffffff;
+  }
+
+  /* Role Confirmation Banner */
+  .role-confirm-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 10px;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+    font-size: 0.81rem;
+    line-height: 1.45;
+  }
+  .role-confirm-banner.family {
+    background: #edf8f2;
+    border: 1px solid #bce6d0;
+    color: #14532d;
+  }
+  .role-confirm-banner.caregiver {
+    background: #eef8ff;
+    border: 1px solid #bce1fa;
+    color: #034870;
+  }
+  .role-confirm-banner i {
+    font-size: 1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Form Elements */
   .signup-page .form-pane { display:none; }
-  .signup-page .form-pane.active { display:block; }
+  .signup-page .form-pane.active { display:block; animation: fadeIn 0.25s ease-out; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .signup-page .field { margin-bottom:16px; }
   .signup-page .field label { display:block; font-size:.78rem; font-weight:600; color:#333; margin-bottom:6px; }
   .signup-page .field label .req { color:#c62828; }
@@ -16,16 +236,21 @@
   .signup-page .field textarea { min-height:100px; resize:vertical }
   .signup-page .field small { display:block; font-size:.72rem; color:var(--grey); margin-top:4px }
   .signup-page .error { display:block; color:#c62828; font-size:.8rem; margin-top:4px }
-  .signup-page .btn-submit { width:100%; margin-top:8px; padding:13px; border:0; border-radius:10px; background:#00897b; color:#fff; font:inherit; font-weight:700; font-size:1rem; cursor:pointer }
+  .signup-page .btn-submit { width:100%; margin-top:8px; padding:13px; border:0; border-radius:10px; background:#00897b; color:#fff; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; transition: background 0.15s ease; }
   .signup-page .btn-submit:hover { background:#00695c }
+  .signup-page .btn-submit.btn-blue { background:#0288d1; }
+  .signup-page .btn-submit.btn-blue:hover { background:#0277bd; }
+
   .signup-page .note { font-size:.82rem; color:var(--grey); margin-top:16px; text-align:center }
   .signup-page .note a { color:var(--teal); font-weight:700; text-decoration:none }
   .signup-page .note a:hover { text-decoration:underline }
   .signup-page .form-error-banner { display:flex; align-items:flex-start; gap:10px; background:#fdecea; color:#7f1414; font-size:.82rem; border:1px solid #ffcdd2; border-radius:10px; padding:12px 14px; margin-bottom:16px }
   .signup-page .form-error-banner i { color:#c62828; margin-top:2px; flex-shrink:0 }
+
   @media (max-width: 768px) {
     .auth-page.signup-page { flex-direction:column; min-height:auto }
     .auth-page.signup-page .auth-left { display:none }
+    .role-cards-grid { grid-template-columns: 1fr; }
   }
 </style>
 {% endblock %}
@@ -37,12 +262,13 @@
         <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" class="auth-brand-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)" />
         <span class="auth-brand-name">GetMe<span>Care</span><em>Ontario</em></span>
       </div>
-      <h1 class="auth-left-heading">One form,<br />care on the way.</h1>
-      <p class="auth-left-sub">Families register and post their care request in the same step — it goes live for verified caregivers the moment you submit.</p>
+      <h1 class="auth-left-heading">Direct care,<br />zero guesswork.</h1>
+      <p class="auth-left-sub">Connecting Ontario families seeking compassionate in-home care with pre-screened, verified Personal Support Workers.</p>
       <ul class="auth-trust-list">
-        <li><i class="fas fa-shield-alt"></i> Admin-matched, pre-vetted caregivers</li>
-        <li><i class="fas fa-whatsapp"></i> Admin WhatsApp desk alerted instantly</li>
-        <li><i class="fas fa-star"></i> Real 1–5 caregiver ratings from completed shifts</li>
+        <li><i class="fas fa-shield-alt"></i> Verified PSW credentials &amp; document screening</li>
+        <li><i class="fas fa-whatsapp"></i> Live WhatsApp administrative coordination</li>
+        <li><i class="fas fa-star"></i> Real 1–5 ratings from completed shifts</li>
+        <li><i class="fas fa-clock"></i> Quick turnaround for urgent &amp; recurring care</li>
       </ul>
     </div>
   </section>
@@ -50,129 +276,243 @@
   <section class="auth-right" aria-labelledby="signup-heading">
     <div class="auth-form-wrap">
       <div class="auth-form-header">
-        <h1 id="signup-heading">Create your account</h1>
-        <p>Pick your role below. Employers: your care request is published to the public job board immediately on submit — no admin delay.</p>
+        <h1 id="signup-heading">Get Started with GetMeCare</h1>
+        <p>Please choose how you will be using the platform:</p>
       </div>
 
-      <div class="role-tabs" role="tablist">
-        <button type="button" data-pane="employer" class="{% if selected_role != 'caregiver' %}active{% endif %}">I need a caregiver (employer)</button>
-        <button type="button" data-pane="caregiver" class="{% if selected_role == 'caregiver' %}active{% endif %}">I am a caregiver</button>
+      <!-- Quick Guidance Helper -->
+      <div class="role-helper-box">
+        <div class="role-helper-title">
+          <i class="fas fa-compass"></i> Not sure which option to choose?
+        </div>
+        <div class="role-quick-pills">
+          <button type="button" class="quick-pill" onclick="setRole('employer')">
+            <i class="fas fa-home"></i> I need care for myself or family
+          </button>
+          <button type="button" class="quick-pill" onclick="setRole('caregiver')">
+            <i class="fas fa-user-md"></i> I am a PSW looking for shifts
+          </button>
+        </div>
       </div>
+
+      <!-- Two Clear Decision Cards -->
+      <div class="role-cards-grid" role="radiogroup" aria-label="Select account type">
+        <!-- CARD 1: Family / Employer -->
+        <div class="role-card {% if selected_role != 'caregiver' %}selected{% endif %}"
+             id="card-employer"
+             onclick="setRole('employer')"
+             role="radio"
+             aria-checked="{% if selected_role != 'caregiver' %}true{% else %}false{% endif %}"
+             tabindex="0">
+          <div class="rc-header">
+            <span class="rc-badge family"><i class="fas fa-heart"></i> For Families</span>
+            <span class="rc-check"><i class="fas fa-check"></i></span>
+          </div>
+          <div class="rc-icon">🏡</div>
+          <h2 class="rc-title">I Need a Caregiver</h2>
+          <p class="rc-desc">You are seeking care for a parent, child, loved one, or yourself.</p>
+          <ul class="rc-perks">
+            <li><i class="fas fa-check-circle"></i> Post your care needs in 2 mins</li>
+            <li><i class="fas fa-check-circle"></i> Matched with vetted Ontario PSWs</li>
+            <li><i class="fas fa-check-circle"></i> No business registration needed</li>
+          </ul>
+          <div class="rc-action-btn">Select: Hiring Care</div>
+        </div>
+
+        <!-- CARD 2: Caregiver / PSW -->
+        <div class="role-card caregiver-card {% if selected_role == 'caregiver' %}selected{% endif %}"
+             id="card-caregiver"
+             onclick="setRole('caregiver')"
+             role="radio"
+             aria-checked="{% if selected_role == 'caregiver' %}true{% else %}false{% endif %}"
+             tabindex="0">
+          <div class="rc-header">
+            <span class="rc-badge caregiver"><i class="fas fa-stethoscope"></i> For PSWs</span>
+            <span class="rc-check"><i class="fas fa-check"></i></span>
+          </div>
+          <div class="rc-icon">🩺</div>
+          <h2 class="rc-title">I Am a Caregiver</h2>
+          <p class="rc-desc">You are a certified PSW, nurse, or companion looking for paid shifts.</p>
+          <ul class="rc-perks">
+            <li><i class="fas fa-check-circle"></i> Browse local Ontario shifts</li>
+            <li><i class="fas fa-check-circle"></i> Earn direct hourly pay in CAD</li>
+            <li><i class="fas fa-check-circle"></i> Instant WhatsApp shift alerts</li>
+          </ul>
+          <div class="rc-action-btn">Select: Finding Work</div>
+        </div>
+      </div>
+
       <!-- EMPLOYER: unified registration + care request -->
       <form method="post" id="employer-form" class="form-pane {% if selected_role != 'caregiver' %}active{% endif %}">
         {% csrf_token %}
         <input type="hidden" name="role" value="employer">
+
+        <div class="role-confirm-banner family">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>You are registering as a Care Seeker / Family:</strong><br>
+            Fill out your details and your care schedule below. Your care request is published immediately so our coordination desk can match you with verified PSWs.
+          </div>
+        </div>
+
         {% if employer_form.non_field_errors %}
         <div class="form-error-banner" role="alert"><i class="fas fa-exclamation-circle"></i><div>{{ employer_form.non_field_errors }}</div></div>
         {% endif %}
 
         <div class="field">
-          <label>Full name <span class="req">*</span></label>
-          <input type="text" name="full_name" value="{{ employer_form.full_name.value|default:'' }}" required placeholder="Jane Doe">
+          <label>Your Full Name <span class="req">*</span></label>
+          <input type="text" name="full_name" value="{{ employer_form.full_name.value|default:'' }}" required placeholder="e.g. Jane Doe">
           {% for e in employer_form.full_name.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Email <span class="req">*</span></label>
+          <label>Email Address <span class="req">*</span></label>
           <input type="email" name="email" value="{{ employer_form.email.value|default:'' }}" required placeholder="you@example.com">
           {% for e in employer_form.email.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Password <span class="req">*</span></label>
+          <label>Create Password <span class="req">*</span></label>
           <input type="password" name="password" required minlength="8" placeholder="At least 8 characters">
           {% for e in employer_form.password.errors %}<span class="error">{{ e }}</span>{% endfor %}
           <small>At least 8 characters</small>
         </div>
 
         <div class="field">
-          <label>WhatsApp-enabled mobile number <span class="req">*</span></label>
+          <label>WhatsApp-enabled Mobile Number <span class="req">*</span></label>
           <input type="tel" name="phone" value="{{ employer_form.phone.value|default:'' }}" required placeholder="+1 (416) 000-0000">
           {% for e in employer_form.phone.errors %}<span class="error">{{ e }}</span>{% endfor %}
-          <small>We use this to connect you with matched caregivers.</small>
+          <small>Required so our care matching desk can message you directly on WhatsApp.</small>
         </div>
 
         <div class="field">
-          <label>City / location <span class="req">*</span></label>
-          <input type="text" name="city" value="{{ employer_form.city.value|default:'' }}" required placeholder="e.g. Mississauga, ON">
+          <label>City / Location in Ontario <span class="req">*</span></label>
+          <input type="text" name="city" value="{{ employer_form.city.value|default:'' }}" required placeholder="e.g. Mississauga, Toronto, Brampton">
           {% for e in employer_form.city.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Care request details <span class="req">*</span></label>
-          <textarea name="care_request" required placeholder="Schedule, hours per week, and core needs (e.g. weekday mornings, 18 hrs/week, dementia companionship and meal support)">{{ employer_form.care_request.value|default:'' }}</textarea>
+          <label>Describe Your Care Needs <span class="req">*</span></label>
+          <textarea name="care_request" required placeholder="Describe what type of care you need (e.g. Morning companionship, bathing assistance, 15 hours/week for an elderly parent in Mississauga)">{{ employer_form.care_request.value|default:'' }}</textarea>
           {% for e in employer_form.care_request.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
-        <button type="submit" class="btn-submit">Create account &amp; publish my care request</button>
-        <p class="note">Your request goes live on the public job board immediately, and our admin WhatsApp desk is alerted at the same moment.</p>
+        <button type="submit" class="btn-submit">
+          <i class="fas fa-check-circle"></i> Create Account &amp; Publish Care Request
+        </button>
+        <p class="note">Your request is submitted securely and our administrative matching desk will review candidates immediately.</p>
       </form>
+
       <!-- CAREGIVER registration -->
       <form method="post" id="caregiver-form" class="form-pane {% if selected_role == 'caregiver' %}active{% endif %}">
         {% csrf_token %}
         <input type="hidden" name="role" value="caregiver">
+
+        <div class="role-confirm-banner caregiver">
+          <i class="fas fa-user-check"></i>
+          <div>
+            <strong>You are registering as a Caregiver / PSW:</strong><br>
+            Create your caregiver profile to get matched with shifts across Ontario. You will be able to upload your certifications and set your hourly rate in the next step.
+          </div>
+        </div>
+
         {% if form.non_field_errors %}
         <div class="form-error-banner" role="alert"><i class="fas fa-exclamation-circle"></i><div>{{ form.non_field_errors }}</div></div>
         {% endif %}
 
         <div class="field">
-          <label>First name <span class="req">*</span></label>
+          <label>First Name <span class="req">*</span></label>
           <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" required placeholder="First name">
           {% for e in form.first_name.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Last name <span class="req">*</span></label>
+          <label>Last Name <span class="req">*</span></label>
           <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" required placeholder="Last name">
           {% for e in form.last_name.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Username <span class="req">*</span></label>
-          <input type="text" name="username" value="{{ form.username.value|default:'' }}" required placeholder="Choose a username">
+          <label>Choose a Username <span class="req">*</span></label>
+          <input type="text" name="username" value="{{ form.username.value|default:'' }}" required placeholder="e.g. sarah_psw">
           {% for e in form.username.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Email <span class="req">*</span></label>
+          <label>Email Address <span class="req">*</span></label>
           <input type="email" name="email" value="{{ form.email.value|default:'' }}" required placeholder="you@example.com">
           {% for e in form.email.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>WhatsApp-enabled mobile number <span class="req">*</span></label>
+          <label>WhatsApp-enabled Mobile Number <span class="req">*</span></label>
           <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}" required placeholder="+1 (416) 000-0000">
           {% for e in form.phone.errors %}<span class="error">{{ e }}</span>{% endfor %}
-          <small>Required so admin can contact you directly on WhatsApp.</small>
+          <small>Required so our dispatch team can contact you for urgent shift matches.</small>
         </div>
 
         <div class="field">
-          <label>Password <span class="req">*</span></label>
+          <label>Create Password <span class="req">*</span></label>
           <input type="password" name="password1" required minlength="8" placeholder="At least 8 characters">
           {% for e in form.password1.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
         <div class="field">
-          <label>Confirm password <span class="req">*</span></label>
+          <label>Confirm Password <span class="req">*</span></label>
           <input type="password" name="password2" required placeholder="Repeat your password">
           {% for e in form.password2.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
-        <button type="submit" class="btn-submit">Create caregiver account</button>
-        <p class="note">A WhatsApp-enabled mobile number is required so our admin desk can reach you.</p>
+        <button type="submit" class="btn-submit btn-blue">
+          <i class="fas fa-user-plus"></i> Create Caregiver Account
+        </button>
+        <p class="note">After creating your account, you will upload your PSW certificate / ID for admin approval.</p>
       </form>
 
-      <p class="note">Already registered? <a href="{% url 'Account:login' %}">Sign in</a>.</p>
+      <p class="note">Already have an account? <a href="{% url 'Account:login' %}">Sign in here</a>.</p>
     </div>
   </section>
 </main>
+
 <script>
-document.querySelectorAll('.role-tabs button').forEach(function(b){
-  b.addEventListener('click', function(){
-    document.querySelectorAll('.role-tabs button').forEach(function(x){x.classList.remove('active');});
-    document.querySelectorAll('.form-pane').forEach(function(x){x.classList.remove('active');});
-    b.classList.add('active');
-    document.getElementById(b.dataset.pane + '-form').classList.add('active');
+function setRole(role) {
+  var cardEmp = document.getElementById('card-employer');
+  var cardCg  = document.getElementById('card-caregiver');
+  var formEmp = document.getElementById('employer-form');
+  var formCg  = document.getElementById('caregiver-form');
+
+  if (role === 'caregiver') {
+    cardEmp.classList.remove('selected');
+    cardEmp.setAttribute('aria-checked', 'false');
+    cardCg.classList.add('selected');
+    cardCg.setAttribute('aria-checked', 'true');
+
+    formEmp.classList.remove('active');
+    formCg.classList.add('active');
+  } else {
+    cardCg.classList.remove('selected');
+    cardCg.setAttribute('aria-checked', 'false');
+    cardEmp.classList.add('selected');
+    cardEmp.setAttribute('aria-checked', 'true');
+
+    formCg.classList.remove('active');
+    formEmp.classList.add('active');
+  }
+
+  // Update query string in browser without reloading
+  if (window.history && window.history.replaceState) {
+    var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?role=' + role;
+    window.history.replaceState({ path: newUrl }, '', newUrl);
+  }
+}
+
+// Allow keyboard space/enter selection on cards
+document.querySelectorAll('.role-card').forEach(function(card){
+  card.addEventListener('keydown', function(e){
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      card.click();
+    }
   });
 });
 </script>
