@@ -318,6 +318,15 @@
         <div class="emp-name-block">
           <div class="emp-name">{{ p.user.get_full_name|default:p.user.username }}</div>
           <div class="emp-email">{{ p.user.email }}</div>
+          {% if p.user.phone %}
+          <div style="font-size:.74rem;color:#1b7d4f;display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-weight:600;">
+            <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ p.user.phone }}
+          </div>
+          {% else %}
+          <div style="font-size:.72rem;color:#a0aba3;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
+            <i class="fab fa-whatsapp" style="color:#c5d0c8"></i> <span style="font-style:italic">No WhatsApp</span>
+          </div>
+          {% endif %}
         </div>
         {# status badge #}
         {% if p.account_status == 'suspended' %}
@@ -411,9 +420,13 @@
       </a>
       {% if p.user.phone|wa_link %}
       <a href="{{ p.user.phone|wa_link }}?text=Hello%20{{ p.user.first_name|default:p.user.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20Admin%20Support."
-         target="_blank" class="ec-btn" style="background:#25d366;color:#fff;" title="Chat directly with employer on WhatsApp">
+         target="_blank" rel="noopener" class="ec-btn" style="background:#25d366;color:#fff;font-weight:700;" title="Chat directly with employer on WhatsApp ({{ p.user.phone }})">
         <i class="fab fa-whatsapp"></i> WhatsApp
       </a>
+      {% else %}
+      <span class="ec-btn ecb-ghost" style="opacity:0.55;cursor:not-allowed;background:#f5f7f5;color:#8a9a90;" title="No WhatsApp number registered for this employer">
+        <i class="fab fa-whatsapp" style="color:#b2bfb7"></i> No WA
+      </span>
       {% endif %}
     </div>
 

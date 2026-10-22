@@ -1,4 +1,4 @@
-{% extends "AdminApp/base_admin.html" %} {% block title %}Manage Users — Admin{% endblock %} {% block extra_head %}
+{% extends "AdminApp/base_admin.html" %} {% load gmc_tags %} {% block title %}Manage Users — Admin{% endblock %} {% block extra_head %}
 <style>
   .u-info {
     display: flex;
@@ -134,7 +134,14 @@
               >
             </td>
             <td>
-              {% if has_wa %}
+              {% if has_wa and u.phone|wa_link %}
+                <a href="{{ u.phone|wa_link }}?text=Hello%20{{ u.first_name|default:u.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20Admin%20Support."
+                   target="_blank" rel="noopener"
+                   style="font-size:.82rem;font-weight:600;color:#1b7d4f;text-decoration:none;display:inline-flex;align-items:center;gap:5px;"
+                   title="Click to chat directly on WhatsApp">
+                  <i class="fab fa-whatsapp" style="color:#25d366;font-size:.95rem;"></i> {{ u.phone }}
+                </a>
+              {% elif has_wa %}
                 <span style="font-size:.82rem;font-weight:600;color:#1b7d4f;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> {{ u.phone }}</span>
               {% else %}
                 <span style="font-size:.74rem;color:#c96000;background:#fff8ee;padding:3px 8px;border-radius:6px;border:1px solid #fed7aa;display:inline-flex;align-items:center;gap:4px;">
@@ -164,6 +171,14 @@
                    onclick="return confirm('Send WhatsApp setup reminder email to {{ u.email }}?')"
                    class="adm-btn" style="background:#e8f7ee;color:#1b7d4f;border:1px solid #b2dfca;padding:6px 10px;font-size:.74rem;text-decoration:none;" title="Send WhatsApp setup reminder email">
                   <i class="fab fa-whatsapp" style="color:#25d366;"></i> Remind
+                </a>
+                {% endif %}
+                {% if has_wa and u.phone|wa_link %}
+                <a href="{{ u.phone|wa_link }}?text=Hello%20{{ u.first_name|default:u.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20Admin%20Support."
+                   target="_blank" rel="noopener"
+                   class="adm-btn" style="background:#25d366;color:#fff;padding:6px 10px;font-size:.74rem;text-decoration:none;font-weight:700;"
+                   title="Chat directly on WhatsApp ({{ u.phone }})">
+                  <i class="fab fa-whatsapp"></i> WA
                 </a>
                 {% endif %}
                 {% if u.id != request.user.id and not u.is_superuser and not u.is_staff %}

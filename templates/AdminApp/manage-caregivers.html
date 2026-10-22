@@ -1,4 +1,5 @@
 {% extends "AdminApp/base_admin.html" %}
+{% load gmc_tags %}
 {% block title %}Manage Caregivers — Admin{% endblock %}
 {% block extra_head %}
 <style>
@@ -144,6 +145,8 @@
 .ccb-warn    { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; cursor:default; }
 .ccb-suspend { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; }
 .ccb-deact   { background:#fdecea; color:#c62828; border:1px solid #ffcdd2; }
+.ccb-wa      { background:#25d366; color:#fff; font-weight:700; text-decoration:none; }
+.ccb-wa:hover{ background:#128c7e; color:#fff; }
 
 /* ── Pagination ── */
 .adm-pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:28px; flex-wrap:wrap; }
@@ -318,6 +321,15 @@
             {% if p.status == 'active' %}</a>{% endif %}
           </div>
           <div class="cg-email">{{ p.user.email }}</div>
+          {% if p.user.phone %}
+          <div style="font-size:.74rem;color:#1b7d4f;display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-weight:600;">
+            <i class="fab fa-whatsapp" style="color:#25d366"></i> {{ p.user.phone }}
+          </div>
+          {% else %}
+          <div style="font-size:.72rem;color:#a0aba3;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
+            <i class="fab fa-whatsapp" style="color:#c5d0c8"></i> <span style="font-style:italic">No WhatsApp</span>
+          </div>
+          {% endif %}
         </div>
         {# status badge — moderation overrides verification #}
         {% if p.account_status == 'suspended' %}
@@ -444,9 +456,20 @@
       </a>
       {% endif %}
 
-      <a href="{% url 'admin_support_start' p.user.pk %}" class="cc-btn ccb-green">
+      <a href="{% url 'admin_support_start' p.user.pk %}" class="cc-btn ccb-green" title="Open internal web chat">
         <i class="fas fa-comment"></i> Chat
       </a>
+
+      {% if p.user.phone|wa_link %}
+      <a href="{{ p.user.phone|wa_link }}?text=Hello%20{{ p.user.first_name|default:p.user.username|urlencode }},%20I'm%20contacting%20you%20from%20GetMeCare%20Ontario%20Admin%20Support."
+         target="_blank" rel="noopener" class="cc-btn ccb-wa" title="Chat directly with caregiver on WhatsApp ({{ p.user.phone }})">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>
+      {% else %}
+      <span class="cc-btn ccb-ghost" style="opacity:0.55;cursor:not-allowed;background:#f5f7f5;color:#8a9a90;" title="No WhatsApp number registered for this caregiver">
+        <i class="fab fa-whatsapp" style="color:#b2bfb7"></i> No WA
+      </span>
+      {% endif %}
     </div>
   </div>
 

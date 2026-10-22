@@ -315,6 +315,7 @@ def manage_caregivers(request):
             Q(user__last_name__icontains=q) |
             Q(user__username__icontains=q) |
             Q(user__email__icontains=q) |
+            Q(user__phone__icontains=q) |
             Q(city__icontains=q) |
             Q(skills__icontains=q) |
             Q(status__icontains=q)
@@ -372,6 +373,7 @@ def manage_employers(request):
             Q(user__last_name__icontains=q) |
             Q(user__username__icontains=q) |
             Q(user__email__icontains=q) |
+            Q(user__phone__icontains=q) |
             Q(payment_reference__icontains=q) |
             Q(account_status__icontains=q)
         )
