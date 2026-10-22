@@ -1091,71 +1091,74 @@
       <button class="ep-search-icon-btn" id="ep-search-icon-btn" aria-label="Open search">
         <i class="fas fa-search"></i>
       </button>
-      <a href="{% url 'home' %}" class="ep-back" style="margin-left: 10px"
-        ><i class="fas fa-arrow-left"></i> Back to site</a
-      >
-      <div class="ep-bell-wrap" id="epBellWrap">
-        <button type="button" class="ep-bell" id="epBellBtn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
-          <i class="fas fa-bell"></i>
-          {% if unread_notifications_count %}
-          <span class="ep-bell-badge" id="epBellBadge">{% if unread_notifications_count > 9 %}9+{% else %}{{ unread_notifications_count }}{% endif %}</span>
-          {% else %}
-          <span class="ep-bell-badge" id="epBellBadge" style="display:none;">0</span>
-          {% endif %}
-        </button>
+      <div class="ep-topbar-space"></div>
+      <div class="ep-topbar-right" style="display:flex;align-items:center;gap:12px;margin-left:auto;">
+        <a href="{% url 'home' %}" class="ep-back">
+          <i class="fas fa-arrow-left"></i> Back to site
+        </a>
+        <div class="ep-bell-wrap" id="epBellWrap">
+          <button type="button" class="ep-bell" id="epBellBtn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+            <i class="fas fa-bell"></i>
+            {% if unread_notifications_count %}
+            <span class="ep-bell-badge" id="epBellBadge">{% if unread_notifications_count > 9 %}9+{% else %}{{ unread_notifications_count }}{% endif %}</span>
+            {% else %}
+            <span class="ep-bell-badge" id="epBellBadge" style="display:none;">0</span>
+            {% endif %}
+          </button>
 
-        <!-- Notification Dropdown Popover -->
-        <div class="ep-notif-dropdown" id="epNotifDropdown" role="menu" aria-label="Notifications list">
-          <div class="ep-notif-header">
-            <div class="ep-notif-title-row">
-              <span>Notifications</span>
-              {% if unread_notifications_count %}
-              <span class="ep-notif-badge" id="epNotifBadge">{{ unread_notifications_count }}</span>
-              {% else %}
-              <span class="ep-notif-badge" id="epNotifBadge" style="display:none;">0</span>
-              {% endif %}
-            </div>
-            <button type="button" class="ep-notif-clear-btn" id="epClearNotifsBtn" title="Clear all notifications" {% if not user_notifications %}disabled{% endif %}>
-              <i class="fas fa-check-double"></i> Clear all
-            </button>
-          </div>
-
-          <div class="ep-notif-body" id="epNotifList">
-            {% for n in user_notifications %}
-            <div class="ep-notif-item {% if not n.is_read %}unread{% endif %}" data-notif-id="{{ n.id }}" data-notif-link="{{ n.link|default:'' }}">
-              <div class="ep-notif-icon ep-ni-{{ n.notification_type }}">
-                {% if n.notification_type == 'shift' %}<i class="fas fa-calendar-check"></i>
-                {% elif n.notification_type == 'document' %}<i class="fas fa-file-alt"></i>
-                {% elif n.notification_type == 'message' %}<i class="fas fa-comment-dots"></i>
-                {% elif n.notification_type == 'payment' %}<i class="fas fa-wallet"></i>
-                {% elif n.notification_type == 'account' %}<i class="fas fa-shield-alt"></i>
-                {% else %}<i class="fas fa-bell"></i>{% endif %}
+          <!-- Notification Dropdown Popover -->
+          <div class="ep-notif-dropdown" id="epNotifDropdown" role="menu" aria-label="Notifications list">
+            <div class="ep-notif-header">
+              <div class="ep-notif-title-row">
+                <span>Notifications</span>
+                {% if unread_notifications_count %}
+                <span class="ep-notif-badge" id="epNotifBadge">{{ unread_notifications_count }}</span>
+                {% else %}
+                <span class="ep-notif-badge" id="epNotifBadge" style="display:none;">0</span>
+                {% endif %}
               </div>
-              <div class="ep-notif-content">
-                <div class="ep-notif-item-title">{{ n.title }}</div>
-                <div class="ep-notif-item-msg">{{ n.message }}</div>
-                <div class="ep-notif-item-time"><i class="far fa-clock" style="font-size:0.65rem;"></i> {{ n.created_at|timesince }} ago</div>
-              </div>
-              <button type="button" class="ep-notif-dismiss-btn" data-dismiss-id="{{ n.id }}" title="Dismiss this notification" aria-label="Dismiss">
-                <i class="fas fa-times"></i>
+              <button type="button" class="ep-notif-clear-btn" id="epClearNotifsBtn" title="Clear all notifications" {% if not user_notifications %}disabled{% endif %}>
+                <i class="fas fa-check-double"></i> Clear all
               </button>
             </div>
-            {% empty %}
-            <div class="ep-notif-empty" id="epNotifEmpty">
-              <i class="far fa-bell-slash"></i>
-              <p>No new notifications</p>
-              <span>You're all caught up!</span>
-            </div>
-            {% endfor %}
-          </div>
 
-          <div class="ep-notif-footer">
-            <span>GetMeCare Live Updates</span>
-            <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#1b7d4f;border-radius:50%;display:inline-block;"></span> Active</span>
+            <div class="ep-notif-body" id="epNotifList">
+              {% for n in user_notifications %}
+              <div class="ep-notif-item {% if not n.is_read %}unread{% endif %}" data-notif-id="{{ n.id }}" data-notif-link="{{ n.link|default:'' }}">
+                <div class="ep-notif-icon ep-ni-{{ n.notification_type }}">
+                  {% if n.notification_type == 'shift' %}<i class="fas fa-calendar-check"></i>
+                  {% elif n.notification_type == 'document' %}<i class="fas fa-file-alt"></i>
+                  {% elif n.notification_type == 'message' %}<i class="fas fa-comment-dots"></i>
+                  {% elif n.notification_type == 'payment' %}<i class="fas fa-wallet"></i>
+                  {% elif n.notification_type == 'account' %}<i class="fas fa-shield-alt"></i>
+                  {% else %}<i class="fas fa-bell"></i>{% endif %}
+                </div>
+                <div class="ep-notif-content">
+                  <div class="ep-notif-item-title">{{ n.title }}</div>
+                  <div class="ep-notif-item-msg">{{ n.message }}</div>
+                  <div class="ep-notif-item-time"><i class="far fa-clock" style="font-size:0.65rem;"></i> {{ n.created_at|timesince }} ago</div>
+                </div>
+                <button type="button" class="ep-notif-dismiss-btn" data-dismiss-id="{{ n.id }}" title="Dismiss this notification" aria-label="Dismiss">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              {% empty %}
+              <div class="ep-notif-empty" id="epNotifEmpty">
+                <i class="far fa-bell-slash"></i>
+                <p>No new notifications</p>
+                <span>You're all caught up!</span>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="ep-notif-footer">
+              <span>GetMeCare Live Updates</span>
+              <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#1b7d4f;border-radius:50%;display:inline-block;"></span> Active</span>
+            </div>
           </div>
         </div>
+        <div class="ep-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
       </div>
-      <div class="ep-topbar-av">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
     </div>
     <!-- Mobile search overlay -->
     <div class="ep-search-overlay" id="ep-search-overlay" role="dialog" aria-modal="true" aria-label="Search">
