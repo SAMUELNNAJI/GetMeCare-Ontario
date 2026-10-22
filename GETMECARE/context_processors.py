@@ -94,21 +94,24 @@ def sidebar_context(request):
             except Exception:
                 pass
 
-        # ── WhatsApp popup gate ──────────────────────────────
-        # Auto-show the "Add WhatsApp" popup on the dashboard for
-        # caregivers who have not saved a usable WhatsApp number yet.
-        try:
-            from GETMECARE.whatsapp import whatsapp_digits
-            ctx['show_whatsapp_modal'] = not whatsapp_digits(request.user.phone)
-        except Exception:
-            ctx['show_whatsapp_modal'] = False
-
     elif request.user.is_employer:
         try:
             from EmployerApp.views import _employer_ctx
             ctx = _employer_ctx(request.user)
         except Exception:
             pass
+
+    # ── WhatsApp popup gate ──────────────────────────────
+    # Auto-show the "Add WhatsApp" popup on the dashboard for
+    # old users (caregivers or employers) who have not saved a usable WhatsApp number yet.
+    if request.user.is_authenticated and not request.session.get('dismissed_whatsapp_modal'):
+        try:
+            from GETMECARE.whatsapp import whatsapp_digits
+            ctx['show_whatsapp_modal'] = not bool(whatsapp_digits(request.user.phone))
+        except Exception:
+            ctx['show_whatsapp_modal'] = False
+    else:
+        ctx['show_whatsapp_modal'] = False
 
     # Inject unread count for both roles
     ctx['total_unread'] = _get_total_unread(request.user)

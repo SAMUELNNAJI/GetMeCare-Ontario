@@ -591,3 +591,44 @@ def dismiss_notification(request, notif_id):
     unread_count = request.user.notifications.filter(is_read=False).count()
     return JsonResponse({'ok': True, 'unread_count': unread_count})
 
+
+@login_required(login_url='Account:login')
+def update_user_whatsapp(request):
+    """
+    Save WhatsApp number to request.user.phone for any authenticated user
+    (both Caregivers and Employers).
+    """
+    if request.method != 'POST':
+        return redirect('home')
+
+    raw = (request.POST.get('phone') or request.POST.get('whatsapp') or '').strip()
+    from GETMECARE.whatsapp import whatsapp_digits, whatsapp_link
+    digits = whatsapp_digits(raw)
+
+    if not digits:
+        error = 'Please enter a valid phone number (at least 7 digits).'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'ok': False, 'error': error}, status=400)
+        messages.error(request, error)
+        return redirect(request.META.get('HTTP_REFERER') or 'home')
+
+    request.user.phone = digits
+    request.user.save(update_fields=['phone'])
+    request.session['dismissed_whatsapp_modal'] = True
+
+    wa_link = whatsapp_link(digits)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True, 'wa_link': wa_link, 'phone': digits})
+
+    messages.success(request, 'Your WhatsApp number has been updated successfully.')
+    return redirect(request.META.get('HTTP_REFERER') or 'home')
+
+
+@login_required(login_url='Account:login')
+def dismiss_whatsapp_modal(request):
+    """Allow user to dismiss the WhatsApp modal for the current session."""
+    if request.method == 'POST':
+        request.session['dismissed_whatsapp_modal'] = True
+        return JsonResponse({'ok': True})
+    return JsonResponse({'ok': False, 'error': 'POST required'}, status=400)
+

@@ -1,13 +1,19 @@
 {% load static %}
-{% if request.user.is_caregiver %}
+{% if request.user.is_authenticated %}
 <link rel="stylesheet" href="{% static 'Caregiver/css/whatsapp.css' %}">
 
 <div class="gmc-wa-backdrop" id="gmcWhatsAppBackdrop" role="dialog" aria-modal="true" aria-labelledby="gmcWhatsAppTitle">
   <div class="gmc-wa-modal">
     <div class="gmc-wa-icon"><i class="fab fa-whatsapp"></i></div>
     <div class="gmc-wa-title" id="gmcWhatsAppTitle">Add Your WhatsApp Number</div>
-    <p class="gmc-wa-body">Employers reach out faster on WhatsApp. Add a number that has WhatsApp enabled so clients can message you directly.</p>
-    <form method="post" action="{% url 'CareGiverAcc:update_whatsapp' %}" id="gmcWhatsAppForm">
+    <p class="gmc-wa-body">
+      {% if request.user.is_caregiver %}
+        Employers reach out faster on WhatsApp. Add a number with WhatsApp enabled so clients and our matching desk can contact you directly.
+      {% else %}
+        Stay updated on your care requests. Add your WhatsApp-enabled phone number so verified caregivers and our coordination team can message you directly.
+      {% endif %}
+    </p>
+    <form method="post" action="{% url 'Account:update_user_whatsapp' %}" id="gmcWhatsAppForm">
       {% csrf_token %}
       <label class="gmc-wa-field">
         <span class="gmc-wa-label">WhatsApp Number</span>
@@ -17,13 +23,12 @@
       </label>
       <div class="gmc-wa-error" id="gmcWhatsAppError"></div>
       <div class="gmc-wa-actions">
-        <button type="button" class="gmc-wa-cancel" id="gmcWhatsAppCancel">Cancel</button>
+        <button type="button" class="gmc-wa-cancel" id="gmcWhatsAppCancel">Maybe Later</button>
         <button type="submit" class="gmc-wa-btn" id="gmcWhatsAppSubmit">Save Number</button>
       </div>
     </form>
   </div>
 </div>
-
 
 <script>
 (function(){
@@ -42,9 +47,19 @@
     if(errEl){ errEl.textContent=''; errEl.classList.remove('show'); }
     if(input){ setTimeout(function(){ input.focus(); input.select(); }, 60); }
   }
-  function close(){
+  function close(dismissSession){
     backdrop.classList.remove('open');
     document.body.style.overflow = '';
+    if(dismissSession && csrfEl){
+      fetch("{% url 'Account:dismiss_whatsapp_modal' %}", {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfEl.value
+        },
+        credentials: 'same-origin'
+      }).catch(function(){});
+    }
   }
   function showError(msg){
     if(!errEl) return;
@@ -55,23 +70,29 @@
     var triggers = document.querySelectorAll('.gmc-wa-add, [data-gmc-wa-open]');
     for(var i=0;i<triggers.length;i++){
       var trigger = triggers[i];
-      if(trigger.tagName === 'A' && trigger.getAttribute('href')) continue; // already a link
+      if(trigger.tagName === 'A' && trigger.getAttribute('href')) continue;
       var chip = document.createElement('a');
-      // Keep the trigger's own classes so page-specific styling survives,
-      // and add a "done" modifier for the success look.
       chip.className = (trigger.className || '') + ' gmc-wa-done';
       chip.href = waLink;
       chip.target = '_blank';
       chip.rel = 'noopener';
       chip.innerHTML = '<i class="fab fa-whatsapp"></i> WhatsApp enabled';
-      chip.setAttribute('title', 'Message ' + (firstName || 'this caregiver') + ' on WhatsApp');
+      chip.setAttribute('title', 'Message ' + (firstName || 'user') + ' on WhatsApp');
       if(trigger.parentNode){ trigger.parentNode.replaceChild(chip, trigger); }
     }
   }
 
-  if(cancel) cancel.addEventListener('click', close);
-  backdrop.addEventListener('click', function(e){ if(e.target === backdrop) close(); });
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && backdrop.classList.contains('open')) close(); });
+  if(cancel){
+    cancel.addEventListener('click', function(){
+      close(true);
+    });
+  }
+  backdrop.addEventListener('click', function(e){
+    if(e.target === backdrop) close(true);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && backdrop.classList.contains('open')) close(true);
+  });
 
   // Any element with [data-gmc-wa-open] opens the popup
   document.addEventListener('click', function(e){
@@ -95,8 +116,14 @@
       .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
       .then(function(res){
         if(res.ok && res.data && res.data.ok){
-          successState(res.data.wa_link, '{{ request.user.first_name|default:"Caregiver"|escapejs }}');
-          close();
+          successState(res.data.wa_link, '{{ request.user.first_name|default:"User"|escapejs }}');
+          close(false);
+          // Show brief visual confirmation
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1b7d4f;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:700;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.18);';
+          toast.innerHTML = '<i class="fab fa-whatsapp"></i> WhatsApp number saved!';
+          document.body.appendChild(toast);
+          setTimeout(function(){ toast.remove(); }, 3500);
         } else {
           showError((res.data && res.data.error) || 'Could not save your number. Please try again.');
           if(submit){ submit.disabled = false; }
@@ -109,7 +136,12 @@
     });
   }
 
-  // Expose for callers (e.g. auto-open on dashboard load)
+  // Auto-open modal if user does not have WhatsApp number saved and has not dismissed
+  {% if show_whatsapp_modal %}
+  setTimeout(open, 800);
+  {% endif %}
+
+  // Expose globally for buttons/menus
   window.gmcWhatsAppModal = { open: open, close: close };
 })();
 </script>
