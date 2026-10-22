@@ -248,3 +248,8 @@ ADMIN_NOTIFICATION_CHANNEL = os.getenv('ADMIN_NOTIFICATION_CHANNEL', 'email').lo
 # WhatsApp Business provider webhook (optional fallback)
 ADMIN_WHATSAPP_NUMBER = os.getenv('ADMIN_WHATSAPP_NUMBER', '+12494812647')
 ADMIN_WHATSAPP_WEBHOOK_URL = os.getenv('ADMIN_WHATSAPP_WEBHOOK_URL', '')
+
+# Contact Form Dedicated Gmail SMTP (bypasses ZeptoMail entirely)
+GMAIL_USER = os.getenv('GMAIL_USER', 'getmecareontario@gmail.com')
+GMAIL_APP_PASSWORD = os.getenv('GMAIL_APP_PASSWORD', '')
+

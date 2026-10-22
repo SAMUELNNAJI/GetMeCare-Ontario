@@ -173,7 +173,29 @@ def services(request):
 
 
 def contact(request):
+    from Caregiver.antispam import generate_contact_challenge, check_contact_submission
+    from django.contrib import messages as dj_messages
+
     if request.method == 'POST':
+        is_valid, err_msg, is_bot = check_contact_submission(request)
+
+        # ── Honeypot or bot caught: fake success silently (bots move on, zero spam sent) ──
+        if is_bot:
+            dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
+            n1, n2, tok = generate_contact_challenge()
+            return render(request, 'Caregiver/contact.html', {
+                'captcha_n1': n1, 'captcha_n2': n2, 'captcha_token': tok
+            })
+
+        # ── Verification failed ──
+        if not is_valid:
+            dj_messages.error(request, err_msg)
+            n1, n2, tok = generate_contact_challenge()
+            return render(request, 'Caregiver/contact.html', {
+                'captcha_n1': n1, 'captcha_n2': n2, 'captcha_token': tok,
+                'form_data': request.POST,
+            })
+
         first_name = request.POST.get('firstName', '').strip()
         last_name  = request.POST.get('lastName', '').strip()
         email      = request.POST.get('email', '').strip()
@@ -182,44 +204,9 @@ def contact(request):
         subject    = request.POST.get('subject', '').strip()
         message    = request.POST.get('message', '').strip()
 
-        from django.contrib import messages as dj_messages
-
-        # ── 1. Honeypot: bots fill in the hidden "website" field ──
-        honeypot = request.POST.get('website', '').strip()
-        if honeypot:
-            # Silently succeed — don't tell bots they were blocked
-            dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
-            return render(request, 'Caregiver/contact.html')
-
-        # ── 2. Timing check: reject if submitted in under 4 seconds ──
-        try:
-            loaded_at = int(request.POST.get('form_loaded_at', 0))
-            elapsed   = int(time.time()) - loaded_at
-        except (ValueError, TypeError):
-            elapsed = 999
-        if elapsed < 4:
-            dj_messages.success(request, "Your message has been sent! We'll get back to you within 1–2 business days.")
-            return render(request, 'Caregiver/contact.html')
-
-        # ── 3. Rate limit: max 3 submissions per IP per hour ──
-        import hashlib
-        from django.core.cache import cache
-        ip_raw   = (request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
-        ip_key   = 'contact_rl_' + hashlib.md5(ip_raw.encode()).hexdigest()
-        rl_count = cache.get(ip_key, 0)
-        if rl_count >= 3:
-            dj_messages.error(request, 'Too many messages sent. Please wait a while before trying again.')
-            return render(request, 'Caregiver/contact.html')
-        cache.set(ip_key, rl_count + 1, timeout=3600)  # 1 hour window
-
         if first_name and last_name and email and role and subject and message:
-            import smtplib
-            from email.mime.text import MIMEText
-            from email.mime.multipart import MIMEMultipart
-
-            # ── Send directly via Gmail SMTP — bypasses ZeptoMail entirely ──
             plain_body = (
-                f"New contact form submission\n\n"
+                f"New verified contact form inquiry:\n\n"
                 f"Name: {first_name} {last_name}\n"
                 f"Email: {email}\n"
                 f"Phone: {phone or 'Not provided'}\n"
@@ -228,36 +215,68 @@ def contact(request):
                 f"Message:\n{message}"
             )
 
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = f'[Contact Form] {subject} — {first_name} {last_name}'
-            msg['From']    = CONTACT_FORM_INBOX
-            msg['To']      = CONTACT_FORM_INBOX
-            msg['Reply-To'] = email  # reply goes straight to the visitor
-
-            msg.attach(MIMEText(plain_body, 'plain'))
-
             ok = False
             try:
                 from django.conf import settings as _s
-                gmail_user = getattr(_s, 'GMAIL_USER', '')
+                from django.core.mail import get_connection, EmailMessage
+
+                gmail_user = getattr(_s, 'GMAIL_USER', '') or CONTACT_FORM_INBOX
                 gmail_pass = getattr(_s, 'GMAIL_APP_PASSWORD', '')
-                if gmail_user and gmail_pass:
-                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=15) as server:
-                        server.login(gmail_user, gmail_pass)
-                        server.sendmail(gmail_user, [CONTACT_FORM_INBOX], msg.as_string())
-                    ok = True
-                else:
-                    # Fallback: still use Django mail if Gmail not configured
-                    from GETMECARE.email_utils import send_transactional_email, _wrap, SITE_NAME as SN
-                    ok = send_transactional_email(
-                        subject    = f'[Contact Form] {subject} — {first_name} {last_name}',
-                        to_email   = CONTACT_FORM_INBOX,
-                        html_body  = _wrap(f'<h2>Contact Form</h2><pre>{plain_body}</pre>'),
-                        plain_body = plain_body,
+
+                clean_pass = (gmail_pass or '').replace(' ', '').strip()
+                if len(clean_pass) >= 32 and clean_pass[:16] == clean_pass[16:32]:
+                    clean_pass = clean_pass[:16]
+
+                if not gmail_user or not clean_pass:
+                    import logging as _log
+                    _log.getLogger(__name__).error(
+                        "Contact form cannot send via Gmail: GMAIL_USER or GMAIL_APP_PASSWORD missing."
                     )
-            except Exception:
+                else:
+                    try:
+                        conn = get_connection(
+                            backend='django.core.mail.backends.smtp.EmailBackend',
+                            host='smtp.gmail.com',
+                            port=587,
+                            username=gmail_user,
+                            password=clean_pass,
+                            use_tls=True,
+                            timeout=15,
+                        )
+                        email_msg = EmailMessage(
+                            subject=f'[Contact Form] {subject} — {first_name} {last_name}',
+                            body=plain_body,
+                            from_email=gmail_user,
+                            to=[CONTACT_FORM_INBOX],
+                            reply_to=[email],
+                            connection=conn,
+                        )
+                        email_msg.send(fail_silently=False)
+                        ok = True
+                    except Exception:
+                        # Fallback to SSL 465
+                        conn_ssl = get_connection(
+                            backend='django.core.mail.backends.smtp.EmailBackend',
+                            host='smtp.gmail.com',
+                            port=465,
+                            username=gmail_user,
+                            password=clean_pass,
+                            use_ssl=True,
+                            timeout=15,
+                        )
+                        email_msg = EmailMessage(
+                            subject=f'[Contact Form] {subject} — {first_name} {last_name}',
+                            body=plain_body,
+                            from_email=gmail_user,
+                            to=[CONTACT_FORM_INBOX],
+                            reply_to=[email],
+                            connection=conn_ssl,
+                        )
+                        email_msg.send(fail_silently=False)
+                        ok = True
+            except Exception as exc:
                 import logging as _log
-                _log.getLogger(__name__).exception('Contact form email failed')
+                _log.getLogger(__name__).exception('Contact form email failed via Gmail: %s', exc)
                 ok = False
 
             if ok:
@@ -267,9 +286,16 @@ def contact(request):
         else:
             dj_messages.error(request, 'Please fill in all required fields.')
 
-        return render(request, 'Caregiver/contact.html')
+        n1, n2, tok = generate_contact_challenge()
+        return render(request, 'Caregiver/contact.html', {
+            'captcha_n1': n1, 'captcha_n2': n2, 'captcha_token': tok
+        })
 
-    return render(request, 'Caregiver/contact.html')
+    # GET request
+    n1, n2, tok = generate_contact_challenge()
+    return render(request, 'Caregiver/contact.html', {
+        'captcha_n1': n1, 'captcha_n2': n2, 'captcha_token': tok
+    })
 
 
 def privacy(request):
