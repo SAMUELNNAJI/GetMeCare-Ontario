@@ -406,34 +406,22 @@
 <section class="stats-bar" id="stats-bar">
   <div class="stats-container">
     <div class="stat-item">
-      <span class="stat-number" data-target="142" data-prefix="" data-suffix=""
-        >0</span
-      >
+      <span class="stat-number" data-target="142" data-prefix="" data-suffix="">142</span>
       <span class="stat-label">Verified Caregivers</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-number" data-target="38" data-prefix="" data-suffix=""
-        >0</span
-      >
+      <span class="stat-number" data-target="38" data-prefix="" data-suffix="">38</span>
       <span class="stat-label">Years Avg Experience</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-number" data-target="19" data-prefix="" data-suffix=""
-        >0</span
-      >
+      <span class="stat-number" data-target="19" data-prefix="" data-suffix="">19</span>
       <span class="stat-label">Cities in Ontario</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span
-        class="stat-number"
-        data-target="31.50"
-        data-prefix="$"
-        data-suffix=""
-        >$0</span
-      >
+      <span class="stat-number" data-target="31.50" data-prefix="$" data-suffix="">$31.50</span>
       <span class="stat-label">Avg Hourly Rate</span>
     </div>
   </div>
@@ -648,10 +636,10 @@
           class="safety-img"
         />
         <div class="safety-top-badge">
-          <span class="stb-icon"><i class="fas fa-dollar-sign"></i></span>
+          <span class="stb-icon"><i class="fas fa-handshake"></i></span>
           <div>
-            <div class="stb-title">$0 Agency Fee</div>
-            <div class="stb-sub">Direct-hire pricing</div>
+            <div class="stb-title">No Agency Markup</div>
+            <div class="stb-sub">Pay caregivers directly</div>
           </div>
         </div>
         <div class="safety-badge">
@@ -944,26 +932,30 @@
     function animateCounter(el) {
       const target = parseFloat(el.dataset.target);
       const prefix = el.dataset.prefix || "";
+      const suffix = el.dataset.suffix || "";
       const isFloat = el.dataset.target.includes(".");
       const decimals = isFloat
         ? (el.dataset.target.split(".")[1] || "").length
         : 0;
-      const duration = 1800;
+      const duration = 1600;
+      // Start from 75% of target so counter never shows 0
+      const startVal = target * 0.75;
       const start = performance.now();
       function tick(now) {
         const elapsed = now - start;
         const progress = Math.min(elapsed / duration, 1);
         const eased = easeOutQuad(progress);
-        const current = eased * target;
+        const current = startVal + (target - startVal) * eased;
         el.textContent =
           prefix +
           (isFloat
             ? current.toFixed(decimals)
-            : Math.floor(current).toString());
+            : Math.floor(current).toString()) +
+          suffix;
         if (progress < 1) requestAnimationFrame(tick);
         else
           el.textContent =
-            prefix + (isFloat ? target.toFixed(decimals) : target.toString());
+            prefix + (isFloat ? target.toFixed(decimals) : target.toString()) + suffix;
       }
       requestAnimationFrame(tick);
     }

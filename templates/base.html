@@ -167,7 +167,7 @@
         </button>
       </div>
       <!-- Mobile drawer -->
-      <div class="mobile-drawer" id="mobile-drawer">
+      <div class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
         <nav class="mobile-nav">
           <a href="{% url 'browse' %}">Browse Caregivers</a>
           <a href="{% url 'browse_jobs' %}">Browse Jobs</a>
@@ -283,6 +283,7 @@
         function openMenu() {
           btn.classList.add("is-open");
           drawer.classList.add("is-open");
+          drawer.setAttribute("aria-hidden", "false");
           overlay.classList.add("is-open");
           btn.setAttribute("aria-expanded", "true");
           document.body.style.overflow = "hidden";
@@ -290,6 +291,7 @@
         function closeMenu() {
           btn.classList.remove("is-open");
           drawer.classList.remove("is-open");
+          drawer.setAttribute("aria-hidden", "true");
           overlay.classList.remove("is-open");
           btn.setAttribute("aria-expanded", "false");
           document.body.style.overflow = "";
