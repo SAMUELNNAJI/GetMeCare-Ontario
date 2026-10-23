@@ -1,0 +1,745 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ontario Caregiver & Family Health Blog — Guides & Resources | GetMeCare{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Expert guides, tips, and insights on Ontario home care, finding vetted Personal Support Workers (PSWs), dementia care strategies, and caregiver financial assistance.">
+<meta name="keywords" content="Ontario home care blog, hire psw ontario, dementia care ontario, caregiver advice, ontario caregiver tax credit, senior care ontario">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ontario Caregiver & Family Health Blog | GetMeCare Ontario">
+<meta property="og:description" content="Expert guides, tips, and insights on Ontario home care, finding vetted Personal Support Workers (PSWs), and caregiver resources.">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:image" content="{% static 'Caregiver/images/hero-image.png' %}">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ontario Caregiver & Family Health Blog | GetMeCare Ontario">
+<meta name="twitter:description" content="Expert guides, tips, and insights on Ontario home care, finding vetted PSWs, and caregiver resources.">
+
+<script type="application/ld+json">
+{{ breadcrumb_schema_json|safe }}
+</script>
+
+<style>
+  :root {
+    --primary: #1b7d4f;
+    --primary-dark: #145e3b;
+    --primary-light: #e6f5ee;
+    --accent-orange: #f59e0b;
+    --text-dark: #121815;
+    --text-muted: #5b6961;
+    --bg-light: #f7faf8;
+    --card-border: #e2ece6;
+  }
+
+  /* ═══ HERO BANNER (Matches Site Theme) ═══ */
+  .blog-hero {
+    margin-top: 64px;
+    background: linear-gradient(120deg, #00695c 0%, #00897b 55%, #004d40 100%);
+    padding: 64px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .blog-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 77, 64, 0.85) 0%,
+      rgba(0, 105, 92, 0.75) 50%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+    pointer-events: none;
+  }
+  .blog-hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .blog-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .blog-hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 18px;
+  }
+  .blog-hero-highlight {
+    color: #80cbc4;
+    font-style: italic;
+  }
+  .blog-hero-sub {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .blog-hero-meta {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .blog-hero-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .blog-hero-meta span i {
+    color: #80cbc4;
+  }
+
+  /* ═══ FILTER BAR (Non-sticky to prevent blocking cards) ═══ */
+  .blog-filter-section {
+    background: #fff;
+    border-bottom: 1px solid var(--card-border);
+    padding: 16px 0;
+    position: static;
+    box-shadow: none;
+  }
+  .filter-container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .category-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: none;
+  }
+  .category-pills::-webkit-scrollbar { display: none; }
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f1f5f2;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .cat-pill:hover {
+    background: #e2ece5;
+    color: var(--primary);
+  }
+  .cat-pill.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(27,125,79,0.25);
+  }
+  .cat-count {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.07);
+  }
+  .cat-pill.active .cat-count {
+    background: rgba(255,255,255,0.22);
+    color: #fff;
+  }
+  .search-form-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 260px;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8faf8;
+    border: 1.5px solid #d8e2dc;
+    border-radius: 24px;
+    padding: 8px 16px;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(27,125,79,0.12);
+    background: #fff;
+  }
+  .search-box i { color: #8a9a90; font-size: 0.85rem; }
+  .search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.86rem;
+    color: var(--text-dark);
+    width: 100%;
+  }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .blog-main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 44px 24px 80px;
+  }
+
+  /* ═══ FEATURED HERO ARTICLE (Compact) ═══ */
+  .featured-spotlight {
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .featured-spotlight:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+  }
+  .featured-img-wrap {
+    position: relative;
+    min-height: 220px;
+    max-height: 260px;
+    overflow: hidden;
+    background: #004d40;
+  }
+  .featured-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .featured-spotlight:hover .featured-img-wrap img {
+    transform: scale(1.04);
+  }
+  .featured-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+  }
+  .featured-badge-float {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(0,77,64,0.9);
+    backdrop-filter: blur(8px);
+    color: #80cbc4;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(128,203,196,0.4);
+  }
+  .featured-content {
+    padding: 22px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .featured-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .meta-tag {
+    background: #e0f2f1;
+    color: #00695c;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.72rem;
+  }
+  .featured-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.3;
+    margin-bottom: 10px;
+    letter-spacing: -0.015em;
+  }
+  .featured-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .featured-title a:hover {
+    color: #00695c;
+  }
+  .featured-excerpt {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .featured-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid #f0f4f1;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .author-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .author-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .author-info strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+  }
+  .author-info span {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+  .btn-read-featured {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .btn-read-featured:hover {
+    background: var(--primary-dark);
+    transform: translateX(3px);
+  }
+
+  /* ═══ ARTICLE GRID ═══ */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 28px;
+  }
+  .article-card {
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+  }
+  .article-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 36px rgba(27,125,79,0.12);
+    border-color: #bbf7d0;
+  }
+  .card-img-wrap {
+    height: 210px;
+    position: relative;
+    overflow: hidden;
+    background: #eef2ef;
+  }
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .article-card:hover .card-img-wrap img {
+    transform: scale(1.06);
+  }
+  .card-category-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(6px);
+    color: var(--primary-dark);
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .card-body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .card-meta {
+    font-size: 0.77rem;
+    color: #7b8a82;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .card-meta i { margin-right: 3px; }
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.4;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .card-title a:hover {
+    color: var(--primary);
+  }
+  .card-excerpt {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #f3f6f4;
+  }
+  .card-author {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+  .card-author span {
+    display: block;
+    font-size: 0.7rem;
+    color: #8a9890;
+    font-weight: 400;
+  }
+  .card-read-link {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: gap 0.2s ease;
+  }
+  .card-read-link:hover {
+    gap: 8px;
+    color: var(--primary-dark);
+  }
+
+  /* ═══ PAGINATION ═══ */
+  .blog-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 56px;
+  }
+  .pg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1.5px solid var(--card-border);
+    color: var(--text-dark);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .pg-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+  }
+  .pg-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* ═══ EMPTY STATE ═══ */
+  .empty-state {
+    text-align: center;
+    padding: 72px 20px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+  }
+  .empty-state i {
+    font-size: 3.5rem;
+    color: #cbd5e1;
+    margin-bottom: 18px;
+  }
+  .empty-state h3 {
+    font-size: 1.35rem;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+  .empty-state p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .blog-hero h1 { font-size: 2.1rem; }
+    .featured-spotlight { grid-template-columns: 1fr; }
+    .featured-img-wrap { min-height: 240px; }
+    .featured-content { padding: 28px 24px; }
+    .articles-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===================== BLOG HERO ===================== -->
+<section class="blog-hero">
+  <div class="blog-hero-inner">
+    <span class="blog-eyebrow"><i class="fas fa-book-open"></i> GetMeCare Knowledge Hub</span>
+    <h1>
+      Ontario Caregiving &amp;<br>
+      <span class="blog-hero-highlight">Family Health Insights</span>
+    </h1>
+    <p class="blog-hero-sub">
+      In-depth guides, practical advice, and regulatory insights on hiring vetted Personal Support Workers (PSWs), managing dementia care, navigating government benefits, and excelling in home care across Ontario.
+    </p>
+    <div class="blog-hero-meta">
+      <span><i class="fas fa-shield-alt"></i> Medically &amp; Practically Vetted</span>
+      <span><i class="fas fa-map-marker-alt"></i> Ontario Guidelines &amp; Laws</span>
+      <span><i class="fas fa-check-circle"></i> Updated Weekly</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FILTER BAR ===================== -->
+<section class="blog-filter-section">
+  <div class="filter-container">
+    <div class="category-pills">
+      <a href="{% url 'blog_index' %}{% if search_q %}?q={{ search_q }}{% endif %}"
+         class="cat-pill {% if not category_filter and not tag_filter %}active{% endif %}">
+        All Articles <span class="cat-count">{{ total_posts }}</span>
+      </a>
+      {% for c in category_counts %}
+      <a href="?category={{ c.key }}{% if search_q %}&q={{ search_q }}{% endif %}"
+         class="cat-pill {% if category_filter == c.key %}active{% endif %}">
+        {{ c.label }} <span class="cat-count">{{ c.count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+
+    <form method="get" action="" class="search-form-wrap">
+      {% if category_filter %}<input type="hidden" name="category" value="{{ category_filter }}">{% endif %}
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" name="q" placeholder="Search guides by keyword…" value="{{ search_q|default:'' }}">
+      </div>
+      {% if search_q or tag_filter %}
+      <a href="{% url 'blog_index' %}{% if category_filter %}?category={{ category_filter }}{% endif %}"
+         class="cat-pill" style="padding:8px 12px;background:#fdecea;color:#c62828" title="Clear filter">
+        <i class="fas fa-times"></i>
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</section>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main class="blog-main">
+
+  {% if search_q %}
+  <div style="background:#e6f5ee;border:1px solid #b2dfca;border-radius:12px;padding:12px 20px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <span style="font-size:0.9rem;color:#166534">
+      <i class="fas fa-filter" style="margin-right:6px"></i> Showing results for <strong>"{{ search_q }}"</strong> — {{ total_posts }} article{{ total_posts|pluralize }}
+    </span>
+    <a href="{% url 'blog_index' %}" style="font-size:0.82rem;color:#166534;font-weight:700;text-decoration:none">Clear Search</a>
+  </div>
+  {% endif %}
+
+  {# ── Featured Article Spotlight (Hero card on Page 1 without active filters) ── #}
+  {% if featured_post and not search_q and not category_filter and not tag_filter %}
+  <article class="featured-spotlight">
+    <div class="featured-img-wrap">
+      <img src="{{ featured_post.display_image }}" alt="{{ featured_post.image_alt|default:featured_post.title }}" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+      <div class="featured-overlay"></div>
+      <span class="featured-badge-float"><i class="fas fa-star"></i> Featured Guide</span>
+    </div>
+    <div class="featured-content">
+      <div class="featured-meta">
+        <span class="meta-tag">{{ featured_post.get_category_display }}</span>
+        <span><i class="far fa-calendar-alt"></i> {{ featured_post.published_at|date:"F d, Y" }}</span>
+        <span><i class="far fa-clock"></i> {{ featured_post.read_time_minutes }} min read</span>
+      </div>
+      <h2 class="featured-title">
+        <a href="{{ featured_post.get_absolute_url }}">{{ featured_post.title }}</a>
+      </h2>
+      <p class="featured-excerpt">{{ featured_post.excerpt }}</p>
+      <div class="featured-footer">
+        <div class="author-badge">
+          <div class="author-avatar">
+            <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
+          </div>
+          <div class="author-info">
+            <strong>{{ featured_post.author_name }}</strong>
+            <span>{{ featured_post.author_role }}</span>
+          </div>
+        </div>
+        <a href="{{ featured_post.get_absolute_url }}" class="btn-read-featured">
+          Read Guide <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </article>
+  {% endif %}
+
+  {# ── Articles Grid ── #}
+  {% if posts %}
+  <div class="articles-grid">
+    {% for post in posts %}
+    {# If featured post is displayed above on page 1, don't duplicate if desired, or show consistently #}
+    <article class="article-card">
+      <div class="card-img-wrap">
+        <a href="{{ post.get_absolute_url }}" aria-label="{{ post.title }}">
+          <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+        </a>
+        <span class="card-category-badge">{{ post.get_category_display }}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span><i class="far fa-calendar"></i> {{ post.published_at|date:"M d, Y" }}</span>
+          <span>&bull;</span>
+          <span><i class="far fa-clock"></i> {{ post.read_time_minutes }} min read</span>
+        </div>
+        <h3 class="card-title">
+          <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        </h3>
+        <p class="card-excerpt">{{ post.excerpt }}</p>
+        <div class="card-footer">
+          <div class="card-author">
+            {{ post.author_name }}
+            <span>{{ post.author_role|truncatechars:28 }}</span>
+          </div>
+          <a href="{{ post.get_absolute_url }}" class="card-read-link">
+            Read <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  {# ═══ Pagination ═══ #}
+  {% if page_obj.has_other_pages %}
+  <nav class="blog-pagination" aria-label="Blog pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="pg-btn" aria-label="Previous page">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+    {% endif %}
+
+    {% for i in page_obj.paginator.page_range %}
+      {% if page_obj.number == i %}
+        <span class="pg-btn active">{{ i }}</span>
+      {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+        <a href="?page={{ i }}{% if search_q %}&q={{ search_q }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="pg-btn">{{ i }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="pg-btn" aria-label="Next page">
+        <i class="fas fa-chevron-right"></i>
+      </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-search"></i>
+    <h3>No articles found</h3>
+    <p>Try searching for different keywords or browse all available categories.</p>
+    <a href="{% url 'blog_index' %}" class="btn-read-featured">Reset Filters</a>
+  </div>
+  {% endif %}
+
+</main>
+{% endblock %}

@@ -1476,3 +1476,58 @@ def send_whatsapp_reminder_email(user, site_domain: str = None) -> bool:
         to_email=user.email,
         html_body=_wrap(content),
     )
+
+
+def send_employer_converted_to_caregiver_email(user, site_domain: str = None) -> bool:
+    """Notify a user that their account role has been converted to a Caregiver / PSW profile."""
+    domain = site_domain or SITE_URL.replace('https://', '').replace('http://', '')
+    proto = 'https' if not domain.startswith('127.0.0.1') and not domain.startswith('localhost') else 'http'
+    login_url = f"{proto}://{domain}/account/login/"
+    docs_url = f"{proto}://{domain}/caregiver/documents/"
+    profile_url = f"{proto}://{domain}/caregiver/profile/"
+
+    name = user.get_full_name() or user.username
+
+    content = f"""
+    <h2>Account Updated: You're Now Registered as a Caregiver</h2>
+    <p>Hello {name},</p>
+    <p>Your account on <strong>GetMeCare Ontario</strong> has been updated by administration from an Employer account to an independent <strong>Caregiver / Personal Support Worker (PSW)</strong> profile.</p>
+
+    <div class="info-box" style="border-left-color:#00897b;background:#e0f2f1;padding:16px;margin:20px 0;border-radius:6px;">
+      <p style="margin:0 0 10px;font-weight:700;color:#004d40;font-size:15px;">Required Next Steps to Activate Your Account:</p>
+      <p style="margin:0 0 10px;font-size:13.5px;color:#263238;">
+        Your caregiver profile is currently <strong>Pending Admin Review</strong>. Before your profile can be activated and made visible to Ontario families searching for care, you must complete the following onboarding steps:
+      </p>
+      <ol style="padding-left:22px;line-height:1.75;margin:0;font-size:13.5px;color:#263238;">
+        <li><strong>Log In to Your Portal:</strong> Access your new Caregiver portal at <a href="{login_url}" style="color:#00695c;font-weight:600;">{login_url}</a> using your current login details.</li>
+        <li><strong>Upload Required Verification Documents:</strong> Navigate to your Document Verification section and submit:
+          <ul style="margin:4px 0;">
+            <li>Police Vulnerable Sector Check (VSC)</li>
+            <li>PSW Certificate, Nursing Diploma, or relevant healthcare credential</li>
+            <li>Standard First Aid &amp; CPR Level C</li>
+            <li>Government-issued Photo ID (Driver's License or Passport)</li>
+          </ul>
+        </li>
+        <li><strong>Upload Your Profile Picture:</strong> Add a clear, professional photo headshot to build trust with families seeking care.</li>
+        <li><strong>Update Your Profile Details:</strong> Set your hourly rates, available hours, and care specialities.</li>
+      </ol>
+    </div>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a class="btn" href="{docs_url}" style="background:#00897b;color:#ffffff;padding:14px 34px;font-size:15px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(0,137,123,0.3);">
+        Log In &amp; Upload Documents &rarr;
+      </a>
+    </div>
+
+    <p style="font-size:13px;color:#666;line-height:1.5;">
+      Once your compliance documents and profile photo are uploaded, our administration team will review and activate your verified profile within 24–48 hours. If you believe this role change was done in error or need assistance, please reply directly to this email or reach us at <a href="mailto:{ADMIN_EMAIL}" style="color:#00695c;">{ADMIN_EMAIL}</a>.
+    </p>
+    """
+
+    subject = f"[{SITE_NAME}] Action Required: Your account has been converted to a Caregiver profile"
+    return send_transactional_email(
+        subject=subject,
+        to_email=user.email,
+        html_body=_wrap(content),
+    )
+

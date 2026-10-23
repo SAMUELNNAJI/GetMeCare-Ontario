@@ -1,0 +1,756 @@
+{% extends "AdminApp/base_admin.html" %}
+{% block title %}{{ is_edit|yesno:"Edit Blog Post,Write Blog Post" }} — Admin{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+  .note-editor.note-frame {
+    border: 1.5px solid #dde2d8 !important;
+    border-radius: 9px !important;
+    overflow: hidden;
+  }
+  .note-editor.note-frame .note-statusbar {
+    background: #f8faf8;
+  }
+  .note-toolbar {
+    background: #f8faf7 !important;
+    border-bottom: 1px solid #dde2d8 !important;
+    padding: 6px 8px !important;
+  }
+  .note-editable {
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: #1a1a1a;
+    min-height: 380px;
+  }
+  .adm-form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #dde2d8;
+    border-radius: 9px;
+    font-size: .88rem;
+    font-family: inherit;
+    outline: none;
+    color: #1a1a1a;
+    box-sizing: border-box;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .adm-form-control:focus {
+    border-color: #1b7d4f;
+    box-shadow: 0 0 0 3px rgba(27,125,79,.12);
+  }
+  .adm-form-label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #2e3831;
+    margin-bottom: 6px;
+  }
+  .adm-form-hint {
+    font-size: .74rem;
+    color: #7a8a80;
+    margin-top: 4px;
+    display: block;
+  }
+  .adm-form-group {
+    margin-bottom: 20px;
+  }
+  .adm-form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .adm-form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .adm-section-divider {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #1b7d4f;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e6f5ee;
+    margin: 28px 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .adm-check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .86rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    background: #f8faf7;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #e0e6dc;
+  }
+  .adm-check-label input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #1b7d4f;
+    cursor: pointer;
+  }
+  .seo-score-box {
+    background: linear-gradient(135deg, #f0fdf4, #e6f5ee);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+  /* ═══ CUSTOM UPLOAD BUTTON & DROPZONE ═══ */
+  .custom-file-uploader {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+    transition: all 0.25s ease;
+    cursor: default;
+  }
+  .custom-file-uploader.drag-over {
+    border-color: #1b7d4f;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 4px rgba(27, 125, 79, 0.12);
+    transform: scale(1.01);
+  }
+  .upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .upload-icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e6f5ee, #d1fae5);
+    color: #1b7d4f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+    box-shadow: 0 4px 12px rgba(27, 125, 79, 0.12);
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .custom-file-uploader:hover .upload-icon-circle {
+    transform: translateY(-2px) scale(1.06);
+    background: linear-gradient(135deg, #1b7d4f, #145e3b);
+    color: #ffffff;
+  }
+  .upload-headline {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #374151;
+  }
+  .upload-action-btn {
+    background: linear-gradient(135deg, #1b7d4f, #15803d);
+    color: #ffffff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(27, 125, 79, 0.25);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  }
+  .upload-action-btn:hover {
+    background: linear-gradient(135deg, #15803d, #145e3b);
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 18px rgba(27, 125, 79, 0.32);
+  }
+  .upload-action-btn:active {
+    transform: translateY(0);
+  }
+  .upload-meta-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .upload-meta-pills span {
+    font-size: 0.72rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 3px 9px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+
+  /* Preview Card */
+  .upload-preview-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+    background: #f8faf8;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px;
+    animation: fadeIn 0.3s ease;
+  }
+  .preview-thumb-wrap {
+    position: relative;
+    width: 110px;
+    height: 74px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #d1d5db;
+    background: #000;
+  }
+  .preview-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .preview-badge-status {
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    background: rgba(16, 185, 129, 0.92);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .preview-details {
+    flex: 1;
+    min-width: 0;
+  }
+  .preview-filename {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preview-filesize {
+    font-size: 0.76rem;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  .preview-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .preview-btn-change {
+    background: #ffffff;
+    border: 1.5px solid #d1d5db;
+    color: #374151;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .preview-btn-change:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+  .preview-btn-remove {
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    color: #b91c1c;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s;
+  }
+  .preview-btn-remove:hover {
+    background: #fee2e2;
+  }
+
+  /* Existing image display */
+  .existing-image-box {
+    margin-top: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: left;
+  }
+  .existing-image-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+  .existing-tag {
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .existing-image-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .existing-img-thumb {
+    width: 68px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+  }
+  .adm-badge-rec {
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-left: 6px;
+    font-weight: 600;
+  }
+  .url-input-wrap {
+    position: relative;
+  }
+  .url-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 0.88rem;
+    pointer-events: none;
+  }
+  .url-input-wrap .adm-form-control {
+    padding-left: 36px;
+  }
+
+  @media (max-width: 768px) {
+    .adm-form-grid-2, .adm-form-grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+  <div>
+    <a href="{% url 'AdminApp:blog_list' %}" style="font-size:.82rem;color:#1b7d4f;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-bottom:6px">
+      <i class="fas fa-arrow-left"></i> Back to Blog Posts
+    </a>
+    <h1 class="adm-page-title" style="margin-bottom:4px">
+      <i class="fas fa-pen-nib" style="color:#1b7d4f;margin-right:8px"></i>
+      {{ is_edit|yesno:"Edit Blog Post,Write New Blog Post" }}
+    </h1>
+    <p style="font-size:.84rem;color:#777">Author, format, and optimize content for maximum Google ranking & reader engagement.</p>
+  </div>
+  {% if is_edit %}
+  <a href="{% url 'blog_detail' post.slug %}" target="_blank" rel="noopener" class="adm-btn adm-btn-ghost" style="padding:8px 16px;font-size:.84rem">
+    <i class="fas fa-external-link-alt"></i> Preview on Site
+  </a>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="adm-card">
+  {% csrf_token %}
+  <div class="adm-card-pad" style="padding:28px">
+
+    {# ── Basic Information ── #}
+    <div class="adm-section-divider" style="margin-top:0">
+      <i class="fas fa-align-left"></i> Article Basics
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.title.id_for_label }}">Article Title <span style="color:#c62828">*</span></label>
+      {{ form.title }}
+      <span class="adm-form-hint">E.g., "How to Choose the Right Personal Support Worker (PSW) in Ontario"</span>
+      {% if form.title.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.title.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="adm-form-grid-2">
+      <div class="adm-form-group">
+        <label class="adm-form-label" for="{{ form.slug.id_for_label }}">URL Slug</label>
+        {{ form.slug }}
+        <span class="adm-form-hint">Leave blank to auto-generate from title. e.g. how-to-choose-psw-ontario</span>
+        {% if form.slug.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.slug.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="adm-form-group">
+        <label class="adm-form-label" for="{{ form.category.id_for_label }}">Category <span style="color:#c62828">*</span></label>
+        {{ form.category }}
+        {% if form.category.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.category.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="adm-form-grid-3">
+      <div class="adm-form-group">
+        <label class="adm-form-label" for="{{ form.author_name.id_for_label }}">Author Name</label>
+        {{ form.author_name }}
+      </div>
+      <div class="adm-form-group">
+        <label class="adm-form-label" for="{{ form.author_role.id_for_label }}">Author Title / Role</label>
+        {{ form.author_role }}
+      </div>
+      <div class="adm-form-group">
+        <label class="adm-form-label" for="{{ form.read_time_minutes.id_for_label }}">Read Time (minutes)</label>
+        {{ form.read_time_minutes }}
+      </div>
+    </div>
+
+    {# ── Visuals & Media ── #}
+    <div class="adm-section-divider">
+      <i class="fas fa-image"></i> Featured Image
+    </div>
+
+    <div class="adm-form-grid-2" style="align-items:start">
+      <div class="adm-form-group">
+        <label class="adm-form-label">
+          Featured Image File <span class="adm-badge-rec">Recommended</span>
+        </label>
+
+        <!-- Modern Upload Box -->
+        <div class="custom-file-uploader" id="customFileUploader">
+          <!-- Hidden real Django input -->
+          <div style="display:none">
+            {{ form.featured_image }}
+          </div>
+
+          <!-- Dropzone Empty State -->
+          <div class="upload-dropzone" id="uploadDropzone">
+            <div class="upload-icon-circle">
+              <i class="fas fa-cloud-arrow-up"></i>
+            </div>
+            <div class="upload-headline">
+              Drag &amp; drop your header photo here, or
+            </div>
+            <button type="button" class="upload-action-btn" id="uploadTriggerBtn">
+              <i class="fas fa-folder-open"></i> Browse Files
+            </button>
+            <div class="upload-meta-pills">
+              <span><i class="fas fa-check-circle"></i> JPG, PNG, WEBP</span>
+              <span><i class="fas fa-expand"></i> 1200 &times; 630</span>
+              <span><i class="fas fa-file-shield"></i> Max 10MB</span>
+            </div>
+          </div>
+
+          <!-- Selected File Preview Card -->
+          <div class="upload-preview-card" id="uploadPreviewCard" style="display:none">
+            <div class="preview-thumb-wrap">
+              <img id="previewImg" src="" alt="Selected Preview" class="preview-thumb-img">
+              <div class="preview-badge-status"><i class="fas fa-check"></i> Ready to Upload</div>
+            </div>
+            <div class="preview-details">
+              <div class="preview-filename" id="previewFilename">image.jpg</div>
+              <div class="preview-filesize" id="previewFilesize">1.2 MB</div>
+              <div class="preview-actions">
+                <button type="button" class="preview-btn-change" id="btnChangeImage">
+                  <i class="fas fa-arrows-rotate"></i> Change Image
+                </button>
+                <button type="button" class="preview-btn-remove" id="btnRemoveImage">
+                  <i class="fas fa-trash-can"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- If editing and an image already exists -->
+          {% if is_edit and post.display_image %}
+          <div class="existing-image-box" id="existingImageBox">
+            <div class="existing-image-header">
+              <span><i class="fas fa-circle-check" style="color:#10b981"></i> Currently Published Image</span>
+              <span class="existing-tag">Live on Site</span>
+            </div>
+            <div class="existing-image-body">
+              <img src="{{ post.display_image }}" alt="{{ post.title }}" class="existing-img-thumb" onerror="this.style.display='none'">
+              <div style="font-size:.78rem;color:#6b7280;line-height:1.4">
+                Uploading a new file above will replace this image when you save.
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <span class="adm-form-hint">Upload a high-impact header photo to maximize click-throughs and Google Discover distribution.</span>
+        {% if form.featured_image.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:6px">{{ form.featured_image.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div>
+        <div class="adm-form-group">
+          <label class="adm-form-label" for="{{ form.featured_image_url.id_for_label }}">
+            Or Remote Image URL
+          </label>
+          <div class="url-input-wrap">
+            <i class="fas fa-link url-input-icon"></i>
+            {{ form.featured_image_url }}
+          </div>
+          <span class="adm-form-hint">Paste a direct CDN or Unsplash image URL (used if no local file is uploaded).</span>
+          {% if form.featured_image_url.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.featured_image_url.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="adm-form-group" style="margin-top:16px">
+          <label class="adm-form-label" for="{{ form.image_alt.id_for_label }}">Image Alt Text (SEO)</label>
+          {{ form.image_alt }}
+          <span class="adm-form-hint">Descriptive keywords for Google Image ranking and screen-reader accessibility.</span>
+          {% if form.image_alt.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.image_alt.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Content & Excerpt ── #}
+    <div class="adm-section-divider">
+      <i class="fas fa-file-alt"></i> Excerpt & Full Content
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.excerpt.id_for_label }}">Short Excerpt <span style="color:#c62828">*</span></label>
+      {{ form.excerpt }}
+      <span class="adm-form-hint">A concise 1-2 sentence hook shown on home page carousel and search snippets.</span>
+      {% if form.excerpt.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.excerpt.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.content.id_for_label }}">Full Article Body (HTML Supported) <span style="color:#c62828">*</span></label>
+      {{ form.content }}
+      <span class="adm-form-hint">Format using &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, and &lt;strong&gt;. Proper heading hierarchy helps rank on Google.</span>
+      {% if form.content.errors %}<div style="color:#c62828;font-size:.78rem;margin-top:4px">{{ form.content.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.tags.id_for_label }}">Tags / Keywords</label>
+      {{ form.tags }}
+      <span class="adm-form-hint">Comma-separated tags e.g. psw, dementia care, senior support, ontario</span>
+    </div>
+
+    {# ── SEO & Meta Tags ── #}
+    <div class="adm-section-divider">
+      <i class="fas fa-rocket"></i> Google SEO Optimization
+    </div>
+
+    <div class="seo-score-box">
+      <div style="font-weight:700;font-size:.88rem;color:#166534;margin-bottom:4px">
+        <i class="fas fa-check-double"></i> SEO Meta Guidelines
+      </div>
+      <p style="font-size:.8rem;color:#1e3a29;margin:0;line-height:1.45">
+        To rank very fast on Google: ensure the title contains your primary keyword, meta description is between 120-160 characters, and body includes clear subheadings (H2, H3).
+      </p>
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.meta_title.id_for_label }}">Custom SEO Meta Title</label>
+      {{ form.meta_title }}
+      <span class="adm-form-hint">Ideal length: 50-60 characters. Leave blank to default to article title.</span>
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.meta_description.id_for_label }}">Custom SEO Meta Description</label>
+      {{ form.meta_description }}
+      <span class="adm-form-hint">Ideal length: 120-160 characters for Google search snippet.</span>
+    </div>
+
+    <div class="adm-form-group">
+      <label class="adm-form-label" for="{{ form.meta_keywords.id_for_label }}">SEO Meta Keywords</label>
+      {{ form.meta_keywords }}
+      <span class="adm-form-hint">E.g. "ontario home care, psw hourly rate, caregiver hiring ontario"</span>
+    </div>
+
+    {# ── Visibility & Publishing ── #}
+    <div class="adm-section-divider">
+      <i class="fas fa-globe"></i> Publishing Settings
+    </div>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+      <label class="adm-check-label">
+        {{ form.is_published }}
+        <span>Publish immediately (visible to visitors & search engines)</span>
+      </label>
+      <label class="adm-check-label">
+        {{ form.is_featured }}
+        <span>Feature post (prominent highlight on blog page)</span>
+      </label>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid #eef2eb">
+      <a href="{% url 'AdminApp:blog_list' %}" class="adm-btn adm-btn-ghost" style="padding:10px 20px">Cancel</a>
+      <button type="submit" class="adm-btn adm-btn-green" style="padding:10px 26px;font-size:.88rem">
+        <i class="fas fa-save"></i> {{ is_edit|yesno:"Save Changes,Publish Blog Post" }}
+      </button>
+    </div>
+
+  </div>
+</form>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('#id_content').summernote({
+      placeholder: 'Write the complete, rich article content here with headings, lists, formatting, and images...',
+      tabsize: 2,
+      height: 480,
+      toolbar: [
+        ['style', ['style']],
+        ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+        ['fontname', ['fontname']],
+        ['fontsize', ['fontsize']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture', 'video', 'hr']],
+        ['view', ['fullscreen', 'codeview', 'help']]
+      ],
+      callbacks: {
+        onChange: function(contents, $editable) {
+          var plain = $('<div>').html(contents).text();
+          var words = plain.trim().split(/\s+/).filter(Boolean).length;
+          var minutes = Math.max(1, Math.ceil(words / 200));
+          $('#id_read_time_minutes').val(minutes);
+        }
+      }
+    });
+
+    // Auto-generate slug from title if empty
+    var titleInput = $('#id_title');
+    var slugInput = $('#id_slug');
+    if (!slugInput.val()) {
+      slugInput.data('auto', true);
+    }
+    titleInput.on('input', function() {
+      if (slugInput.data('auto')) {
+        var s = $(this).val().toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        slugInput.val(s);
+      }
+    });
+    slugInput.on('input', function() {
+      $(this).data('auto', false);
+    });
+
+    // ── Custom Image Upload & Dropzone Handling ──
+    var realFileInput = document.getElementById('id_featured_image');
+    var dropzone = document.getElementById('customFileUploader');
+    var dropzoneEmpty = document.getElementById('uploadDropzone');
+    var previewCard = document.getElementById('uploadPreviewCard');
+    var previewImg = document.getElementById('previewImg');
+    var previewFilename = document.getElementById('previewFilename');
+    var previewFilesize = document.getElementById('previewFilesize');
+    var triggerBtn = document.getElementById('uploadTriggerBtn');
+    var changeBtn = document.getElementById('btnChangeImage');
+    var removeBtn = document.getElementById('btnRemoveImage');
+
+    if (realFileInput && dropzone) {
+      if (triggerBtn) {
+        triggerBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          realFileInput.click();
+        });
+      }
+      if (changeBtn) {
+        changeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          realFileInput.click();
+        });
+      }
+
+      ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropzone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('drag-over');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(function(eventName) {
+        dropzone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('drag-over');
+        }, false);
+      });
+
+      dropzone.addEventListener('drop', function(e) {
+        var dt = e.dataTransfer;
+        var files = dt.files;
+        if (files && files.length > 0) {
+          realFileInput.files = files;
+          handleFileSelect(files[0]);
+        }
+      });
+
+      realFileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          handleFileSelect(this.files[0]);
+        }
+      });
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          realFileInput.value = '';
+          dropzoneEmpty.style.display = 'flex';
+          previewCard.style.display = 'none';
+          previewImg.src = '';
+        });
+      }
+
+      function handleFileSelect(file) {
+        if (!file.type.match(/^image\//)) {
+          alert('Please select a valid image file (JPG, PNG, or WEBP).');
+          realFileInput.value = '';
+          return;
+        }
+        previewFilename.textContent = file.name;
+        previewFilesize.textContent = formatBytes(file.size);
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          dropzoneEmpty.style.display = 'none';
+          previewCard.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        var k = 1024;
+        var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        var i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+    }
+  });
+</script>
+{% endblock %}

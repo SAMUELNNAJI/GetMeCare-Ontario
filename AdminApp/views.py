@@ -12,8 +12,8 @@ from Account.models import (
 )
 from Account.forms import REQUIRED_DOC_TYPES
 from django.db.models import Q
-from .models import Faq, Service
-from .forms import FaqForm, ServiceForm
+from .models import Faq, Service, BlogPost
+from .forms import FaqForm, ServiceForm, BlogPostForm
 from GETMECARE.email_utils import (
     send_payout_notification_email,
     send_dispute_resolved_employer_email,
@@ -409,6 +409,88 @@ def activate_employer(request, profile_id):
             f'{profile.user.get_full_name()} has been activated as an employer.'
         )
     return redirect('AdminApp:manage_employers')
+
+
+@admin_required
+def convert_employer_to_caregiver(request, profile_id):
+    """
+    Convert an employer into a caregiver.
+    - Role is set to CustomUser.CAREGIVER.
+    - CaregiverProfile is created with status=STATUS_PENDING (unactivated, awaiting verification documents & photo).
+    - Open JobPostings are closed.
+    - EmployerProfile is deleted so no employer functionality remains.
+    - Email is sent to user instructing them to log in, upload documents and profile photo.
+    - User is moved from employer page to manage caregiver (redirects to manage_caregivers).
+    """
+    from django.urls import reverse
+    from GETMECARE.email_utils import send_employer_converted_to_caregiver_email
+
+    if request.method != 'POST':
+        return redirect('AdminApp:manage_employers')
+
+    profile = get_object_or_404(EmployerProfile, pk=profile_id)
+    user = profile.user
+
+    # 1. Update user role
+    user.role = CustomUser.CAREGIVER
+    user.save(update_fields=['role'])
+
+    # 2. Ensure CaregiverProfile exists and is pending verification (not activated yet)
+    cg_profile, created = CaregiverProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'status': CaregiverProfile.STATUS_PENDING,
+            'account_status': CaregiverProfile.ACCOUNT_ACTIVE,
+        }
+    )
+    if not created:
+        cg_profile.status = CaregiverProfile.STATUS_PENDING
+        cg_profile.account_status = CaregiverProfile.ACCOUNT_ACTIVE
+        cg_profile.save(update_fields=['status', 'account_status'])
+
+    # 3. Close open job postings
+    JobPosting.objects.filter(employer=user, status=JobPosting.STATUS_OPEN).update(
+        status=JobPosting.STATUS_CLOSED,
+        updated_at=timezone.now()
+    )
+
+    # 4. Remove EmployerProfile so no employer functionality remains
+    profile.delete()
+
+    # 5. Send notification email to the converted user
+    try:
+        site_domain = request.get_host()
+    except Exception:
+        site_domain = 'getmecare-ontario.com'
+
+    if user.email:
+        try:
+            send_employer_converted_to_caregiver_email(user, site_domain=site_domain)
+        except Exception:
+            pass
+
+    # 6. In-app notification
+    try:
+        Notification.objects.create(
+            user=user,
+            title='Account Converted to Caregiver',
+            message=(
+                'Your account has been switched to a Caregiver / PSW profile by platform administration. '
+                'Please upload your required verification documents (VSC, certificates, ID) and profile photo to get activated.'
+            ),
+            notification_type=Notification.TYPE_SYSTEM,
+            link=reverse('CareGiverAcc:dashboard'),
+        )
+    except Exception:
+        pass
+
+    messages.success(
+        request,
+        f'Success: {user.get_full_name() or user.username} has been converted into a Caregiver and moved to the Caregivers list. '
+        f'An onboarding email was sent instructing them to log in and upload verification documents and photo. Their verification status is Pending Review.'
+    )
+    return redirect('AdminApp:manage_caregivers')
+
 
 
 @admin_required
@@ -1705,3 +1787,97 @@ def program_shift(request):
         'recent_shifts': recent_shifts,
     })
     return render(request, 'AdminApp/program-shift.html', ctx)
+
+
+# ──────────────────────────────────────────────────────────────
+# Blog Management
+# ──────────────────────────────────────────────────────────────
+
+@admin_required
+def blog_list(request):
+    """Admin view: list and manage all blog posts."""
+    from django.core.paginator import Paginator
+
+    q = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '').strip()
+    status_filter = request.GET.get('status', 'all').strip()
+
+    qs = BlogPost.objects.all().order_by('-published_at', '-created_at')
+
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(excerpt__icontains=q) |
+            Q(tags__icontains=q) |
+            Q(author_name__icontains=q)
+        )
+    if category:
+        qs = qs.filter(category=category)
+    if status_filter == 'published':
+        qs = qs.filter(is_published=True)
+    elif status_filter == 'draft':
+        qs = qs.filter(is_published=False)
+
+    counts = {
+        'all': BlogPost.objects.count(),
+        'published': BlogPost.objects.filter(is_published=True).count(),
+        'draft': BlogPost.objects.filter(is_published=False).count(),
+    }
+
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'posts': page_obj,
+        'page_obj': page_obj,
+        'search_q': q,
+        'category_filter': category,
+        'status_filter': status_filter,
+        'categories': BlogPost.CATEGORY_CHOICES,
+        'counts': counts,
+        'total_count': paginator.count,
+    })
+    return render(request, 'AdminApp/blog-list.html', ctx)
+
+
+@admin_required
+def blog_edit(request, post_id=None):
+    """Admin view: create or edit a blog post."""
+    if post_id is not None:
+        post_obj = get_object_or_404(BlogPost, pk=post_id)
+    else:
+        post_obj = None
+
+    if request.method == 'POST':
+        form = BlogPostForm(request.POST, request.FILES, instance=post_obj)
+        if form.is_valid():
+            saved_post = form.save()
+            action_verb = 'updated' if post_obj else 'created'
+            messages.success(request, f'Blog post "{saved_post.title}" successfully {action_verb}!')
+            return redirect('AdminApp:blog_list')
+        messages.error(request, 'Please correct the errors in the form below.')
+    else:
+        form = BlogPostForm(instance=post_obj)
+
+    ctx = _admin_sidebar()
+    ctx.update({
+        'form': form,
+        'post': post_obj,
+        'is_edit': post_obj is not None,
+    })
+    return render(request, 'AdminApp/blog-form.html', ctx)
+
+
+@admin_required
+def blog_delete(request, post_id):
+    """Admin view: delete a blog post (POST only)."""
+    if request.method != 'POST':
+        return redirect('AdminApp:blog_list')
+    post_obj = get_object_or_404(BlogPost, pk=post_id)
+    title = post_obj.title
+    post_obj.delete()
+    messages.success(request, f'Blog post "{title}" has been deleted.')
+    return redirect('AdminApp:blog_list')
+

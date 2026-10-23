@@ -121,6 +121,15 @@
 .ecb-suspend { background:#fff3e0; color:#c96000; border:1px solid #f5d78a; }
 .ecb-deact   { background:#fdecea; color:#c62828; border:1px solid #ffcdd2; }
 .ecb-pay     { background:#e8f0fe; color:#1a56c4; }
+.ecb-convert { background:linear-gradient(135deg, #4f46e5, #4338ca); color:#fff; font-weight:700; box-shadow:0 2px 6px rgba(79,70,229,.25); }
+.ecb-convert:hover { background:linear-gradient(135deg, #4338ca, #3730a3); color:#fff; }
+.mod-icon-c { background:#ede9fe; color:#4f46e5; }
+.mod-ok-c {
+  background:linear-gradient(135deg, #4f46e5, #4338ca); color:#fff; border:none; border-radius:9px;
+  padding:10px 22px; font-size:.845rem; font-weight:700; cursor:pointer; font-family:inherit;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.mod-ok-c:hover { background:linear-gradient(135deg, #4338ca, #3730a3); }
 
 /* ═══ MODERATION MODAL ═══ */
 .mod-backdrop {
@@ -415,6 +424,12 @@
       <a href="{% url 'AdminApp:employer_payments' %}" class="ec-btn ecb-pay">
         <i class="fas fa-credit-card"></i> Payments
       </a>
+      {# Convert Employer to Caregiver #}
+      <button type="button" class="ec-btn ecb-convert"
+        onclick="openMod('convert',{{ p.pk }},'{{ p.user.get_full_name|default:p.user.username|escapejs }}')"
+        title="Switch this user to a Caregiver role and activate caregiver dashboard">
+        <i class="fas fa-user-nurse"></i> Turn into Caregiver
+      </button>
       <a href="{% url 'admin_support_start' p.user.pk %}" class="ec-btn ecb-green" title="Open internal web chat">
         <i class="fas fa-comment"></i> Chat
       </a>
@@ -505,6 +520,30 @@
   </div>
 </div>
 
+{# ═══ Convert to Caregiver Modal ═══ #}
+<div class="mod-backdrop" id="modConvert">
+  <div class="mod-box">
+    <div class="mod-icon mod-icon-c"><i class="fas fa-user-nurse"></i></div>
+    <div class="mod-title">Turn Employer into Caregiver</div>
+    <p class="mod-sub">
+      You are about to convert <strong id="convertName"></strong> into a <strong>Caregiver / PSW</strong>.<br><br>
+      <span style="display:block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;color:#166534;font-size:.82rem;margin-bottom:8px;">
+        <i class="fas fa-check-circle" style="margin-right:4px;"></i> Their dashboard will immediately switch to the <strong>Caregiver Dashboard</strong> with all caregiver capabilities enabled (schedule, shift logs, earnings, documents).
+      </span>
+      <span style="display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;color:#991b1b;font-size:.82rem;">
+        <i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i> <strong>Zero employer functionality will remain.</strong> Their employer profile and open job postings will be removed.
+      </span>
+    </p>
+    <form method="post" id="convertForm">
+      {% csrf_token %}
+      <div class="mod-actions">
+        <button type="button" class="mod-cancel" onclick="closeMod('convert')">Cancel</button>
+        <button type="submit" class="mod-ok-c"><i class="fas fa-exchange-alt"></i> Confirm & Switch Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -516,20 +555,25 @@
       document.getElementById('suspForm').action = '/admin-panel/employers/'+id+'/suspend/';
       document.getElementById('suspReason').value = '';
       document.getElementById('modSuspend').classList.add('open');
-    } else {
+    } else if(action==='deactivate'){
       document.getElementById('deactName').textContent = name;
       document.getElementById('deactForm').action = '/admin-panel/employers/'+id+'/deactivate/';
       document.getElementById('deactReason').value = '';
       document.getElementById('modDeact').classList.add('open');
+    } else if(action==='convert'){
+      document.getElementById('convertName').textContent = name;
+      document.getElementById('convertForm').action = '/admin-panel/employers/'+id+'/convert-to-caregiver/';
+      document.getElementById('modConvert').classList.add('open');
     }
     document.body.style.overflow = 'hidden';
   }
   function closeMod(action){
-    var el = document.getElementById(action==='suspend'?'modSuspend':'modDeact');
-    el.classList.remove('open');
+    var targetId = action==='suspend' ? 'modSuspend' : (action==='convert' ? 'modConvert' : 'modDeact');
+    var el = document.getElementById(targetId);
+    if(el) el.classList.remove('open');
     document.body.style.overflow = '';
   }
-  ['modSuspend','modDeact'].forEach(function(id){
+  ['modSuspend','modDeact','modConvert'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.addEventListener('click',function(e){
       if(e.target===el){el.classList.remove('open');document.body.style.overflow='';}
@@ -537,7 +581,10 @@
   });
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
-      ['modSuspend','modDeact'].forEach(function(id){document.getElementById(id).classList.remove('open');});
+      ['modSuspend','modDeact','modConvert'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) el.classList.remove('open');
+      });
       document.body.style.overflow='';
     }
   });

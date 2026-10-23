@@ -130,6 +130,12 @@
             {% endif %}
             >Services</a
           >
+          <a
+            href="{% url 'blog_index' %}"
+            {% if 'blog' in request.resolver_match.url_name %}class="nav-active"
+            {% endif %}
+            >Blog</a
+          >
         </nav>
         <div class="nav-actions">
           {% if user.is_authenticated %} {% if user.is_staff %}
@@ -167,6 +173,7 @@
           <a href="{% url 'browse_jobs' %}">Browse Jobs</a>
           <a href="{% url 'how_it_works' %}">How It Works</a>
           <a href="{% url 'services' %}">Services</a>
+          <a href="{% url 'blog_index' %}">Blog & Resources</a>
         </nav>
         <div class="mobile-nav-actions">
           {% if user.is_authenticated %} {% if user.is_staff %}
@@ -231,6 +238,7 @@
             <li><a href="{% url 'browse_jobs' %}">Browse Jobs</a></li>
             <li><a href="{% url 'how_it_works' %}">How It Works</a></li>
             <li><a href="{% url 'services' %}">Services</a></li>
+            <li><a href="{% url 'blog_index' %}">Blog & Guides</a></li>
             <li><a href="#">Open Jobs</a></li>
           </ul>
         </div>
@@ -238,6 +246,7 @@
           <h5>FOR FAMILIES</h5>
           <ul>
             <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}?role=employer{% elif user.is_employer %}{% url 'EmployerApp:post_job' %}{% else %}#{% endif %}" {% if user.is_authenticated and not user.is_employer %}onclick="handlePostCareRequest(); return false;"{% endif %}>Post a Care Request</a></li>
+            <li><a href="{% url 'blog_index' %}?category=family_guide">Caregiver Hiring Guides</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
           </ul>
@@ -246,6 +255,7 @@
           <h5>FOR CAREGIVERS</h5>
           <ul>
             <li><a href="{% if not user.is_authenticated %}{% url 'Account:signup' %}?role=caregiver{% else %}#{% endif %}" {% if user.is_authenticated %}onclick="return false;"{% endif %}>Apply as a PSW</a></li>
+            <li><a href="{% url 'blog_index' %}?category=caregiver_tips">Caregiver Career &amp; Tips</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             <li><a href="{% url 'terms' %}">Terms of Service</a></li>
           </ul>
@@ -256,6 +266,7 @@
           &copy; 2026 Target Jobspace LLC. All rights reserved. &nbsp;&bull;&nbsp; getmecare-ontario.com
         </p>
         <div class="footer-bottom-links">
+          <a href="{% url 'blog_index' %}">Blog &amp; Knowledge Hub</a>
           <a href="{% url 'contact' %}">Contact Us</a>
           <a href="{% url 'terms' %}">Terms of Service</a>
           <a href="{% url 'privacy' %}">Privacy Policy</a>

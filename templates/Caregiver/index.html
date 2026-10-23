@@ -1,8 +1,368 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}GetMeCare
-ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
+{% block title %}GetMeCare ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ═══ HOME BLOG CAROUSEL SECTION ═══ */
+  .home-blog-section {
+    padding: 92px 0 96px;
+    background: #f7faf8;
+    position: relative;
+    overflow: hidden;
+  }
+  .home-blog-section::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(27,125,79,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .h-blog-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 38px;
+    flex-wrap: wrap;
+  }
+  .h-blog-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e6f5ee;
+    color: #1b7d4f;
+    border: 1px solid #b2dfca;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  .h-blog-title {
+    font-size: 2.35rem;
+    font-weight: 800;
+    color: #121815;
+    line-height: 1.22;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+  .h-blog-sub {
+    font-size: 1.05rem;
+    color: #526359;
+    max-width: 580px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .h-blog-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .h-blog-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #1b7d4f;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1.5px solid #d2e4db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+  }
+  .h-blog-all-btn:hover {
+    background: #1b7d4f;
+    border-color: #1b7d4f;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(27,125,79,0.2);
+  }
+  .h-carousel-arrows {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .h-arrow-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid #d2e4db;
+    color: #121815;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+  }
+  .h-arrow-btn:hover:not(:disabled) {
+    background: #1b7d4f;
+    border-color: #1b7d4f;
+    color: #fff;
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(27,125,79,0.25);
+  }
+  .h-arrow-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* CAROUSEL VIEWPORT & TRACK */
+  .h-carousel-viewport {
+    overflow: hidden;
+    position: relative;
+    border-radius: 20px;
+    padding: 10px 4px 22px;
+    margin: 0 -4px;
+    cursor: grab;
+    user-select: none;
+  }
+  .h-carousel-viewport.is-dragging {
+    cursor: grabbing;
+  }
+  .h-carousel-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+  }
+  .h-carousel-slide {
+    flex: 0 0 calc(33.333% - 16px);
+    margin-right: 24px;
+    box-sizing: border-box;
+  }
+
+  /* THE MAD BLOG CARD */
+  .mad-blog-card {
+    background: #fff;
+    border: 1px solid #e1ebe5;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.25s ease;
+    position: relative;
+  }
+  .mad-blog-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 42px -10px rgba(27,125,79,0.22), 0 0 0 1.5px rgba(27,125,79,0.28);
+    border-color: #86efac;
+  }
+  .mbc-thumb-box {
+    position: relative;
+    height: 205px;
+    overflow: hidden;
+    background: #0f2017;
+  }
+  .mbc-thumb-box a {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .mbc-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mad-blog-card:hover .mbc-img {
+    transform: scale(1.08);
+  }
+  .mbc-overlay-grad {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.02) 40%, rgba(0,0,0,0.48) 100%);
+    pointer-events: none;
+  }
+  .mbc-cat-pill {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(18, 24, 21, 0.85);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .mbc-time-pill {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(6px);
+    color: #166534;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .mbc-content {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .mbc-date-row {
+    font-size: 0.76rem;
+    color: #7b8b82;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .mbc-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #121815;
+    line-height: 1.38;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s ease;
+  }
+  .mbc-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .mad-blog-card:hover .mbc-title a {
+    color: #1b7d4f;
+  }
+  .mbc-excerpt {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #55665d;
+    margin-bottom: 18px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .mbc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid #f0f4f1;
+  }
+  .mbc-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mbc-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b7d4f, #145e3b);
+    color: #fff;
+    font-size: 0.76rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mbc-author strong {
+    display: block;
+    font-size: 0.78rem;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+  .mbc-author span {
+    display: block;
+    font-size: 0.68rem;
+    color: #888;
+  }
+  .mbc-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1b7d4f;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .mbc-read-btn i {
+    transition: transform 0.2s ease;
+  }
+  .mad-blog-card:hover .mbc-read-btn {
+    color: #145e3b;
+  }
+  .mad-blog-card:hover .mbc-read-btn i {
+    transform: translateX(4px);
+  }
+
+  /* CAROUSEL PAGINATION DOTS */
+  .h-carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+  }
+  .h-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #cbd8d1;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .h-dot.active {
+    width: 28px;
+    border-radius: 8px;
+    background: #1b7d4f;
+    box-shadow: 0 2px 8px rgba(27,125,79,0.3);
+  }
+
+  @media (max-width: 1024px) {
+    .h-carousel-slide {
+      flex: 0 0 calc(50% - 12px);
+    }
+  }
+  @media (max-width: 640px) {
+    .h-carousel-slide {
+      flex: 0 0 100%;
+      margin-right: 16px;
+    }
+    .h-blog-title {
+      font-size: 1.85rem;
+    }
+    .home-blog-section {
+      padding: 60px 0 68px;
+    }
+  }
+</style>
+{% endblock %}
 {% block content %}
+
 
 <!-- ===================== HERO ===================== -->
 <section class="hero">
@@ -472,6 +832,84 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
   </div>
 </section>
 
+<!-- ===================== BLOG CAROUSEL SECTION ===================== -->
+{% if recent_blogs %}
+<section class="home-blog-section" id="home-blog">
+  <div class="section-container">
+    <div class="h-blog-header">
+      <div>
+        <span class="h-blog-pill"><i class="fas fa-sparkles"></i> Insights & Resources</span>
+        <h2 class="h-blog-title">Ontario Care & Wellness Guides</h2>
+        <p class="h-blog-sub">
+          Expert advice on hiring vetted Personal Support Workers, dementia care routines, and navigating Ontario healthcare.
+        </p>
+      </div>
+      <div class="h-blog-controls">
+        <a href="{% url 'blog_index' %}" class="h-blog-all-btn">
+          Explore All Articles <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="h-carousel-arrows">
+          <button type="button" class="h-arrow-btn" id="blogPrevBtn" aria-label="Previous articles">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button type="button" class="h-arrow-btn" id="blogNextBtn" aria-label="Next articles">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Mad Carousel Viewport -->
+    <div class="h-carousel-viewport" id="blogViewport">
+      <div class="h-carousel-track" id="blogTrack">
+        {% for post in recent_blogs %}
+        <div class="h-carousel-slide">
+          <article class="mad-blog-card">
+            <div class="mbc-thumb-box">
+              <a href="{{ post.get_absolute_url }}">
+                <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" class="mbc-img" onerror="this.src='{% static "Caregiver/images/hero-image.png" %}';">
+              </a>
+              <div class="mbc-overlay-grad"></div>
+              <span class="mbc-cat-pill">{{ post.get_category_display }}</span>
+              <span class="mbc-time-pill"><i class="far fa-clock"></i> {{ post.read_time_minutes }}m read</span>
+            </div>
+
+            <div class="mbc-content">
+              <div class="mbc-date-row">
+                <i class="far fa-calendar-alt"></i> {{ post.published_at|date:"M d, Y" }}
+              </div>
+              <h3 class="mbc-title">
+                <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+              </h3>
+              <p class="mbc-excerpt">{{ post.excerpt }}</p>
+
+              <div class="mbc-footer">
+                <div class="mbc-author">
+                  <div class="mbc-av">
+                    <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
+                  </div>
+                  <div>
+                    <strong>{{ post.author_name }}</strong>
+                    <span>{{ post.author_role|truncatechars:26 }}</span>
+                  </div>
+                </div>
+                <a href="{{ post.get_absolute_url }}" class="mbc-read-btn" aria-label="Read {{ post.title }}">
+                  <span>Read Guide</span> <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Carousel Pagination Dots -->
+    <div class="h-carousel-dots" id="blogDots"></div>
+  </div>
+</section>
+{% endif %}
+
 <!-- ===================== CTA BANNER ===================== -->
 <section class="cta-banner-wrap">
   <div class="cta-banner">
@@ -542,5 +980,175 @@ ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
     const statsBar = document.getElementById("stats-bar");
     if (statsBar) observer.observe(statsBar);
   })();
+
+  // ═══ MAD BLOG CAROUSEL SCRIPT ═══
+  (function () {
+    const track = document.getElementById('blogTrack');
+    const viewport = document.getElementById('blogViewport');
+    const prevBtn = document.getElementById('blogPrevBtn');
+    const nextBtn = document.getElementById('blogNextBtn');
+    const dotsContainer = document.getElementById('blogDots');
+    if (!track || !viewport) return;
+
+    const slides = Array.from(track.children);
+    const totalSlides = slides.length;
+    if (totalSlides === 0) return;
+
+    let currentIndex = 0;
+    let autoplayTimer = null;
+    let isDragging = false;
+    let startPos = 0;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
+
+    function getVisibleCount() {
+      const w = window.innerWidth;
+      if (w < 640) return 1;
+      if (w <= 1024) return 2;
+      return 3;
+    }
+
+    function getMaxIndex() {
+      const count = getVisibleCount();
+      return Math.max(0, totalSlides - count);
+    }
+
+    function updateDots() {
+      if (!dotsContainer) return;
+      dotsContainer.innerHTML = '';
+      const maxIdx = getMaxIndex();
+      for (let i = 0; i <= maxIdx; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'h-dot' + (i === currentIndex ? ' active' : '');
+        dot.setAttribute('type', 'button');
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', () => goToSlide(i));
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function updateButtons() {
+      const maxIdx = getMaxIndex();
+      if (prevBtn) prevBtn.disabled = currentIndex <= 0;
+      if (nextBtn) nextBtn.disabled = currentIndex >= maxIdx;
+    }
+
+    function getSlideWidth() {
+      if (slides.length === 0) return 0;
+      const slide = slides[0];
+      const style = window.getComputedStyle(slide);
+      const marginRight = parseFloat(style.marginRight) || 0;
+      return slide.getBoundingClientRect().width + marginRight;
+    }
+
+    function setTrackPosition() {
+      const slideW = getSlideWidth();
+      currentTranslate = -currentIndex * slideW;
+      prevTranslate = currentTranslate;
+      track.style.transform = `translateX(${currentTranslate}px)`;
+      updateButtons();
+      updateActiveDot();
+    }
+
+    function updateActiveDot() {
+      if (!dotsContainer) return;
+      const dots = dotsContainer.querySelectorAll('.h-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentIndex);
+      });
+    }
+
+    function goToSlide(index) {
+      const maxIdx = getMaxIndex();
+      currentIndex = Math.max(0, Math.min(index, maxIdx));
+      setTrackPosition();
+    }
+
+    function nextSlide() {
+      const maxIdx = getMaxIndex();
+      if (currentIndex >= maxIdx) {
+        goToSlide(0);
+      } else {
+        goToSlide(currentIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        goToSlide(currentIndex - 1);
+      }
+    }
+
+    if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+    if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+    // Autoplay with pause on hover
+    function startAutoplay() {
+      stopAutoplay();
+      autoplayTimer = setInterval(nextSlide, 4500);
+    }
+    function stopAutoplay() {
+      if (autoplayTimer) clearInterval(autoplayTimer);
+    }
+
+    viewport.addEventListener('mouseenter', stopAutoplay);
+    viewport.addEventListener('mouseleave', startAutoplay);
+
+    // Touch and drag swipe support
+    function touchStart(e) {
+      stopAutoplay();
+      isDragging = true;
+      startPos = getPositionX(e);
+      track.style.transition = 'none';
+      viewport.classList.add('is-dragging');
+    }
+
+    function touchMove(e) {
+      if (!isDragging) return;
+      const currentPosition = getPositionX(e);
+      const diff = currentPosition - startPos;
+      currentTranslate = prevTranslate + diff;
+      track.style.transform = `translateX(${currentTranslate}px)`;
+    }
+
+    function touchEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      viewport.classList.remove('is-dragging');
+      track.style.transition = 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)';
+      const movedBy = currentTranslate - prevTranslate;
+      if (movedBy < -50) {
+        goToSlide(currentIndex + 1);
+      } else if (movedBy > 50) {
+        goToSlide(currentIndex - 1);
+      } else {
+        goToSlide(currentIndex);
+      }
+      startAutoplay();
+    }
+
+    function getPositionX(e) {
+      return e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+    }
+
+    viewport.addEventListener('touchstart', touchStart, { passive: true });
+    viewport.addEventListener('touchmove', touchMove, { passive: true });
+    viewport.addEventListener('touchend', touchEnd);
+
+    viewport.addEventListener('mousedown', touchStart);
+    window.addEventListener('mousemove', touchMove);
+    window.addEventListener('mouseup', touchEnd);
+
+    window.addEventListener('resize', () => {
+      currentIndex = Math.min(currentIndex, getMaxIndex());
+      updateDots();
+      setTrackPosition();
+    });
+
+    updateDots();
+    setTrackPosition();
+    startAutoplay();
+  })();
 </script>
 {% endblock %}
+

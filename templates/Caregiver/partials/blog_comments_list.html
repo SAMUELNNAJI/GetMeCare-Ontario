@@ -1,0 +1,190 @@
+{% if comments_page %}
+  <div id="commentsList">
+    {% for c in comments_page %}
+    <div class="comment-item" id="comment-{{ c.id }}" data-comment-id="{{ c.id }}" data-guest-token="{{ c.guest_token|default:'' }}">
+      <div class="comment-header">
+        <div class="comment-author-box">
+          <div class="cmt-avatar">{{ c.author_name|first|upper }}</div>
+          <div>
+            <span class="cmt-author-name">{{ c.author_name }}</span>
+            {% if c.user %}
+              <span class="cmt-badge-user"><i class="fas fa-check-circle"></i> Verified User</span>
+            {% else %}
+              <span class="cmt-badge-guest">Guest</span>
+            {% endif %}
+          </div>
+        </div>
+        <span class="cmt-time"><i class="far fa-clock"></i> {{ c.created_at|date:"M d, Y at h:i A" }}</span>
+      </div>
+
+      <!-- Body -->
+      <div class="cmt-content-body" id="cmtBody-{{ c.id }}">{{ c.content }}</div>
+
+      <!-- Actions -->
+      <div class="cmt-actions-row">
+        <button type="button" class="cmt-act-btn" onclick="toggleReplyBox({{ c.id }})">
+          <i class="fas fa-reply"></i> Reply
+        </button>
+
+        {% if user.is_staff or user == c.user %}
+        <button type="button" class="cmt-act-btn" onclick="openEditBox({{ c.id }})">
+          <i class="fas fa-edit"></i> Edit
+        </button>
+        <button type="button" class="cmt-act-btn del-btn" onclick="deleteComment({{ c.id }})">
+          <i class="fas fa-trash-alt"></i> Delete
+        </button>
+        {% else %}
+        <!-- For guest authors: revealed via localStorage token check in JS -->
+        <button type="button" class="cmt-act-btn guest-manage-btn" style="display:none" onclick="openEditBox({{ c.id }})">
+          <i class="fas fa-edit"></i> Edit
+        </button>
+        <button type="button" class="cmt-act-btn del-btn guest-manage-btn" style="display:none" onclick="deleteComment({{ c.id }})">
+          <i class="fas fa-trash-alt"></i> Delete
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Inline Edit Form -->
+      <div class="cmt-inline-box" id="editBox-{{ c.id }}">
+        <textarea class="cmt-textarea" id="editText-{{ c.id }}">{{ c.content }}</textarea>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+          <button type="button" class="cmt-btn-secondary" onclick="closeEditBox({{ c.id }})">Cancel</button>
+          <button type="button" class="cmt-btn-primary" onclick="saveEdit({{ c.id }})">
+            <i class="fas fa-check"></i> Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline Reply Form -->
+      <div class="cmt-inline-box" id="replyBox-{{ c.id }}">
+        {% if not user.is_authenticated %}
+        <div class="cmt-guest-grid" style="margin-bottom:10px">
+          <input type="text" id="replyGuestName-{{ c.id }}" placeholder="Your Name or Nickname *" class="cmt-input" required>
+          <input type="email" id="replyGuestEmail-{{ c.id }}" placeholder="Your Email (Optional)" class="cmt-input">
+        </div>
+        {% endif %}
+        <textarea class="cmt-textarea" id="replyText-{{ c.id }}" placeholder="Write your reply to {{ c.author_name }}..."></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+          <button type="button" class="cmt-btn-secondary" onclick="closeReplyBox({{ c.id }})">Cancel</button>
+          <button type="button" class="cmt-btn-primary" onclick="submitReply({{ c.id }})">
+            <i class="fas fa-reply"></i> Post Reply
+          </button>
+        </div>
+      </div>
+
+      <!-- Replies Container -->
+      <div class="replies-container" id="replies-{{ c.id }}">
+        {% for r in c.replies.all %}
+        <div class="reply-item" id="comment-{{ r.id }}" data-comment-id="{{ r.id }}" data-guest-token="{{ r.guest_token|default:'' }}">
+          <div class="comment-header">
+            <div class="comment-author-box">
+              <div class="cmt-avatar" style="width:30px;height:30px;font-size:0.8rem">{{ r.author_name|first|upper }}</div>
+              <div>
+                <span class="cmt-author-name" style="font-size:0.88rem">{{ r.author_name }}</span>
+                {% if r.user %}
+                  <span class="cmt-badge-user"><i class="fas fa-check-circle"></i> Verified User</span>
+                {% else %}
+                  <span class="cmt-badge-guest">Guest</span>
+                {% endif %}
+              </div>
+            </div>
+            <span class="cmt-time"><i class="far fa-clock"></i> {{ r.created_at|date:"M d, Y at h:i A" }}</span>
+          </div>
+          <div class="cmt-content-body" id="cmtBody-{{ r.id }}" style="margin-left:42px">{{ r.content }}</div>
+
+          <div class="cmt-actions-row" style="margin-left:42px">
+            {% if user.is_staff or user == r.user %}
+            <button type="button" class="cmt-act-btn" onclick="openEditBox({{ r.id }})">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button type="button" class="cmt-act-btn del-btn" onclick="deleteComment({{ r.id }})">
+              <i class="fas fa-trash-alt"></i> Delete
+            </button>
+            {% else %}
+            <button type="button" class="cmt-act-btn guest-manage-btn" style="display:none" onclick="openEditBox({{ r.id }})">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button type="button" class="cmt-act-btn del-btn guest-manage-btn" style="display:none" onclick="deleteComment({{ r.id }})">
+              <i class="fas fa-trash-alt"></i> Delete
+            </button>
+            {% endif %}
+          </div>
+
+          <!-- Inline Edit Form for Reply -->
+          <div class="cmt-inline-box" id="editBox-{{ r.id }}" style="margin-left:42px">
+            <textarea class="cmt-textarea" id="editText-{{ r.id }}">{{ r.content }}</textarea>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+              <button type="button" class="cmt-btn-secondary" onclick="closeEditBox({{ r.id }})">Cancel</button>
+              <button type="button" class="cmt-btn-primary" onclick="saveEdit({{ r.id }})">Save</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Comment Pagination Controls -->
+  {% if comments_page.paginator.num_pages > 1 %}
+  <nav class="cmt-pagination" aria-label="Comment page navigation">
+    <div class="cmt-pagination-info">
+      Showing page <strong>{{ comments_page.number }}</strong> of <strong>{{ comments_page.paginator.num_pages }}</strong> ({{ comments_page.paginator.count }} discussions)
+    </div>
+    <ul class="cmt-pagination-list">
+      {% if comments_page.has_previous %}
+      <li>
+        <a href="?c_page={{ comments_page.previous_page_number }}#comments" class="cmt-page-btn cmt-prev-btn" data-page="{{ comments_page.previous_page_number }}" onclick="goToCommentPage(event, {{ comments_page.previous_page_number }})">
+          <i class="fas fa-chevron-left"></i> Prev
+        </a>
+      </li>
+      {% else %}
+      <li>
+        <span class="cmt-page-btn cmt-prev-btn disabled">
+          <i class="fas fa-chevron-left"></i> Prev
+        </span>
+      </li>
+      {% endif %}
+
+      {% for p in comments_page.paginator.page_range %}
+        {% if p == comments_page.number %}
+        <li><span class="cmt-page-num active" aria-current="page">{{ p }}</span></li>
+        {% elif p > comments_page.number|add:"-3" and p < comments_page.number|add:"3" %}
+        <li>
+          <a href="?c_page={{ p }}#comments" class="cmt-page-num" data-page="{{ p }}" onclick="goToCommentPage(event, {{ p }})">{{ p }}</a>
+        </li>
+        {% elif p == 1 or p == comments_page.paginator.num_pages %}
+        <li>
+          <a href="?c_page={{ p }}#comments" class="cmt-page-num" data-page="{{ p }}" onclick="goToCommentPage(event, {{ p }})">{{ p }}</a>
+        </li>
+        {% elif p == comments_page.number|add:"-3" or p == comments_page.number|add:"3" %}
+        <li><span class="cmt-page-ellipsis">&hellip;</span></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if comments_page.has_next %}
+      <li>
+        <a href="?c_page={{ comments_page.next_page_number }}#comments" class="cmt-page-btn cmt-next-btn" data-page="{{ comments_page.next_page_number }}" onclick="goToCommentPage(event, {{ comments_page.next_page_number }})">
+          Next <i class="fas fa-chevron-right"></i>
+        </a>
+      </li>
+      {% else %}
+      <li>
+        <span class="cmt-page-btn cmt-next-btn disabled">
+          Next <i class="fas fa-chevron-right"></i>
+        </span>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+{% else %}
+  <div id="commentsList">
+    <div id="noCommentsMsg" style="text-align:center;padding:36px 20px;color:#7a8a80">
+      <i class="far fa-comment-dots" style="font-size:2.4rem;color:#cbd5e1;margin-bottom:10px;display:block"></i>
+      <p style="margin:0;font-size:0.95rem">No comments yet. Be the first to share your thoughts!</p>
+    </div>
+  </div>
+{% endif %}

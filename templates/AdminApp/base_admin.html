@@ -318,6 +318,9 @@
     <a href="{% url 'AdminApp:service_list' %}" {% if request.resolver_match.url_name == 'service_list' or request.resolver_match.url_name == 'service_add' or request.resolver_match.url_name == 'service_edit' %}class="active"{% endif %}>
       <i class="fas fa-hand-holding-heart"></i> Services
     </a>
+    <a href="{% url 'AdminApp:blog_list' %}" {% if request.resolver_match.url_name == 'blog_list' or request.resolver_match.url_name == 'blog_add' or request.resolver_match.url_name == 'blog_edit' %}class="active"{% endif %}>
+      <i class="fas fa-newspaper"></i> Blog Posts
+    </a>
     <a href="{% url 'admin_chat_monitor' %}" {% if request.resolver_match.url_name == 'admin_chat_monitor' %}class="active"{% endif %}>
       <i class="fas fa-comments"></i> Chat Monitor
     </a>

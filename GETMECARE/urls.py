@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
-from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap
+from GETMECARE.sitemaps import StaticViewSitemap, CaregiverSitemap, JobSitemap, BlogSitemap
 from GETMECARE import whatsapp_webhooks
 
 
@@ -179,6 +179,7 @@ urlpatterns = [
             'static': StaticViewSitemap,
             'caregivers': CaregiverSitemap,
             'jobs': JobSitemap,
+            'blogs': BlogSitemap,
         },
     }, name='django.contrib.sitemaps.views.sitemap'),
     # ── Password reset (ZeptoMail) ────────────────────────────

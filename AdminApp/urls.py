@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin-panel/caregivers/',                           views.manage_caregivers,  name='manage_caregivers'),
     path('admin-panel/employers/',                            views.manage_employers,    name='manage_employers'),
     path('admin-panel/employers/<int:profile_id>/activate/',  views.activate_employer,   name='activate_employer'),
+    path('admin-panel/employers/<int:profile_id>/convert-to-caregiver/', views.convert_employer_to_caregiver, name='convert_employer_to_caregiver'),
     path('admin-panel/employers/<int:profile_id>/suspend/',   views.suspend_employer,    name='suspend_employer'),
     path('admin-panel/employers/<int:profile_id>/deactivate/', views.deactivate_employer, name='deactivate_employer'),
     path('admin-panel/employers/<int:profile_id>/reactivate/', views.reactivate_employer, name='reactivate_employer'),
@@ -52,6 +53,11 @@ urlpatterns = [
     path('admin-panel/services/<int:service_id>/edit/',       views.service_edit,   name='service_edit'),
     path('admin-panel/services/<int:service_id>/delete/',     views.service_delete, name='service_delete'),
     path('services/api/',                                      views.public_services, name='public_services'),
+    # Blogs
+    path('admin-panel/blogs/',                                views.blog_list,      name='blog_list'),
+    path('admin-panel/blogs/add/',                            views.blog_edit,      name='blog_add'),
+    path('admin-panel/blogs/<int:post_id>/edit/',             views.blog_edit,      name='blog_edit'),
+    path('admin-panel/blogs/<int:post_id>/delete/',           views.blog_delete,    name='blog_delete'),
     # Site settings
     path('admin-panel/toggle-activation-fee/', views.toggle_activation_fee, name='toggle_activation_fee'),
 ]

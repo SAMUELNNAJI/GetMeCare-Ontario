@@ -38,7 +38,7 @@ CSRF_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # keep this for later when you add SSL
 
-ALLOWED_HOSTS = ['getmecare-ontario.com', 'www.getmecare-ontario.com', '185.113.249.197', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['getmecare-ontario.com', 'www.getmecare-ontario.com', '185.113.249.197', 'localhost', '127.0.0.1', 'testserver']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
