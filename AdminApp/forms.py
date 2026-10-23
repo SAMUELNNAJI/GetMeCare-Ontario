@@ -84,6 +84,9 @@ class BlogPostForm(forms.ModelForm):
                 candidate = f"{base_slug}-{counter}"
                 counter += 1
             instance.slug = candidate
+        # Auto-generate image alt from title if admin left it blank
+        if not instance.image_alt and instance.title:
+            instance.image_alt = f"{instance.title} — GetMeCare Ontario"
         if commit:
             instance.save()
             self.save_m2m()

@@ -556,7 +556,7 @@ GetMeCare{% endblock %} {% block extra_head %}
       <div class="ep-big-av" id="ep-av-preview">
         <span id="ep-av-initials">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}{% else %}{{ request.user.username|slice:":2"|upper }}{% endif %}</span>
         {% if profile and profile.profile_image %}
-        <img src="{{ profile.profile_image.url }}" alt="Profile photo" id="ep-av-img" />
+        <img src="{{ profile.profile_image.url }}" alt="{{ request.user.get_full_name }} profile photo" id="ep-av-img" />
         {% else %}
         <img src="" alt="" id="ep-av-img" style="display:none" />
         {% endif %}

@@ -14,7 +14,7 @@
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{% block og_url %}https://getmecare.ca{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}https://getmecare-ontario.com{% endblock %}">
     <meta property="og:title" content="{% block og_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
@@ -23,13 +23,13 @@
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{% block twitter_url %}https://getmecare.ca{% endblock %}">
+    <meta name="twitter:url" content="{% block twitter_url %}https://getmecare-ontario.com{% endblock %}">
     <meta name="twitter:title" content="{% block twitter_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="{% block canonical_url %}https://getmecare.ca{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}https://getmecare-ontario.com{% endblock %}">
     
     {% if user.is_authenticated %}
     <meta name="user-id" content="{{ user.id }}">
@@ -104,7 +104,7 @@
     <header class="navbar">
       <div class="nav-container">
         <a href="{% url 'home' %}" class="logo">
-          <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" class="logo-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
+          <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario logo" class="logo-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
           <div class="logo-text-wrap">
             <span class="logo-name">GetMe<span style="color:#F0A040">Care</span></span>
             <span class="logo-region">Ontario</span>
@@ -210,7 +210,7 @@
       <div class="footer-container">
         <div class="footer-col brand-col">
           <div class="footer-brand">
-            <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" width="44" height="44" style="object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
+            <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario — trusted PSW platform" width="44" height="44" style="object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
             <div>
               <div class="footer-logo-text">GetMe<span style="color:#F0A040">Care</span></div>
               <div class="footer-logo-sub">ONTARIO</div>

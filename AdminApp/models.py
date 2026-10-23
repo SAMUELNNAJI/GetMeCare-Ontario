@@ -190,6 +190,9 @@ class BlogPost(models.Model):
                 candidate = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = candidate
+        # Auto-generate image alt from title if blank
+        if not self.image_alt and self.title:
+            self.image_alt = f"{self.title} — GetMeCare Ontario"
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):

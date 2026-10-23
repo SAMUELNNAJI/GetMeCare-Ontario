@@ -898,7 +898,7 @@
     <div class="post-author-row">
       <div class="post-author-info">
         <div class="post-author-av">
-          <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
+          <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario editorial team" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
         </div>
         <div>
           <div class="post-author-name">{{ post.author_name }}</div>
@@ -917,7 +917,7 @@
 
   <!-- Cover Image -->
   <figure class="post-cover-wrap">
-    <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" class="post-cover-img" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+    <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" class="post-cover-img" loading="lazy" onerror="this.src='/static/Caregiver/images/hero-image.png'">
   </figure>
 
   <!-- Article Body -->
