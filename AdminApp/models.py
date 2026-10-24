@@ -180,6 +180,64 @@ class BlogPost(models.Model):
     def __str__(self):
         return self.title
 
+    def _convert_field_to_webp(self, field_name):
+        field = getattr(self, field_name)
+        if not field:
+            return
+        try:
+            # Skip if already webp
+            name = getattr(field, 'name', '') or ''
+            if name.lower().endswith('.webp'):
+                return
+            from PIL import Image
+            import io
+            from django.core.files.base import ContentFile
+            field.open('rb')
+            img = Image.open(field)
+            img = img.convert('RGB') if img.mode not in ('RGB', 'RGBA') else img
+            if img.mode == 'RGBA':
+                # keep alpha
+                pass
+            buf = io.BytesIO()
+            img.save(buf, format='WEBP', quality=85, method=6)
+            buf.seek(0)
+            base = name.rsplit('/', 1)[-1].rsplit('.', 1)[0] if name else field_name
+            new_name = f"{base}.webp"
+            # replace file
+            field.save(new_name, ContentFile(buf.read()), save=False)
+        except Exception:
+            # Never break save on conversion failure
+            try:
+                field.close()
+            except Exception:
+                pass
+
+    def _convert_remote_url_to_webp(self):
+        url = (self.featured_image_url or '').strip()
+        if not url:
+            return
+        if url.lower().endswith('.webp'):
+            return
+        try:
+            import requests
+            from PIL import Image
+            import io
+            from django.core.files.base import ContentFile
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            img = Image.open(io.BytesIO(resp.content))
+            if img.mode not in ('RGB', 'RGBA'):
+                img = img.convert('RGB')
+            buf = io.BytesIO()
+            img.save(buf, format='WEBP', quality=85, method=6)
+            buf.seek(0)
+            import os
+            base = os.path.splitext(os.path.basename(url.split('?')[0]))[0] or 'blog-image'
+            self.featured_image.save(f"{base}.webp", ContentFile(buf.read()), save=False)
+            self.featured_image_url = ''
+        except Exception:
+            pass
+
     def save(self, *args, **kwargs):
         if not self.slug and self.title:
             from django.utils.text import slugify
@@ -193,6 +251,12 @@ class BlogPost(models.Model):
         # Auto-generate image alt from title if blank
         if not self.image_alt and self.title:
             self.image_alt = f"{self.title} — GetMeCare Ontario"
+        # Convert uploaded images to WebP
+        self._convert_field_to_webp('featured_image')
+        self._convert_field_to_webp('author_avatar')
+        # Convert remote URL to a local WebP file
+        if self.featured_image_url and not self.featured_image:
+            self._convert_remote_url_to_webp()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
