@@ -3,6 +3,7 @@
 {% block title %}GetMeCare ONTARIO – Hire Trusted, Pre-Vetted Ontario Caregivers Directly{% endblock %}
 
 {% block extra_head %}
+<link rel="preload" as="image" href="{% static 'Caregiver/images/hero-image.webp' %}" fetchpriority="high">
 <style>
   /* ═══ HOME BLOG CAROUSEL SECTION ═══ */
   .home-blog-section {
@@ -444,7 +445,7 @@
         <div
           class="care-card-img"
           style="
-            background-image: url({% static 'Caregiver/images/hero-image.png' %});
+            background-image: url({% static 'Caregiver/images/hero-image.webp' %});
             background-size: cover;
             background-position: center;
           "
@@ -466,7 +467,7 @@
         <div
           class="care-card-img"
           style="
-            background-image: url({% static 'Caregiver/images/image-2.png' %});
+            background-image: url({% static 'Caregiver/images/image-2.webp' %});
             background-size: cover;
             background-position: center;
           "
@@ -490,7 +491,7 @@
         <div
           class="care-card-img"
           style="
-            background-image: url({% static 'Caregiver/images/image-3.jpg' %});
+            background-image: url({% static 'Caregiver/images/image-3.webp' %});
             background-size: cover;
             background-position: center;
           "
@@ -512,7 +513,7 @@
         <div
           class="care-card-img"
           style="
-            background-image: url({% static 'Caregiver/images/image-4.jpg' %});
+            background-image: url({% static 'Caregiver/images/image-4.webp' %});
             background-size: cover;
             background-position: center;
           "
@@ -631,9 +632,11 @@
     <div class="safety-img-col">
       <div class="safety-badge-wrap animate-on-scroll">
         <img
-          src="{% static 'Caregiver/images/safety-image.png' %}"
+          src="{% static 'Caregiver/images/safety-image.webp' %}"
           alt="GetMeCare Ontario caregiver safety and verification process"
           class="safety-img"
+          width="512" height="512"
+          loading="lazy"
         />
         <div class="safety-top-badge">
           <span class="stb-icon"><i class="fas fa-handshake"></i></span>
@@ -855,7 +858,7 @@
           <article class="mad-blog-card">
             <div class="mbc-thumb-box">
               <a href="{{ post.get_absolute_url }}">
-                <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" class="mbc-img" onerror="this.src='{% static "Caregiver/images/hero-image.png" %}';">
+                <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" class="mbc-img" onerror="this.src='{% static "Caregiver/images/hero-image.webp" %}';">
               </a>
               <div class="mbc-overlay-grad"></div>
               <span class="mbc-cat-pill">{{ post.get_category_display }}</span>
@@ -874,7 +877,7 @@
               <div class="mbc-footer">
                 <div class="mbc-author">
                   <div class="mbc-av">
-                    <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
+                    <img src="{% static 'Caregiver/images/sitelog.webp' %}" alt="GetMeCare Ontario" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
                   </div>
                   <div>
                     <strong>{{ post.author_name }}</strong>

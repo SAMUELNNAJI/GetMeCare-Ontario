@@ -89,7 +89,7 @@ def _wrap(content: str) -> str:
     - Logo rendered as a hosted absolute-URL image so it shows everywhere
     """
     year = timezone.now().year
-    logo_url = 'https://getmecare-ontario.com/static/Caregiver/images/sitelog.png'
+    logo_url = 'https://getmecare-ontario.com/static/Caregiver/images/sitelog.webp'
 
     return f"""<!DOCTYPE html>
 <html lang="en">

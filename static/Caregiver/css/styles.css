@@ -440,7 +440,7 @@ img {
   margin-top: 64px;
   min-height: 0;
   height: auto;
-  background: url("../images/hero-image.png") center/cover no-repeat;
+  background: url("../images/hero-image.webp") center/cover no-repeat;
   display: flex;
   align-items: center;
   overflow: hidden;

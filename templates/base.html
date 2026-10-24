@@ -20,7 +20,7 @@
     <meta property="og:url" content="{% block og_url %}https://getmecare-ontario.com{% endblock %}">
     <meta property="og:title" content="{% block og_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'Caregiver/images/hero-image.webp' %}{% endblock %}">
     <meta property="og:site_name" content="GetMeCare Ontario">
     <meta property="og:locale" content="en_CA">
     
@@ -29,7 +29,7 @@
     <meta name="twitter:url" content="{% block twitter_url %}https://getmecare-ontario.com{% endblock %}">
     <meta name="twitter:title" content="{% block twitter_title %}GetMeCare Ontario - Trusted PSWs & Caregivers{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Hire trusted, pre-vetted Personal Support Workers (PSWs) and caregivers directly in Ontario. Background checked, certified, and admin-mediated.{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{% static 'Caregiver/images/hero-image.png' %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'Caregiver/images/hero-image.webp' %}{% endblock %}">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="{% block canonical_url %}https://getmecare-ontario.com{% endblock %}">
@@ -44,14 +44,32 @@
     <link rel="icon" type="image/png" sizes="48x48" href="{% static 'Caregiver/images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'Caregiver/css/styles.css' %}" />
     <link rel="stylesheet" href="{% static 'Caregiver/css/whatsapp_widget.css' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      />
+    </noscript>
     <link rel="stylesheet" href="{% static 'Chatbot/css/chatbot.css' %}" />
     <script src="{% static 'Caregiver/js/animations.js' %}" defer></script>
     <script src="{% static 'Chatbot/js/chatbot.js' %}" defer></script>
@@ -63,7 +81,7 @@
       "@type": "LocalBusiness",
       "name": "GetMeCare Ontario",
       "description": "Connecting Ontario families with trusted, pre-vetted independent Personal Support Workers. Mediated, transparent, and safe.",
-      "url": "https://getmecare.ca",
+      "url": "https://getmecare-ontario.com",
       "telephone": "+1-249-481-2647",
       "address": {
         "@type": "PostalAddress",
@@ -107,7 +125,7 @@
     <header class="navbar">
       <div class="nav-container">
         <a href="{% url 'home' %}" class="logo">
-          <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario logo" class="logo-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
+          <img src="{% static 'Caregiver/images/sitelog.webp' %}" alt="GetMeCare Ontario logo" class="logo-icon" style="width:44px;height:44px;object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
           <div class="logo-text-wrap">
             <span class="logo-name">GetMe<span style="color:#F0A040">Care</span></span>
             <span class="logo-region">Ontario</span>
@@ -213,7 +231,7 @@
       <div class="footer-container">
         <div class="footer-col brand-col">
           <div class="footer-brand">
-            <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario — trusted PSW platform" width="44" height="44" style="object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
+            <img src="{% static 'Caregiver/images/sitelog.webp' %}" alt="GetMeCare Ontario — trusted PSW platform" width="44" height="44" style="object-fit:contain;filter:brightness(0) saturate(100%) invert(72%) sepia(60%) saturate(600%) hue-rotate(345deg) brightness(105%) contrast(95%)">
             <div>
               <div class="footer-logo-text">GetMe<span style="color:#F0A040">Care</span></div>
               <div class="footer-logo-sub">ONTARIO</div>

@@ -13,7 +13,7 @@
 <meta property="og:title" content="Ontario Caregiver & Family Health Blog | GetMeCare Ontario">
 <meta property="og:description" content="Expert guides, tips, and insights on Ontario home care, finding vetted Personal Support Workers (PSWs), and caregiver resources.">
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
-<meta property="og:image" content="{% static 'Caregiver/images/hero-image.png' %}">
+<meta property="og:image" content="{% static 'Caregiver/images/hero-image.webp' %}">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
@@ -639,7 +639,7 @@
   {% if featured_post and not search_q and not category_filter and not tag_filter %}
   <article class="featured-spotlight">
     <div class="featured-img-wrap">
-      <img src="{{ featured_post.display_image }}" alt="{{ featured_post.image_alt|default:featured_post.title }}" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+      <img src="{{ featured_post.display_image }}" alt="{{ featured_post.image_alt|default:featured_post.title }}" onerror="this.src='/static/Caregiver/images/hero-image.webp'">
       <div class="featured-overlay"></div>
       <span class="featured-badge-float"><i class="fas fa-star"></i> Featured Guide</span>
     </div>
@@ -656,7 +656,7 @@
       <div class="featured-footer">
         <div class="author-badge">
           <div class="author-avatar">
-            <img src="{% static 'Caregiver/images/sitelog.png' %}" alt="GetMeCare Ontario editorial team" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
+            <img src="{% static 'Caregiver/images/sitelog.webp' %}" alt="GetMeCare Ontario editorial team" style="width:100%;height:100%;object-fit:contain;border-radius:50%">
           </div>
           <div class="author-info">
             <strong>{{ featured_post.author_name }}</strong>
@@ -679,7 +679,7 @@
     <article class="article-card">
       <div class="card-img-wrap">
         <a href="{{ post.get_absolute_url }}" aria-label="{{ post.title }}">
-          <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+          <img src="{{ post.display_image }}" alt="{{ post.image_alt|default:post.title }}" loading="lazy" onerror="this.src='/static/Caregiver/images/hero-image.webp'">
         </a>
         <span class="card-category-badge">{{ post.get_category_display }}</span>
       </div>

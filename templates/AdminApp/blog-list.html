@@ -191,7 +191,7 @@
   {% for post in posts %}
   <div class="blg-admin-card">
     <div class="blg-thumb-wrap">
-      <img src="{{ post.display_image }}" alt="{{ post.title }}" class="blg-thumb-img" onerror="this.src='/static/Caregiver/images/hero-image.png'">
+      <img src="{{ post.display_image }}" alt="{{ post.title }}" class="blg-thumb-img" onerror="this.src='/static/Caregiver/images/hero-image.webp'">
       <span class="blg-badge-cat">{{ post.get_category_display }}</span>
       {% if post.is_published %}
       <span class="blg-status-pill bsp-pub"><i class="fas fa-check"></i> Published</span>

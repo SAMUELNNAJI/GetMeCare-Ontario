@@ -221,7 +221,7 @@ class BlogPost(models.Model):
                 pass
         if self.featured_image_url:
             return self.featured_image_url
-        return '/static/Caregiver/images/hero-image.png'
+        return '/static/Caregiver/images/hero-image.webp'
 
 
 class BlogComment(models.Model):

@@ -489,7 +489,7 @@ def blog_detail(request, slug):
             "url": request.build_absolute_uri('/'),
             "logo": {
                 "@type": "ImageObject",
-                "url": request.build_absolute_uri('/static/Caregiver/images/sitelog.png')
+                "url": request.build_absolute_uri('/static/Caregiver/images/sitelog.webp')
             }
         },
         "keywords": post.tags
