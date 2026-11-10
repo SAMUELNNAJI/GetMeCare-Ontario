@@ -29,6 +29,7 @@ urlpatterns = [
     path('admin-panel/shifts/program/',                       views.program_shift,       name='program_shift'),
     # Operational Workflow: Job Requests & Candidate Matching
     path('admin-panel/job-requests/',                         views.job_requests,        name='job_requests'),
+    path('admin-panel/job-requests/<int:job_id>/delete/',     views.delete_job_request,  name='delete_job_request'),
     path('admin-panel/job-requests/<int:job_id>/matches/',    views.job_request_matches, name='job_request_matches'),
     path('admin-panel/job-requests/<int:job_id>/payment-link/', views.admin_create_39_payment_link, name='admin_create_39_payment_link'),
     path('admin-panel/job-requests/<int:job_id>/email-candidates/', views.admin_email_candidates, name='admin_email_candidates'),

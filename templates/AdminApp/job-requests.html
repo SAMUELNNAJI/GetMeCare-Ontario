@@ -141,6 +141,8 @@
 .jr-btn-prog:hover { background:#10241c; color:#fff; }
 .jr-btn-chat { background:#fff; color:#128c7e; border:1.5px solid #25d366; }
 .jr-btn-chat:hover { background:#e6f9ed; color:#0b665b; }
+.jr-btn-delete { background:#c62828; color:#fff; }
+.jr-btn-delete:hover { background:#a61f1f; color:#fff; }
 
 /* Empty state */
 .jr-empty {
@@ -373,6 +375,15 @@
         <i class="fab fa-whatsapp"></i> WhatsApp
       </a>
       {% endif %}
+
+      <form method="post" action="{% url 'AdminApp:delete_job_request' j.pk %}"
+            onsubmit="return confirm('Permanently delete this care request? This cannot be undone.');"
+            style="display:flex;flex:1;min-width:110px">
+        {% csrf_token %}
+        <button type="submit" class="jr-btn jr-btn-delete" title="Permanently delete this care request">
+          <i class="fas fa-trash-alt"></i> Delete Request
+        </button>
+      </form>
     </div>
   </div>
   {% endwith %}

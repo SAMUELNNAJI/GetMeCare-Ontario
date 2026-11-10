@@ -1421,6 +1421,19 @@ def job_requests(request):
 
 
 @admin_required
+def delete_job_request(request, job_id):
+    """Admin action: delete a care request (POST only)."""
+    if request.method != 'POST':
+        return redirect('AdminApp:job_requests')
+
+    job = get_object_or_404(JobPosting, pk=job_id)
+    title = job.title
+    job.delete()
+    messages.success(request, f'Care request "{title}" has been deleted.')
+    return redirect('AdminApp:job_requests')
+
+
+@admin_required
 def job_request_matches(request, job_id):
     """Admin candidate matching view: pulls top scored candidates from database
 
@@ -1880,4 +1893,3 @@ def blog_delete(request, post_id):
     post_obj.delete()
     messages.success(request, f'Blog post "{title}" has been deleted.')
     return redirect('AdminApp:blog_list')
-
