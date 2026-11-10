@@ -47,5 +47,6 @@ class DeleteJobRequestTests(TestCase):
 
         response = self.client.post(self.url)
 
-        self.assertRedirects(response, reverse('Account:login'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('Account:login'))
         self.assertTrue(JobPosting.objects.filter(pk=self.job.pk).exists())

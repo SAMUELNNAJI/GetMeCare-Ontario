@@ -397,6 +397,13 @@
           {% for e in employer_form.care_request.errors %}<span class="error">{{ e }}</span>{% endfor %}
         </div>
 
+        <div class="field">
+          <label for="employer-math-answer">Spam check: What is {{ math_question }}? <span class="req">*</span></label>
+          <input type="number" id="employer-math-answer" name="math_answer" required inputmode="numeric" autocomplete="off">
+          <input type="hidden" name="math_token" value="{{ math_token }}">
+          {% if math_error %}<span class="error" role="alert">Please solve the math question correctly.</span>{% endif %}
+        </div>
+
         <button type="submit" class="btn-submit">
           <i class="fas fa-check-circle"></i> Create Account &amp; Publish Care Request
         </button>
@@ -461,6 +468,13 @@
           <label>Confirm Password <span class="req">*</span></label>
           <input type="password" name="password2" required placeholder="Repeat your password">
           {% for e in form.password2.errors %}<span class="error">{{ e }}</span>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="caregiver-math-answer">Spam check: What is {{ math_question }}? <span class="req">*</span></label>
+          <input type="number" id="caregiver-math-answer" name="math_answer" required inputmode="numeric" autocomplete="off">
+          <input type="hidden" name="math_token" value="{{ math_token }}">
+          {% if math_error %}<span class="error" role="alert">Please solve the math question correctly.</span>{% endif %}
         </div>
 
         <button type="submit" class="btn-submit btn-blue">

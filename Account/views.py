@@ -8,6 +8,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from decimal import Decimal
 import logging
+import secrets
 
 from .forms import LoginForm, SignupForm, UnifiedEmployerSignupForm, EditUserForm, EditCaregiverProfileForm, DocumentUploadForm, ProfileImageForm, BankDetailsForm, PasswordChangeForm
 from .models import CustomUser, CaregiverProfile, CaregiverDocument, Shift, ShiftLog, EmployerProfile, JobPosting, Notification
@@ -49,6 +50,33 @@ def caregiver_required(view_func):
     return wrapper
 
 
+def _new_signup_math_challenge(request):
+    left = secrets.randbelow(8) + 2
+    right = secrets.randbelow(8) + 2
+    token = secrets.token_urlsafe(16)
+    request.session['signup_math_challenge'] = {
+        'answer': str(left + right),
+        'token': token,
+    }
+    return f'{left} + {right}', token
+
+
+def _check_signup_math_challenge(request):
+    challenge = request.session.pop('signup_math_challenge', None)
+    submitted_answer = request.POST.get('math_answer', '').strip()
+    submitted_token = request.POST.get('math_token', '')
+    if not isinstance(challenge, dict):
+        return False
+    expected_answer = challenge.get('answer')
+    expected_token = challenge.get('token')
+    return (
+        isinstance(expected_answer, str)
+        and isinstance(expected_token, str)
+        and secrets.compare_digest(submitted_answer, expected_answer)
+        and secrets.compare_digest(submitted_token, expected_token)
+    )
+
+
 # ──────────────────────────────────────────────────────────────
 # Auth views
 # ──────────────────────────────────────────────────────────────
@@ -75,13 +103,15 @@ def signup(request):
     else:
         selected_role = 'employer'
 
+    math_error = request.method == 'POST' and not _check_signup_math_challenge(request)
+
     # Families complete registration and publish their care request in one
     # atomic submit.  A failed job creation therefore never leaves an empty
     # employer account behind.
     if request.method == 'POST' and request.POST.get('role') == CustomUser.EMPLOYER:
         employer_form = UnifiedEmployerSignupForm(request.POST)
         caregiver_form = SignupForm()
-        if employer_form.is_valid():
+        if not math_error and employer_form.is_valid():
             data = employer_form.cleaned_data
             names = data['full_name'].strip().split(None, 1)
             first_name = names[0]
@@ -120,13 +150,16 @@ def signup(request):
                 logger.exception('Welcome email failed for user %s', user.pk)
             messages.success(request, 'Your care request is live! Our matching coordination team has been alerted and will review candidates shortly.')
             return redirect('EmployerApp:dashboard')
+        challenge = _new_signup_math_challenge(request)
         return render(request, 'Account/signup.html', {
             'form': caregiver_form, 'employer_form': employer_form, 'selected_role': 'employer',
+            'math_question': challenge[0],
+            'math_token': challenge[1], 'math_error': math_error,
         })
 
     if request.method == 'POST':
         form = SignupForm(request.POST)
-        if form.is_valid():
+        if not math_error and form.is_valid():
             user = form.save()
             # Auto-create CaregiverProfile when role is caregiver
             if user.is_caregiver:
@@ -149,14 +182,19 @@ def signup(request):
             except Exception:
                 logger.exception('Welcome email failed for user %s', user.pk)
             return redirect_for_user(user)
+        challenge = _new_signup_math_challenge(request)
         return render(request, 'Account/signup.html', {
             'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': 'caregiver',
+            'math_question': challenge[0],
+            'math_token': challenge[1], 'math_error': math_error,
         })
     else:
         form = SignupForm()
 
+    challenge = _new_signup_math_challenge(request)
     return render(request, 'Account/signup.html', {
         'form': form, 'employer_form': UnifiedEmployerSignupForm(), 'selected_role': selected_role,
+        'math_question': challenge[0], 'math_token': challenge[1], 'math_error': False,
     })
 
 
@@ -676,4 +714,3 @@ def add_whatsapp_page(request):
         'current_phone': request.user.phone or '',
         'current_digits': current_digits,
     })
-

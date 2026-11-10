@@ -1,6 +1,7 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 from .forms import ProfileImageForm
 from .models import CustomUser, CaregiverProfile
@@ -21,6 +22,97 @@ class LoginViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('Account:employer_dashboard'))
+
+
+class SignupMathChallengeTests(TestCase):
+    def setUp(self):
+        self.signup_url = reverse('Account:signup')
+
+    def _math_payload(self, response):
+        left, right = response.context['math_question'].split(' + ')
+        return {
+            'math_answer': str(int(left) + int(right)),
+            'math_token': response.context['math_token'],
+        }
+
+    def test_employer_signup_requires_correct_math_answer(self):
+        self.client.get(self.signup_url)
+        data = {
+            'role': CustomUser.EMPLOYER,
+            'full_name': 'Test Family',
+            'email': 'family@example.com',
+            'password': 'Safe-password-123!',
+            'phone': '+1 416 555 0100',
+            'city': 'Toronto',
+            'care_request': 'Looking for weekday companionship.',
+        }
+
+        rejected = self.client.post(self.signup_url, {**data, 'math_answer': 'wrong'})
+
+        self.assertEqual(rejected.status_code, 200)
+        self.assertTrue(rejected.context['math_error'])
+        self.assertFalse(CustomUser.objects.filter(email=data['email']).exists())
+
+        accepted = self.client.post(
+            self.signup_url,
+            {**data, **self._math_payload(rejected)},
+        )
+
+        self.assertRedirects(accepted, reverse('EmployerApp:dashboard'), fetch_redirect_response=False)
+        self.assertTrue(CustomUser.objects.filter(email=data['email']).exists())
+
+    @patch('Account.views.send_welcome_email')
+    def test_caregiver_signup_requires_correct_math_answer(self, _send_welcome_email):
+        response = self.client.get(f'{self.signup_url}?role=caregiver')
+        data = {
+            'role': CustomUser.CAREGIVER,
+            'first_name': 'Care',
+            'last_name': 'Giver',
+            'username': 'caregiver_test',
+            'email': 'caregiver@example.com',
+            'phone': '+1 416 555 0101',
+            'password1': 'Safe-password-123!',
+            'password2': 'Safe-password-123!',
+        }
+
+        rejected = self.client.post(
+            self.signup_url,
+            {**data, 'math_answer': 'wrong'},
+        )
+        self.assertEqual(rejected.status_code, 200)
+        self.assertTrue(rejected.context['math_error'])
+        self.assertFalse(CustomUser.objects.filter(email=data['email']).exists())
+
+        accepted = self.client.post(
+            self.signup_url,
+            {**data, **self._math_payload(rejected)},
+        )
+
+        self.assertRedirects(accepted, reverse('CareGiverAcc:dashboard'), fetch_redirect_response=False)
+        self.assertTrue(CustomUser.objects.filter(email=data['email']).exists())
+
+    def test_math_answer_is_required_and_cannot_be_reused(self):
+        response = self.client.get(self.signup_url)
+        data = {
+            'role': CustomUser.EMPLOYER,
+            'full_name': 'Test Family',
+            'email': 'family@example.com',
+            'password': 'Safe-password-123!',
+            'phone': '+1 416 555 0100',
+            'city': 'Toronto',
+            'care_request': 'Looking for weekday companionship.',
+        }
+        answer = self._math_payload(response)
+
+        rejected = self.client.post(self.signup_url, data)
+        self.assertTrue(rejected.context['math_error'])
+
+        replayed = self.client.post(
+            self.signup_url,
+            {**data, **answer},
+        )
+        self.assertTrue(replayed.context['math_error'])
+        self.assertFalse(CustomUser.objects.filter(email=data['email']).exists())
 
 
 # ──────────────────────────────────────────────────────────────
